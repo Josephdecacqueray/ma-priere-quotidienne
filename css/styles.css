@@ -24,22 +24,47 @@
   --font-body: Georgia, 'Times New Roman', serif;
   --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 
-  --bg-app: #F5F2EB;
-  --bg-card: #FFFFFF;
-  --bg-paper: #FFFDF9;
-  --bg-nav: rgba(245, 242, 235, 0.88);
-  --bg-input: rgba(118, 118, 128, 0.12);
-
+  --bg-app: #F6F2E9;
   --text-primary: #1F1B16;
-  --text-secondary: #6E655A;
-  --text-muted: #998F82;
+  --text-secondary: #5E554B;
+  --text-muted: #8C8276;
 
   --accent-notes: #C4911F;
   --accent-red: #B22222;
   --accent-green: #1E7E34;
   --danger: #C62828;
-  --border-hairline: rgba(60, 48, 30, 0.11);
+  --border-hairline: rgba(255, 255, 255, 0.72);
 
+  /* Matériau Liquid Glass iOS 26/27 */
+  --glass-bg: linear-gradient(155deg, rgba(255, 255, 255, 0.74) 0%, rgba(255, 253, 248, 0.42) 55%, rgba(255, 255, 255, 0.58) 100%);
+  --glass-bg-strong: linear-gradient(160deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 253, 249, 0.70) 100%);
+  --glass-bg-subtle: linear-gradient(155deg, rgba(255, 255, 255, 0.56) 0%, rgba(255, 252, 246, 0.28) 100%);
+  --glass-border: rgba(255, 255, 255, 0.82);
+  --glass-border-soft: rgba(255, 255, 255, 0.58);
+  --glass-blur: blur(26px) saturate(210%) brightness(1.03);
+  --glass-blur-soft: blur(18px) saturate(185%);
+  --glass-shadow:
+    0 12px 32px rgba(38, 29, 16, 0.09),
+    0 2px 6px rgba(38, 29, 16, 0.05),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.94),
+    inset 1px 0 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 2px rgba(80, 62, 36, 0.07);
+  --glass-btn-shadow:
+    0 6px 18px rgba(38, 29, 16, 0.08),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px rgba(80, 62, 36, 0.08);
+  --glass-gold-bg: linear-gradient(155deg, rgba(214, 164, 48, 0.92) 0%, rgba(182, 128, 20, 0.84) 100%);
+  --glass-gold-shadow:
+    0 10px 24px rgba(182, 128, 20, 0.30),
+    inset 0 1.5px 0 rgba(255, 248, 224, 0.72),
+    inset 0 -1px 2px rgba(110, 72, 6, 0.22);
+  --glass-green-bg: linear-gradient(155deg, rgba(38, 148, 66, 0.90) 0%, rgba(26, 114, 48, 0.84) 100%);
+  --glass-green-shadow:
+    0 8px 20px rgba(30, 126, 52, 0.26),
+    inset 0 1.5px 0 rgba(226, 255, 232, 0.65),
+    inset 0 -1px 2px rgba(12, 68, 25, 0.2);
+
+  --spring-ease: cubic-bezier(0.22, 1.4, 0.36, 1);
   --prayer-font-size: 15.5px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -53,7 +78,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg-app);
+  background-color: var(--bg-app);
   color: var(--text-primary);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
@@ -61,9 +86,32 @@ html, body {
   overscroll-behavior-y: contain;
 }
 
+/* Toile lumineuse d'arrière-plan pour la réfraction Liquid Glass */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(232, 196, 122, 0.32) 0%, transparent 46%),
+    radial-gradient(circle at 88% 18%, rgba(148, 174, 224, 0.22) 0%, transparent 44%),
+    radial-gradient(circle at 76% 78%, rgba(215, 160, 140, 0.18) 0%, transparent 48%),
+    radial-gradient(circle at 18% 84%, rgba(196, 145, 31, 0.16) 0%, transparent 45%),
+    linear-gradient(180deg, #F8F4EB 0%, #EFE9DC 100%);
+}
+
 button, input, select, textarea {
   font-family: inherit;
   touch-action: manipulation;
+}
+
+button {
+  transition: transform 0.22s var(--spring-ease), box-shadow 0.2s ease, background 0.2s ease, opacity 0.15s ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.955);
 }
 
 .hidden {
@@ -84,69 +132,80 @@ button, input, select, textarea {
 }
 
 /* =========================================================
-   HEADER & NAVIGATION STYLE APPLE NOTES iOS
+   HEADER & BARRE DE NAVIGATION LIQUID GLASS
    ========================================================= */
 .ios-header-large {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--bg-nav);
-  backdrop-filter: saturate(180%) blur(18px);
-  -webkit-backdrop-filter: saturate(180%) blur(18px);
-  padding: calc(var(--safe-top) + 10px) 16px 12px;
-  border-bottom: 0.5px solid var(--border-hairline);
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.72) 0%, rgba(248, 243, 233, 0.48) 100%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: calc(var(--safe-top) + 10px) 16px 14px;
+  border-bottom: 1px solid var(--glass-border-soft);
+  box-shadow: 0 8px 24px rgba(38, 29, 16, 0.05), inset 0 -1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .header-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.72);
-  padding: 5px 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  padding: 6px 13px;
   border-radius: 999px;
-  border: 0.5px solid var(--border-hairline);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
 .status-dot {
-  width: 7px;
-  height: 7px;
+  width: 7.5px;
+  height: 7.5px;
   border-radius: 50%;
   background: var(--accent-green);
+  box-shadow: 0 0 6px rgba(30, 126, 52, 0.55);
 }
 
 .status-pill.is-offline .status-dot {
   background: var(--accent-notes);
+  box-shadow: 0 0 6px rgba(196, 145, 31, 0.55);
 }
 
 .status-pill.is-syncing .status-dot {
   background: #2563EB;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.55);
 }
 
 .status-pill.is-error .status-dot {
   background: var(--danger);
+  box-shadow: 0 0 6px rgba(198, 40, 40, 0.55);
 }
 
 .icon-btn {
   width: 40px;
   height: 40px;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
   color: var(--accent-notes);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
@@ -158,31 +217,36 @@ button, input, select, textarea {
   line-height: 1.15;
   color: var(--text-primary);
   letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .search-wrap {
   position: relative;
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 11px;
 }
 
 .search-icon {
   position: absolute;
-  left: 11px;
-  color: var(--text-muted);
+  left: 14px;
+  color: var(--text-secondary);
   pointer-events: none;
+  z-index: 1;
 }
 
 .search-input {
   width: 100%;
-  height: 38px;
-  border: none;
-  border-radius: 10px;
-  background: var(--bg-input);
-  padding: 0 34px 0 34px;
+  height: 40px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  padding: 0 38px 0 38px;
   font-size: 16px;
   color: var(--text-primary);
+  box-shadow: inset 0 1.5px 4px rgba(38, 29, 16, 0.06), 0 1px 0 rgba(255, 255, 255, 0.75);
   outline: none;
 }
 
@@ -192,12 +256,13 @@ button, input, select, textarea {
 
 .search-clear {
   position: absolute;
-  right: 6px;
+  right: 7px;
   width: 26px;
   height: 26px;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 50%;
-  background: rgba(110, 101, 90, 0.2);
+  background: rgba(110, 101, 90, 0.35);
+  backdrop-filter: blur(8px);
   color: #fff;
   font-size: 12px;
   cursor: pointer;
@@ -206,16 +271,20 @@ button, input, select, textarea {
 .segmented-control {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: rgba(118, 118, 128, 0.13);
-  border-radius: 9px;
-  padding: 2px;
-  gap: 2px;
+  background: rgba(120, 106, 86, 0.11);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 3px;
+  box-shadow: inset 0 1.5px 4px rgba(38, 29, 16, 0.07);
 }
 
 .segment-btn {
-  height: 34px;
-  border: none;
-  border-radius: 7px;
+  height: 35px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   background: transparent;
   color: var(--text-secondary);
   font-size: 14px;
@@ -225,43 +294,41 @@ button, input, select, textarea {
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
 
 .segment-btn.active {
-  background: var(--bg-card);
+  background: var(--glass-bg);
   color: var(--text-primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-btn-shadow);
 }
 
 .segment-count {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-notes);
 }
 
 /* =========================================================
-   BOUTON ACCUEIL « MES INTENTIONS »
+   BOUTON ACCUEIL « MES INTENTIONS » (LIQUID GLASS)
    ========================================================= */
 .intentions-home-card {
   width: 100%;
   margin-bottom: 14px;
-  padding: 12px 15px;
-  background: var(--bg-paper);
-  border: 0.5px solid rgba(196, 145, 31, 0.35);
-  border-left: 3.5px solid var(--accent-red);
-  border-radius: 14px;
-  box-shadow: 0 1px 4px rgba(31, 27, 22, 0.05);
+  padding: 13px 16px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--accent-red);
+  border-radius: 22px;
+  box-shadow: var(--glass-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   text-align: left;
   cursor: pointer;
-}
-
-.intentions-home-card:active {
-  background: rgba(196, 145, 31, 0.09);
 }
 
 .intentions-home-left {
@@ -310,8 +377,9 @@ button, input, select, textarea {
   font-size: 12px;
   font-weight: 700;
   color: var(--accent-red);
-  background: rgba(178, 34, 34, 0.1);
-  padding: 3px 9px;
+  background: rgba(178, 34, 34, 0.11);
+  border: 1px solid rgba(178, 34, 34, 0.22);
+  padding: 3px 10px;
   border-radius: 999px;
 }
 
@@ -326,38 +394,44 @@ button, input, select, textarea {
    ========================================================= */
 .list-content {
   flex: 1;
-  padding: 12px 16px calc(86px + var(--safe-bottom));
+  padding: 14px 16px calc(102px + var(--safe-bottom));
 }
 
 .filter-pills {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 13px;
 }
 
 .pill-btn {
-  border: 0.5px solid var(--border-hairline);
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
   color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 500;
-  padding: 6px 13px;
+  font-weight: 600;
+  padding: 7px 15px;
   border-radius: 999px;
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
 .pill-btn.active {
-  background: var(--accent-notes);
+  background: var(--glass-gold-bg);
   color: #fff;
-  border-color: var(--accent-notes);
+  border-color: rgba(255, 245, 215, 0.65);
+  box-shadow: var(--glass-gold-shadow);
 }
 
 .notes-group {
-  background: var(--bg-card);
-  border-radius: 14px;
-  border: 0.5px solid var(--border-hairline);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 22px;
+  border: 1px solid var(--glass-border);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(31, 27, 22, 0.04);
+  box-shadow: var(--glass-shadow);
 }
 
 .notes-group:empty {
@@ -366,9 +440,9 @@ button, input, select, textarea {
 
 .note-row {
   display: flex;
-  align-items: stretch;
-  border-bottom: 0.5px solid var(--border-hairline);
-  background: var(--bg-card);
+  align-items: center;
+  border-bottom: 0.5px solid rgba(60, 48, 30, 0.09);
+  background: transparent;
 }
 
 .note-row:last-child {
@@ -381,7 +455,7 @@ button, input, select, textarea {
   border: none;
   background: transparent;
   text-align: left;
-  padding: 13px 10px 13px 16px;
+  padding: 14px 10px 14px 16px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -389,7 +463,7 @@ button, input, select, textarea {
 }
 
 .note-row-main:active {
-  background: rgba(196, 145, 31, 0.08);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .note-row-top {
@@ -401,7 +475,7 @@ button, input, select, textarea {
 
 .note-row-title {
   font-family: var(--font-script);
-  font-size: 1.55rem;
+  font-size: 1.58rem;
   line-height: 1.15;
   color: var(--text-primary);
   white-space: nowrap;
@@ -421,9 +495,10 @@ button, input, select, textarea {
   font-weight: 700;
   letter-spacing: 0.03em;
   color: var(--accent-red);
-  background: rgba(178, 34, 34, 0.1);
-  padding: 2px 7px;
-  border-radius: 6px;
+  background: rgba(178, 34, 34, 0.11);
+  border: 1px solid rgba(178, 34, 34, 0.18);
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 .badge-novena {
@@ -431,8 +506,9 @@ button, input, select, textarea {
   font-weight: 600;
   color: var(--accent-green);
   background: rgba(30, 126, 52, 0.11);
-  padding: 2px 7px;
-  border-radius: 6px;
+  border: 1px solid rgba(30, 126, 52, 0.2);
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 .note-row-preview {
@@ -456,31 +532,38 @@ button, input, select, textarea {
 }
 
 .row-delete-btn {
-  width: 46px;
-  border: none;
-  background: transparent;
+  width: 38px;
+  height: 38px;
+  margin-right: 10px;
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 50%;
+  background: var(--glass-bg-subtle);
   color: var(--text-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .row-delete-btn:active {
   color: var(--danger);
-  background: rgba(198, 40, 40, 0.07);
+  background: rgba(198, 40, 40, 0.12);
 }
 
-/* Neuvaine cards */
+/* Bannière & cartes Neuvaine */
 .reminder-banner {
-  background: linear-gradient(135deg, rgba(196, 145, 31, 0.14), rgba(178, 34, 34, 0.08));
-  border: 0.5px solid rgba(196, 145, 31, 0.35);
-  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(255, 250, 238, 0.78), rgba(246, 224, 178, 0.45));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
   padding: 12px 14px;
   margin-bottom: 12px;
   font-size: 13.5px;
   color: var(--text-primary);
+  box-shadow: var(--glass-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -496,15 +579,16 @@ button, input, select, textarea {
 
 .progress-track {
   flex: 1;
-  height: 6px;
+  height: 7px;
   background: rgba(60, 48, 30, 0.1);
   border-radius: 999px;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .progress-fill {
   height: 100%;
-  background: var(--accent-green);
+  background: var(--glass-green-bg);
   border-radius: 999px;
   transition: width 0.25s ease;
 }
@@ -535,61 +619,67 @@ button, input, select, textarea {
   margin: 0 0 18px;
 }
 
-/* Barre inférieure Apple Notes */
+/* =========================================================
+   DOCK FLOTTANT EN PILULE LIQUID GLASS iOS 26/27
+   ========================================================= */
 .ios-bottom-bar {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 0;
-  width: 100%;
-  max-width: 720px;
+  bottom: calc(12px + var(--safe-bottom));
+  width: calc(100% - 28px);
+  max-width: 680px;
   z-index: 25;
-  background: var(--bg-nav);
-  backdrop-filter: saturate(180%) blur(18px);
-  -webkit-backdrop-filter: saturate(180%) blur(18px);
-  border-top: 0.5px solid var(--border-hairline);
-  padding: 10px 18px calc(var(--safe-bottom) + 10px);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  box-shadow:
+    0 14px 36px rgba(38, 29, 16, 0.14),
+    0 3px 8px rgba(38, 29, 16, 0.06),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 2px rgba(80, 62, 36, 0.08);
+  padding: 7px 10px 7px 18px;
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 44px 1fr 46px;
   align-items: center;
 }
 
 .bottom-summary {
   text-align: center;
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .compose-btn {
-  width: 44px;
-  height: 44px;
-  border: none;
-  background: transparent;
-  color: var(--accent-notes);
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 246, 220, 0.72);
+  background: var(--glass-gold-bg);
+  color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   border-radius: 50%;
-}
-
-.compose-btn:active {
-  background: rgba(196, 145, 31, 0.14);
+  box-shadow: var(--glass-gold-shadow);
 }
 
 /* =========================================================
-   BARRE DE NAVIGATION DES VUES DÉTAIL
+   BARRE DE NAVIGATION DES VUES DÉTAIL (PILULES LIQUID GLASS)
    ========================================================= */
 .ios-nav-bar {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--bg-nav);
-  backdrop-filter: saturate(180%) blur(18px);
-  -webkit-backdrop-filter: saturate(180%) blur(18px);
-  border-bottom: 0.5px solid var(--border-hairline);
-  padding: calc(var(--safe-top) + 6px) 10px 8px;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.72) 0%, rgba(248, 243, 233, 0.48) 100%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border-soft);
+  box-shadow: 0 6px 20px rgba(38, 29, 16, 0.05), inset 0 -1px 0 rgba(255, 255, 255, 0.65);
+  padding: calc(var(--safe-top) + 8px) 12px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -597,53 +687,64 @@ button, input, select, textarea {
 }
 
 .nav-back-btn {
-  min-height: 40px;
-  border: none;
-  background: transparent;
+  min-height: 38px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
   color: var(--accent-notes);
-  font-size: 16.5px;
-  font-weight: 500;
+  font-size: 15.5px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 0 6px 0 2px;
+  padding: 0 13px 0 8px;
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .nav-text-btn {
-  min-height: 36px;
-  border: none;
-  background: rgba(196, 145, 31, 0.11);
+  min-height: 38px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
   color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
-  padding: 0 11px;
+  padding: 0 13px;
   border-radius: 999px;
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
 .nav-text-btn.nav-accent {
-  background: transparent;
-  color: var(--accent-notes);
-  font-size: 16px;
+  background: var(--glass-gold-bg);
+  color: #fff;
+  border-color: rgba(255, 245, 215, 0.65);
+  box-shadow: var(--glass-gold-shadow);
 }
 
 .nav-icon-btn {
   width: 38px;
   height: 38px;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
   color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
@@ -653,9 +754,11 @@ button, input, select, textarea {
 
 /* Contexte neuvaine dans vue prière */
 .novena-context-bar {
-  background: rgba(30, 126, 52, 0.09);
-  border-bottom: 0.5px solid rgba(30, 126, 52, 0.25);
-  padding: 10px 16px;
+  background: linear-gradient(145deg, rgba(235, 248, 238, 0.72), rgba(255, 255, 255, 0.56));
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  border-bottom: 1px solid rgba(30, 126, 52, 0.2);
+  padding: 10px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -674,24 +777,27 @@ button, input, select, textarea {
 }
 
 .btn-validate-day {
-  border: none;
+  border: 1px solid rgba(226, 255, 232, 0.6);
   border-radius: 999px;
-  background: var(--accent-green);
+  background: var(--glass-green-bg);
   color: #fff;
   font-size: 13.5px;
   font-weight: 600;
-  padding: 8px 14px;
+  padding: 8px 15px;
+  box-shadow: var(--glass-green-shadow);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .btn-validate-day.is-done {
-  background: rgba(30, 126, 52, 0.18);
+  background: var(--glass-bg);
   color: var(--accent-green);
+  border-color: rgba(30, 126, 52, 0.32);
+  box-shadow: var(--glass-btn-shadow);
 }
 
 /* =========================================================
-   LECTURE PRIÈRE : TYPOGRAPHIE EXACTE ADAPTÉE IPHONE
+   LECTURE PRIÈRE : TYPOGRAPHIE EXACTE + VERRE IVOIRE HAUTE CLARTÉ
    ========================================================= */
 .prayer-scroll-area,
 .novena-scroll-area {
@@ -700,11 +806,13 @@ button, input, select, textarea {
 }
 
 .prayer-sheet {
-  background: var(--bg-paper);
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 16px;
-  padding: 18px 18px 26px;
-  box-shadow: 0 2px 10px rgba(31, 27, 22, 0.05);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 20px 18px 28px;
+  box-shadow: var(--glass-shadow);
 }
 
 .prayer-sheet-meta {
@@ -722,13 +830,16 @@ button, input, select, textarea {
 }
 
 .font-size-controls button {
-  border: 0.5px solid var(--border-hairline);
-  background: var(--bg-card);
-  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  color: var(--text-primary);
   font-size: 12px;
-  font-weight: 600;
-  padding: 4px 9px;
-  border-radius: 8px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 999px;
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
@@ -821,10 +932,13 @@ button, input, select, textarea {
 }
 
 .edit-card {
-  background: var(--bg-paper);
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 16px;
-  padding: 16px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: var(--glass-shadow);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -850,12 +964,16 @@ button, input, select, textarea {
 }
 
 .fmt-btn {
-  border: 0.5px solid var(--border-hairline);
-  background: var(--bg-card);
-  border-radius: 8px;
-  padding: 7px 11px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  border-radius: 999px;
+  padding: 7px 13px;
   font-size: 13px;
   font-weight: 600;
+  color: var(--text-primary);
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
@@ -872,14 +990,15 @@ button, input, select, textarea {
 .edit-textarea {
   width: 100%;
   min-height: 46dvh;
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 12px;
-  background: #fff;
-  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 13px;
   font-family: var(--font-body);
   font-size: 15.5px;
   line-height: 1.45;
   color: var(--text-primary);
+  box-shadow: inset 0 1px 4px rgba(38, 29, 16, 0.06);
   resize: vertical;
   outline: none;
 }
@@ -897,15 +1016,17 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.85);
-  border-bottom: 0.5px solid var(--border-hairline);
+  padding: 9px 14px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  border-bottom: 1px solid var(--glass-border-soft);
   font-size: 13px;
 }
 
 .pdf-info {
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .pdf-zoom-controls {
@@ -915,20 +1036,24 @@ button, input, select, textarea {
 }
 
 .pdf-zoom-controls button {
-  min-width: 32px;
-  height: 30px;
-  border: 0.5px solid var(--border-hairline);
-  background: var(--bg-card);
-  border-radius: 8px;
+  min-width: 34px;
+  height: 32px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  border-radius: 999px;
   font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
   color: var(--text-primary);
+  box-shadow: var(--glass-btn-shadow);
 }
 
 .pdf-zoom-controls .pdf-native-btn {
   font-size: 12.5px;
   font-weight: 600;
-  padding: 0 10px;
+  padding: 0 12px;
   color: var(--accent-notes);
 }
 
@@ -947,8 +1072,8 @@ button, input, select, textarea {
   max-width: 100%;
   height: auto;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(38, 29, 16, 0.14);
 }
 
 /* =========================================================
@@ -986,10 +1111,13 @@ button, input, select, textarea {
 .linked-prayer-card {
   width: 100%;
   margin-top: 14px;
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 12px;
-  background: var(--bg-card);
-  padding: 12px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  padding: 12px 15px;
+  box-shadow: var(--glass-btn-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1017,10 +1145,13 @@ button, input, select, textarea {
 }
 
 .ios-card {
-  background: var(--bg-card);
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
   padding: 16px;
+  box-shadow: var(--glass-shadow);
 }
 
 .card-section-header {
@@ -1052,9 +1183,11 @@ button, input, select, textarea {
 }
 
 .day-cell {
-  border: 1px solid var(--border-hairline);
-  background: var(--bg-paper);
-  border-radius: 11px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  border-radius: 15px;
   padding: 10px 4px;
   display: flex;
   flex-direction: column;
@@ -1063,17 +1196,18 @@ button, input, select, textarea {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
 .day-cell.is-today {
-  border-color: var(--accent-notes);
-  box-shadow: 0 0 0 1px var(--accent-notes);
+  border-color: rgba(196, 145, 31, 0.85);
+  box-shadow: 0 0 0 1.5px rgba(196, 145, 31, 0.55), var(--glass-btn-shadow);
 }
 
 .day-cell.is-checked {
-  background: rgba(30, 126, 52, 0.12);
-  border-color: var(--accent-green);
+  background: linear-gradient(155deg, rgba(38, 148, 66, 0.22), rgba(30, 126, 52, 0.14));
+  border-color: rgba(30, 126, 52, 0.55);
   color: var(--accent-green);
 }
 
@@ -1090,14 +1224,16 @@ button, input, select, textarea {
 .mini-pill {
   font-size: 12px;
   font-weight: 600;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(110, 101, 90, 0.12);
+  border: 1px solid var(--glass-border-soft);
+  background: var(--glass-bg-subtle);
   color: var(--text-secondary);
 }
 
 .mini-pill.active {
   background: rgba(30, 126, 52, 0.14);
+  border-color: rgba(30, 126, 52, 0.28);
   color: var(--accent-green);
 }
 
@@ -1125,36 +1261,43 @@ button, input, select, textarea {
 .btn-outline-ios,
 .btn-primary-soft {
   width: 100%;
-  min-height: 44px;
-  border-radius: 12px;
+  min-height: 45px;
+  border-radius: 999px;
   font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
-  border: none;
-  padding: 10px 14px;
+  padding: 10px 16px;
 }
 
-.btn-primary-ios {
-  background: var(--accent-notes);
+.btn-primary-ios,
+.btn-primary-soft {
+  border: 1px solid rgba(255, 245, 215, 0.65);
+  background: var(--glass-gold-bg);
   color: #fff;
-}
-
-.btn-secondary-ios {
-  background: rgba(196, 145, 31, 0.13);
-  color: var(--text-primary);
-}
-
-.btn-outline-ios {
-  background: var(--bg-paper);
-  border: 0.5px solid var(--border-hairline);
-  color: var(--text-primary);
+  box-shadow: var(--glass-gold-shadow);
 }
 
 .btn-primary-soft {
   width: auto;
-  background: var(--accent-notes);
-  color: #fff;
-  padding: 10px 18px;
+  padding: 10px 20px;
+}
+
+.btn-secondary-ios {
+  border: 1px solid var(--glass-border);
+  background: linear-gradient(155deg, rgba(255, 248, 232, 0.82), rgba(242, 222, 178, 0.45));
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  color: var(--text-primary);
+  box-shadow: var(--glass-btn-shadow);
+}
+
+.btn-outline-ios {
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  color: var(--text-primary);
+  box-shadow: var(--glass-btn-shadow);
 }
 
 .ios-footnote {
@@ -1184,10 +1327,10 @@ button, input, select, textarea {
 .intentions-add-form {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
   margin-bottom: 18px;
   padding-bottom: 16px;
-  border-bottom: 0.5px solid var(--border-hairline);
+  border-bottom: 0.5px solid rgba(60, 48, 30, 0.1);
 }
 
 .intentions-textarea {
@@ -1205,7 +1348,7 @@ button, input, select, textarea {
   align-items: flex-start;
   gap: 10px;
   padding: 12px 2px;
-  border-bottom: 0.5px solid var(--border-hairline);
+  border-bottom: 0.5px solid rgba(60, 48, 30, 0.09);
 }
 
 .intention-item:last-child {
@@ -1216,23 +1359,26 @@ button, input, select, textarea {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1.5px solid var(--accent-notes);
-  background: #fff;
+  border: 1.5px solid rgba(196, 145, 31, 0.75);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
   color: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .intention-check-btn.is-done {
-  background: var(--accent-green);
-  border-color: var(--accent-green);
+  background: var(--glass-green-bg);
+  border-color: rgba(226, 255, 232, 0.65);
   color: #fff;
+  box-shadow: var(--glass-green-shadow);
 }
 
 .intention-content-col {
@@ -1263,20 +1409,21 @@ button, input, select, textarea {
 .intention-actions {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .intention-mini-btn {
   width: 34px;
   height: 34px;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--glass-border-soft);
+  background: var(--glass-bg-subtle);
   color: var(--text-muted);
-  border-radius: 8px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   cursor: pointer;
 }
 
@@ -1292,12 +1439,15 @@ button, input, select, textarea {
 
 .novena-intention-link {
   width: 100%;
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 12px;
-  background: var(--bg-paper);
-  padding: 11px 13px;
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  padding: 12px 14px;
   text-align: left;
   cursor: pointer;
+  box-shadow: var(--glass-btn-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1320,12 +1470,14 @@ button, input, select, textarea {
 }
 
 /* =========================================================
-   MODALES & BOTTOM SHEETS iOS (PROPORTIONS CORRIGÉES)
+   MODALES & BOTTOM SHEETS LIQUID GLASS (PROPORTIONS CONSERVÉES)
    ========================================================= */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(20, 16, 12, 0.42);
+  background: rgba(24, 18, 12, 0.34);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 40;
 }
 
@@ -1333,39 +1485,42 @@ button, input, select, textarea {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(10px + var(--safe-bottom));
+  bottom: calc(12px + var(--safe-bottom));
   width: calc(100% - 20px);
   max-width: 500px;
   z-index: 50;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .action-sheet-group {
-  background: rgba(255, 253, 249, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 14px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 26px;
   overflow: hidden;
+  box-shadow: var(--glass-shadow);
 }
 
 .action-sheet-title {
   text-align: center;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-muted);
-  padding: 12px 16px;
-  border-bottom: 0.5px solid var(--border-hairline);
+  padding: 13px 16px;
+  border-bottom: 0.5px solid rgba(60, 48, 30, 0.1);
 }
 
 .action-sheet-btn {
   width: 100%;
   min-height: 52px;
   border: none;
-  border-bottom: 0.5px solid var(--border-hairline);
+  border-bottom: 0.5px solid rgba(60, 48, 30, 0.08);
   background: transparent;
   font-size: 17px;
+  font-weight: 500;
   color: var(--text-primary);
   cursor: pointer;
 }
@@ -1374,15 +1529,22 @@ button, input, select, textarea {
   border-bottom: none;
 }
 
+.action-sheet-btn:active {
+  background: rgba(255, 255, 255, 0.5);
+}
+
 .action-sheet-cancel {
   width: 100%;
   min-height: 52px;
-  border: none;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   font-size: 17px;
   font-weight: 600;
   color: var(--accent-notes);
+  box-shadow: var(--glass-shadow);
   cursor: pointer;
 }
 
@@ -1394,22 +1556,27 @@ button, input, select, textarea {
   width: 100%;
   max-width: 720px;
   max-height: 90dvh;
-  background: var(--bg-app);
-  border-radius: 18px 18px 0 0;
+  background: linear-gradient(170deg, rgba(252, 249, 242, 0.92) 0%, rgba(244, 239, 228, 0.84) 100%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--glass-border);
+  border-left: 1px solid var(--glass-border-soft);
+  border-right: 1px solid var(--glass-border-soft);
+  border-radius: 28px 28px 0 0;
   z-index: 50;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 -12px 38px rgba(24, 18, 12, 0.2), inset 0 1.5px 0 rgba(255, 255, 255, 0.94);
 }
 
 .sheet-header {
   display: grid;
-  grid-template-columns: 76px 1fr 84px;
+  grid-template-columns: 88px 1fr 96px;
   align-items: center;
   padding: 12px 14px;
-  border-bottom: 0.5px solid var(--border-hairline);
-  background: var(--bg-nav);
-  border-radius: 18px 18px 0 0;
+  border-bottom: 0.5px solid rgba(60, 48, 30, 0.1);
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 28px 28px 0 0;
   flex-shrink: 0;
 }
 
@@ -1422,25 +1589,30 @@ button, input, select, textarea {
 
 .sheet-cancel,
 .sheet-done {
-  border: none;
-  background: transparent;
-  font-size: 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 6px 4px;
+  padding: 7px 12px;
+  box-shadow: var(--glass-btn-shadow);
 }
 
 .sheet-cancel {
-  text-align: left;
+  justify-self: start;
   color: var(--text-secondary);
 }
 
 .sheet-done {
-  text-align: right;
-  font-weight: 600;
-  color: var(--accent-notes);
+  justify-self: end;
+  background: var(--glass-gold-bg);
+  border-color: rgba(255, 245, 215, 0.65);
+  color: #fff;
+  box-shadow: var(--glass-gold-shadow);
 }
 
-/* display: block empêche iOS Safari d'écraser verticalement select/textarea */
+/* display: block conservé pour éviter l'écrasement vertical sur iOS Safari */
 .sheet-body {
   display: block;
   overflow-y: auto;
@@ -1475,13 +1647,16 @@ button, input, select, textarea {
   width: 100%;
   max-width: 100%;
   min-height: 44px;
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 11px;
-  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 10px 12px;
   font-size: 16px;
   line-height: 1.35;
   color: var(--text-primary);
+  box-shadow: inset 0 1px 3px rgba(38, 29, 16, 0.05), 0 1px 0 rgba(255, 255, 255, 0.85);
   outline: none;
   -webkit-appearance: none;
   appearance: none;
@@ -1490,7 +1665,7 @@ button, input, select, textarea {
 select.ios-input {
   height: 44px;
   padding-right: 36px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236E655A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235E554B' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px 16px;
@@ -1516,33 +1691,38 @@ input[type="time"].ios-input {
 }
 
 .preset-chip {
-  border: 0.5px solid var(--border-hairline);
-  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 6px 13px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  box-shadow: var(--glass-btn-shadow);
   cursor: pointer;
 }
 
 .preset-chip.active {
-  background: var(--accent-notes);
+  background: var(--glass-gold-bg);
   color: #fff;
-  border-color: var(--accent-notes);
+  border-color: rgba(255, 245, 215, 0.65);
+  box-shadow: var(--glass-gold-shadow);
 }
 
 .toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--bg-card);
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 11px;
-  padding: 11px 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 11px 14px;
   margin-bottom: 14px;
   font-size: 15px;
   font-weight: 500;
+  box-shadow: var(--glass-btn-shadow);
 }
 
 .ios-switch {
@@ -1554,9 +1734,9 @@ input[type="time"].ios-input {
 .reminder-fields-box {
   display: block;
   padding: 14px 12px 2px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.65);
-  border: 0.5px solid var(--border-hairline);
+  border-radius: 18px;
+  background: var(--glass-bg-subtle);
+  border: 1px solid var(--glass-border);
 }
 
 .info-sheet-body {
@@ -1566,10 +1746,11 @@ input[type="time"].ios-input {
 }
 
 .info-block {
-  background: var(--bg-card);
-  border: 0.5px solid var(--border-hairline);
-  border-radius: 14px;
-  padding: 14px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 15px;
+  box-shadow: var(--glass-btn-shadow);
 }
 
 .info-block h3 {
@@ -1588,20 +1769,23 @@ input[type="time"].ios-input {
   line-height: 1.5;
 }
 
-/* Toast */
+/* Toast Liquid Glass */
 .toast {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(74px + var(--safe-bottom));
+  bottom: calc(82px + var(--safe-bottom));
   z-index: 70;
-  background: rgba(31, 27, 22, 0.92);
+  background: linear-gradient(155deg, rgba(42, 34, 24, 0.84), rgba(26, 21, 15, 0.78));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   font-size: 13.5px;
-  font-weight: 500;
-  padding: 10px 16px;
+  font-weight: 600;
+  padding: 10px 18px;
   border-radius: 999px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.28);
   max-width: calc(100% - 32px);
   text-align: center;
 }
