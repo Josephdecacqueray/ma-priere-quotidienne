@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Ma prière quotidienne</title>
-  <meta name="description" content="Carnet de prières hors-ligne (notes & PDF), intentions et neuvaines pour iPhone.">
+  <meta name="description" content="Carnet de prières hors-ligne (notes, PDF, photos), chapelet interactif, intentions et neuvaines pour iPhone.">
 
   <!-- iOS / PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Ma prière">
-  <meta name="theme-color" content="#F6F5F1">
+  <meta id="meta-theme-color" name="theme-color" content="#F6F5F1">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=2">
   <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png?v=2">
   <link rel="manifest" href="./manifest.webmanifest">
@@ -23,7 +23,7 @@
   <div id="app" class="app-shell">
 
     <!-- =========================================================
-         VUE 1 : LISTE PRINCIPALE (LIQUID GLASS iOS)
+         VUE 1 : LISTE PRINCIPALE (LIQUID GLASS iOS 26/27)
          ========================================================= -->
     <section id="view-list" class="view view-active" aria-label="Accueil du carnet">
       <header class="ios-header ios-header-large">
@@ -32,13 +32,21 @@
             <span class="status-dot" aria-hidden="true"></span>
             <span id="offline-label">Hors-ligne prêt</span>
           </button>
-          <button id="btn-open-info" class="icon-btn" type="button" aria-label="Installer sur iPhone et informations sur les polices" title="Installer sur iPhone & Polices">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-          </button>
+
+          <div class="header-right-actions">
+            <button id="btn-toggle-theme" class="icon-btn" type="button" aria-label="Changer de thème (Auto, Nuit, Jour)" title="Mode Jour / Nuit">
+              <svg id="theme-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+            <button id="btn-open-info" class="icon-btn" type="button" aria-label="Installer sur iPhone, sauvegarde et informations" title="Informations & Sauvegarde">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <h1 class="app-brand-title">Ma prière quotidienne</h1>
@@ -48,7 +56,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="search-input" type="search" class="search-input" placeholder="Rechercher une prière ou neuvaine…" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher">
+          <input id="search-input" type="search" class="search-input" placeholder="Rechercher prière, intention, mystère…" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher">
           <button id="btn-clear-search" class="search-clear hidden" type="button" aria-label="Effacer la recherche">✕</button>
         </div>
 
@@ -63,8 +71,24 @@
       </header>
 
       <main class="list-content">
+        <!-- Bloc « Aujourd'hui » + Temps liturgique -->
+        <section id="today-card" class="today-card" aria-label="Aujourd'hui">
+          <div class="today-card-top">
+            <span id="today-date-label" class="today-date-label">Aujourd'hui</span>
+            <span id="liturgy-pill" class="liturgy-pill">
+              <span class="liturgy-dot" aria-hidden="true"></span>
+              <span id="liturgy-name">Temps ordinaire</span>
+            </span>
+          </div>
+          <div id="today-summary-links" class="today-summary-links"></div>
+          <div id="today-pinned-chips" class="today-pinned-chips hidden"></div>
+        </section>
+
+        <!-- Résultats de recherche globale (intentions + mystères du chapelet) -->
+        <section id="global-search-results" class="global-search-results hidden" aria-label="Autres résultats"></section>
+
         <!-- Raccourcis d'accueil groupés style Liquid Glass -->
-        <div class="home-shortcuts-group">
+        <div id="home-shortcuts-group" class="home-shortcuts-group">
           <button id="btn-open-intentions" class="shortcut-row-btn" type="button">
             <div class="intentions-home-left">
               <span class="shortcut-icon-pill shortcut-icon-red" aria-hidden="true">
@@ -113,15 +137,18 @@
 
         <!-- Panneau Prières -->
         <div id="panel-prayers">
-          <div class="filter-pills" role="group" aria-label="Filtrer par format">
+          <div class="filter-pills-scroll" role="group" aria-label="Filtrer par format ou dossier">
             <button class="pill-btn active" type="button" data-filter="all">Toutes</button>
-            <button class="pill-btn" type="button" data-filter="text">Notes texte</button>
+            <button class="pill-btn" type="button" data-filter="pinned">Épinglées</button>
+            <button class="pill-btn" type="button" data-filter="text">Notes</button>
             <button class="pill-btn" type="button" data-filter="pdf">PDF</button>
+            <button class="pill-btn" type="button" data-filter="image">Photos</button>
+            <span id="folder-filter-pills" class="folder-filter-pills"></span>
           </div>
           <div id="prayers-list" class="notes-group"></div>
           <div id="prayers-empty" class="empty-state hidden">
             <p class="empty-title">Aucune prière trouvée</p>
-            <p class="empty-sub">Touchez le bouton en bas à droite pour rédiger une prière ou importer un PDF.</p>
+            <p class="empty-sub">Touchez le bouton en bas à droite pour rédiger une prière, importer un PDF ou prendre une photo.</p>
           </div>
         </div>
 
@@ -131,7 +158,7 @@
           <div id="novenas-list" class="notes-group"></div>
           <div id="novenas-empty" class="empty-state hidden">
             <p class="empty-title">Aucune neuvaine en cours</p>
-            <p class="empty-sub">Créez un module de neuvaine pour suivre vos jours et activer un rappel quotidien (iPhone, SMS ou e-mail).</p>
+            <p class="empty-sub">Créez un module de neuvaine pour suivre vos jours et activer un rappel quotidien (Push iPhone, Calendrier, SMS ou e-mail).</p>
             <button id="btn-empty-new-novena" class="btn-primary-soft" type="button">+ Créer une neuvaine</button>
           </div>
         </div>
@@ -151,10 +178,10 @@
     </section>
 
     <!-- =========================================================
-         VUE 2 : LECTURE / ÉDITION D'UNE PRIÈRE (TEXTE OU PDF)
+         VUE 2 : LECTURE / ÉDITION D'UNE PRIÈRE (TEXTE, PDF OU PHOTO)
          ========================================================= -->
     <section id="view-prayer" class="view hidden" aria-label="Détail de la prière">
-      <header class="ios-nav-bar">
+      <header id="prayer-nav-bar" class="ios-nav-bar">
         <button id="btn-prayer-back" class="nav-back-btn" type="button">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="15 18 9 12 15 6"></polyline>
@@ -164,10 +191,24 @@
 
         <div class="nav-actions">
           <div class="nav-glass-group">
+            <button id="btn-prayer-pin" class="nav-group-icon" type="button" aria-label="Épingler cette prière" title="Épingler">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 17v5"></path>
+                <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"></path>
+              </svg>
+            </button>
+            <button id="btn-prayer-focus" class="nav-group-icon" type="button" aria-label="Mode recueillement (plein écran)" title="Mode recueillement">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <polyline points="9 21 3 21 3 15"></polyline>
+                <line x1="21" y1="3" x2="14" y2="10"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+            </button>
             <button id="btn-prayer-to-novena" class="nav-group-btn" type="button" title="Mettre cette prière en neuvaine">Neuvaine</button>
             <button id="btn-prayer-edit-toggle" class="nav-group-btn nav-accent" type="button">Modifier</button>
             <button id="btn-prayer-delete" class="nav-group-icon danger" type="button" aria-label="Supprimer cette prière" title="Supprimer">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
                 <path d="M10 11v6"></path>
@@ -178,6 +219,9 @@
           </div>
         </div>
       </header>
+
+      <!-- Bouton flottant pour quitter le mode recueillement -->
+      <button id="btn-exit-focus" class="exit-focus-pill hidden" type="button">Afficher les menus</button>
 
       <!-- Contexte Neuvaine si ouverte depuis une neuvaine -->
       <div id="prayer-novena-bar" class="novena-context-bar hidden">
@@ -190,16 +234,29 @@
 
       <!-- Mode Lecture Texte -->
       <div id="prayer-read-pane" class="prayer-scroll-area">
-        <article class="prayer-sheet">
+        <article class="prayer-sheet" id="prayer-read-sheet">
           <div class="prayer-sheet-meta">
-            <span id="prayer-meta-date"></span>
-            <div class="font-size-controls" aria-label="Taille du texte">
+            <div class="prayer-meta-left">
+              <span id="prayer-meta-date"></span>
+              <span id="prayer-folder-badge" class="folder-tag hidden"></span>
+            </div>
+            <div class="font-size-controls" aria-label="Options de lecture">
+              <button id="btn-wake-lock" class="wake-lock-btn" type="button" title="Empêcher la mise en veille de l'iPhone">Veille off</button>
               <button id="btn-font-smaller" type="button" aria-label="Réduire la taille du texte">A-</button>
               <button id="btn-font-larger" type="button" aria-label="Agrandir la taille du texte">A+</button>
             </div>
           </div>
           <h1 id="prayer-cover-title" class="prayer-cover-title"></h1>
           <div id="prayer-rendered-body" class="prayer-body"></div>
+
+          <div class="prayer-quick-intentions-wrap">
+            <button id="btn-prayer-quick-intentions" class="btn-outline-ios btn-quick-intentions" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Consulter mes intentions</span>
+            </button>
+          </div>
         </article>
       </div>
 
@@ -208,6 +265,19 @@
         <div class="edit-card">
           <label class="field-label" for="edit-prayer-title">Titre de la prière</label>
           <input id="edit-prayer-title" type="text" class="edit-title-input" placeholder="Ex. Prière à saint Joseph">
+
+          <div class="form-field edit-folder-field">
+            <label class="field-label" for="edit-prayer-folder">Dossier</label>
+            <select id="edit-prayer-folder" class="ios-input">
+              <option value="">Aucun dossier</option>
+              <option value="Matin">Matin</option>
+              <option value="Soir">Soir</option>
+              <option value="Saints">Saints</option>
+              <option value="Litanies">Litanies</option>
+              <option value="Messe">Messe</option>
+              <option value="Psaumes">Psaumes</option>
+            </select>
+          </div>
 
           <div class="format-toolbar" aria-label="Outils de hiérarchie">
             <button type="button" class="fmt-btn" data-prefix="# "><span class="fmt-dot fmt-dot-red"></span>I. Titre</button>
@@ -234,6 +304,20 @@
         </div>
         <div id="pdf-pages-container" class="pdf-pages-container"></div>
       </div>
+
+      <!-- Mode Lecteur Photo / Scan -->
+      <div id="prayer-image-pane" class="pdf-pane hidden">
+        <div class="pdf-toolbar">
+          <span id="image-title-info" class="pdf-info">Photo de prière</span>
+          <div class="pdf-zoom-controls">
+            <button id="btn-image-zoom-out" type="button" aria-label="Dézoomer">−</button>
+            <span id="image-zoom-label">100%</span>
+            <button id="btn-image-zoom-in" type="button" aria-label="Zoomer">+</button>
+            <button id="btn-image-open-native" type="button" class="pdf-native-btn">Ouvrir</button>
+          </div>
+        </div>
+        <div id="prayer-image-container" class="image-viewer-container"></div>
+      </div>
     </section>
 
     <!-- =========================================================
@@ -252,7 +336,7 @@
           <div class="nav-glass-group">
             <button id="btn-novena-edit" class="nav-group-btn nav-accent" type="button">Modifier</button>
             <button id="btn-novena-delete" class="nav-group-icon danger" type="button" aria-label="Supprimer cette neuvaine" title="Supprimer">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
                 <path d="M10 11v6"></path>
@@ -302,8 +386,19 @@
 
           <div class="reminder-actions-stack">
             <button id="btn-novena-configure-reminder" class="btn-secondary-ios" type="button">Configurer l'heure, la durée et le canal</button>
-            <button id="btn-novena-download-ics" class="btn-primary-ios" type="button">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+
+            <button id="btn-novena-push-toggle" class="btn-primary-ios" type="button">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span id="novena-push-toggle-label">Activer les notifications Push iPhone</span>
+            </button>
+
+            <button id="btn-novena-push-test" class="btn-outline-ios hidden" type="button">Envoyer une notification Push de test</button>
+
+            <button id="btn-novena-download-ics" class="btn-outline-ios" type="button">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
                 <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -311,6 +406,7 @@
               </svg>
               <span>Ajouter au Calendrier iPhone (.ics)</span>
             </button>
+
             <div class="reminder-quick-row">
               <button id="btn-novena-send-sms" class="btn-outline-ios" type="button">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -326,16 +422,9 @@
                 <span>Ouvrir E-mail</span>
               </button>
             </div>
-            <button id="btn-novena-pwa-notif" class="btn-outline-ios" type="button">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <span>Tester / Activer notif dans l'app</span>
-            </button>
           </div>
-          <p class="ios-footnote">
-            Sur iPhone sans connexion ni serveur, le fichier <strong>.ics</strong> crée de vraies notifications natives iOS dans votre Calendrier pour chaque jour de la neuvaine. Pour un SMS ou e-mail envoyé automatiquement tous les matins, vous pouvez aussi créer une automatisation dans l'app iPhone <em>Raccourcis</em>.
+          <p id="novena-push-note" class="ios-footnote">
+            Les notifications Push envoient un rappel directement sur votre écran verrouillé iPhone (lorsque l'app est sur l'écran d'accueil iOS 16.4+). Le fichier <strong>.ics</strong> reste disponible en secours 100% hors-ligne.
           </p>
         </div>
       </div>
@@ -385,7 +474,7 @@
     </section>
 
     <!-- =========================================================
-         VUE 5 : MYSTÈRES DU CHAPELET (JOYEUX, LUMINEUX, DOULOUREUX, GLORIEUX)
+         VUE 5 : MYSTÈRES DU CHAPELET & CHAPELET INTERACTIF
          ========================================================= -->
     <section id="view-rosary" class="view hidden" aria-label="Mystères du chapelet">
       <header class="ios-nav-bar">
@@ -397,7 +486,10 @@
         </button>
 
         <div class="nav-actions">
-          <button id="btn-rosary-today" class="nav-text-btn nav-gold-pill" type="button">Mystère du jour</button>
+          <div class="nav-glass-group">
+            <button id="btn-rosary-wake-lock" class="nav-group-btn" type="button" title="Empêcher l'écran de s'éteindre">Veille off</button>
+            <button id="btn-rosary-today" class="nav-group-btn nav-accent" type="button">Mystère du jour</button>
+          </div>
         </div>
       </header>
 
@@ -406,6 +498,28 @@
           <h1 class="prayer-cover-title">Mystères du chapelet</h1>
           <p id="rosary-today-banner" class="rosary-today-subtitle"></p>
         </div>
+
+        <!-- Compteur interactif de chapelet -->
+        <section id="rosary-interactive-card" class="ios-card rosary-interactive-card" aria-label="Compteur interactif du chapelet">
+          <div class="card-section-header">
+            <h2 class="section-heading-script">Chapelet interactif</h2>
+            <span id="rosary-decade-badge" class="mini-pill active">Dizaine 1 / 5</span>
+          </div>
+
+          <div class="rosary-counter-meta">
+            <strong id="rosary-counter-mystery" class="rosary-counter-mystery">1) L'Annonciation</strong>
+            <span id="rosary-counter-fruit" class="rosary-counter-fruit">Fruit : L'humilité</span>
+          </div>
+
+          <div id="rosary-beads-row" class="rosary-beads-row" role="group" aria-label="Grains de la dizaine"></div>
+          <p id="rosary-bead-status" class="rosary-bead-status">Notre Père (début de la dizaine)</p>
+
+          <div class="rosary-counter-controls">
+            <button id="btn-rosary-prev-bead" class="btn-outline-ios rosary-ctrl-sm" type="button">Préc.</button>
+            <button id="btn-rosary-next-bead" class="btn-primary-ios rosary-ctrl-main" type="button">Grain suivant</button>
+            <button id="btn-rosary-reset-bead" class="btn-outline-ios rosary-ctrl-sm" type="button">RAZ</button>
+          </div>
+        </section>
 
         <div class="rosary-filter-scroll" role="tablist" aria-label="Filtrer les mystères">
           <button class="pill-btn rosary-pill active" type="button" data-rosary-filter="all">Tous</button>
@@ -419,12 +533,9 @@
 
         <details class="ios-card rosary-guide-card">
           <summary class="rosary-guide-summary">
-            <span class="section-heading-script">Repère pour réciter le chapelet</span>
+            <span class="section-heading-script">Prières du chapelet</span>
           </summary>
-          <div class="prayer-body rosary-guide-body">
-            <p><strong>Introduction :</strong> Signe de croix, <em>Je crois en Dieu</em> (sur la croix), 1 <em>Notre Père</em>, 3 <em>Je vous salue Marie</em> (pour la foi, l'espérance et la charité), 1 <em>Gloire au Père</em>.</p>
-            <p><strong>Pour chacune des 5 dizaines :</strong> annoncer le mystère et son fruit, réciter 1 <em>Notre Père</em>, 10 <em>Je vous salue Marie</em>, 1 <em>Gloire au Père</em> et la prière de Fatima (<em>« Ô mon Jésus, pardonnez-nous nos péchés… »</em>).</p>
-          </div>
+          <div id="rosary-prayers-body" class="prayer-body rosary-guide-body"></div>
         </details>
       </div>
     </section>
@@ -453,6 +564,13 @@
             <line x1="16" y1="17" x2="8" y2="17"></line>
           </svg>
           <span>Importer un PDF</span>
+        </button>
+        <button id="act-new-photo-prayer" class="action-sheet-btn" type="button">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          <span>Photo / Scan d'une prière</span>
         </button>
         <button id="act-new-novena" class="action-sheet-btn" type="button">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -490,6 +608,57 @@
         <div class="form-field">
           <label class="field-label" for="pdf-title-input">Titre dans le carnet</label>
           <input id="pdf-title-input" type="text" class="ios-input" placeholder="Ex. Litanies de saint Joseph">
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="pdf-folder-select">Dossier (optionnel)</label>
+          <select id="pdf-folder-select" class="ios-input">
+            <option value="">Aucun dossier</option>
+            <option value="Matin">Matin</option>
+            <option value="Soir">Soir</option>
+            <option value="Saints">Saints</option>
+            <option value="Litanies">Litanies</option>
+            <option value="Messe">Messe</option>
+            <option value="Psaumes">Psaumes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sheet Photo / Scan d'une prière -->
+    <div id="sheet-photo" class="bottom-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-photo-title">
+      <div class="sheet-header">
+        <button type="button" class="sheet-cancel" data-close-sheet>Annuler</button>
+        <h2 id="sheet-photo-title" class="sheet-title">Photo d'une prière</h2>
+        <button id="btn-save-photo" type="button" class="sheet-done">Ajouter</button>
+      </div>
+      <div class="sheet-body">
+        <div class="form-field">
+          <label class="field-label" for="photo-file-input">Prendre une photo ou choisir dans la galerie</label>
+          <input id="photo-file-input" type="file" accept="image/*" capture="environment" class="file-input-ios">
+          <p id="photo-file-meta" class="field-help">La photo est compressée proprement et conservée hors-ligne sur votre iPhone.</p>
+        </div>
+
+        <div id="photo-preview-wrap" class="photo-preview-wrap hidden">
+          <img id="photo-preview-img" class="photo-preview-img" alt="Aperçu de la prière">
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="photo-title-input">Titre dans le carnet</label>
+          <input id="photo-title-input" type="text" class="ios-input" placeholder="Ex. Prière de la carte">
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="photo-folder-select">Dossier (optionnel)</label>
+          <select id="photo-folder-select" class="ios-input">
+            <option value="">Aucun dossier</option>
+            <option value="Matin">Matin</option>
+            <option value="Soir">Soir</option>
+            <option value="Saints">Saints</option>
+            <option value="Litanies">Litanies</option>
+            <option value="Messe">Messe</option>
+            <option value="Psaumes">Psaumes</option>
+          </select>
         </div>
       </div>
     </div>
@@ -550,7 +719,7 @@
           <div class="form-field">
             <label class="field-label" for="novena-reminder-channel">Mode de notification</label>
             <select id="novena-reminder-channel" class="ios-input">
-              <option value="iphone">Calendrier iPhone (.ics) &amp; Notif</option>
+              <option value="iphone">Notification Push &amp; Calendrier iPhone</option>
               <option value="sms">SMS</option>
               <option value="email">E-mail</option>
             </select>
@@ -569,11 +738,29 @@
       </div>
     </div>
 
-    <!-- Sheet Infos Installation iPhone & Polices -->
+    <!-- Sheet Mes intentions rapides pendant la lecture d'une prière -->
+    <div id="sheet-quick-intentions" class="bottom-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-qi-title">
+      <div class="sheet-header">
+        <span></span>
+        <h2 id="sheet-qi-title" class="sheet-title">Mes intentions</h2>
+        <button type="button" class="sheet-done" data-close-sheet>Fermer</button>
+      </div>
+      <div class="sheet-body">
+        <form id="quick-intention-form" class="quick-intention-form">
+          <div class="form-field">
+            <input id="quick-intention-input" type="text" class="ios-input" placeholder="Ajouter une intention rapide…">
+          </div>
+          <button class="btn-primary-ios" type="submit">+ Ajouter</button>
+        </form>
+        <div id="quick-intentions-list" class="quick-intentions-list"></div>
+      </div>
+    </div>
+
+    <!-- Sheet Infos Installation iPhone, Push, Sauvegarde & Polices -->
     <div id="sheet-info" class="bottom-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-info-title">
       <div class="sheet-header">
         <span></span>
-        <h2 id="sheet-info-title" class="sheet-title">iPhone, Synchro & Polices</h2>
+        <h2 id="sheet-info-title" class="sheet-title">iPhone, Push &amp; Sauvegarde</h2>
         <button type="button" class="sheet-done" data-close-sheet>OK</button>
       </div>
       <div class="sheet-body info-sheet-body">
@@ -584,22 +771,32 @@
             <li>Touchez le bouton <strong>Partager</strong> (carré avec flèche vers le haut).</li>
             <li>Choisissez <strong>« Sur l'écran d'accueil »</strong> puis touchez <strong>Ajouter</strong>.</li>
           </ol>
-          <p class="field-help">Vos prières, PDF, neuvaines et intentions sont enregistrés sur votre iPhone (hors-ligne) et synchronisés sur le serveur dès que vous fermez l'app ou êtes connecté.</p>
+          <p class="field-help">Vos prières, PDF, photos, neuvaines et intentions sont enregistrés sur votre iPhone (hors-ligne) et synchronisés sur le serveur dès que vous fermez l'app ou êtes connecté.</p>
+        </div>
+
+        <div class="info-block">
+          <h3>Notifications Push iPhone</h3>
+          <p id="info-push-status" class="field-help">Activez les notifications Push pour recevoir les rappels de neuvaine même appli fermée.</p>
+          <div class="info-btn-stack">
+            <button id="btn-info-push-toggle" class="btn-primary-ios" type="button">Activer les notifications Push</button>
+            <button id="btn-info-push-test" class="btn-outline-ios hidden" type="button">Tester une notification Push</button>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <h3>Sauvegarde &amp; Restauration</h3>
+          <p class="field-help">Exportez tout votre carnet en fichier <code>.json</code> ou restaurez une sauvegarde existante.</p>
+          <div class="info-btn-stack">
+            <button id="btn-export-backup" class="btn-secondary-ios" type="button">Exporter mon carnet (.json)</button>
+            <button id="btn-import-backup" class="btn-outline-ios" type="button">Importer une sauvegarde (.json)</button>
+            <input id="backup-file-input" type="file" accept="application/json,.json" class="hidden">
+          </div>
         </div>
 
         <div class="info-block">
           <h3>Police des titres</h3>
           <p class="field-help">
             Ce prototype cherche d'abord <code>./fonts/ShelleyVolanteScript.ttf</code> (ou <code>.otf</code>). Comme ce fichier n'était pas présent localement, la police calligraphique libre <strong>Great Vibes</strong> est utilisée provisoirement en local.
-          </p>
-        </div>
-
-        <div class="info-block">
-          <h3>Mise en forme rapide des notes</h3>
-          <p class="field-help">
-            <code># Titre</code> → Chiffres romains (I., II.), souligné rouge.<br>
-            <code>## Sous-titre</code> → Chiffres arabes (1), 2)), souligné vert.<br>
-            <code>### Sous-sous-titre</code> → Lettres (a), b)), souligné vert.
           </p>
         </div>
       </div>

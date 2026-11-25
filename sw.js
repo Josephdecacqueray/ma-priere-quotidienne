@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ma-priere-v5';
+const CACHE_NAME = 'ma-priere-v6';
 
 // Uniquement les fichiers présents dans le dépôt
 const PRECACHE_URLS = [
@@ -10,7 +10,9 @@ const PRECACHE_URLS = [
   './js/db.js',
   './js/formatter.js',
   './js/ics.js',
+  './js/liturgy.js',
   './js/pdf-viewer.js',
+  './js/push.js',
   './js/rosary.js',
   './js/sync.js',
   './fonts/GreatVibes-Regular.ttf',
@@ -73,6 +75,45 @@ self.addEventListener('fetch', (event) => {
         }
         return resp;
       });
+    })
+  );
+});
+
+/* Notifications Web Push iOS & Android */
+self.addEventListener('push', (event) => {
+  let payload = {
+    title: 'Ma prière quotidienne',
+    body: 'Moment de prière pour votre neuvaine.',
+    url: './'
+  };
+  if (event.data) {
+    try {
+      payload = { ...payload, ...event.data.json() };
+    } catch {
+      payload.body = event.data.text() || payload.body;
+    }
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: './icons/icon-192.png?v=2',
+      badge: './icons/favicon-64.png?v=2',
+      tag: payload.tag || 'ma-priere-push',
+      data: { url: payload.url || './' }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || './';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsList) => {
+      for (const client of clientsList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+      return undefined;
     })
   );
 });

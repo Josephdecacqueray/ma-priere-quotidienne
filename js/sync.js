@@ -2,6 +2,7 @@ import {
   exportSyncPayload,
   replaceAllFromMergedState,
   getAllPrayers,
+  getPrayerBinary,
   updatePrayerPdfSync,
   attachPdfBlobFromServer,
   markSyncDirty
@@ -19,7 +20,7 @@ export async function deleteServerPdf(id) {
       keepalive: true
     });
   } catch {
-    // Ignoré : sera retenté ou sans impact sur la liste
+    // Ignoré
   }
 }
 
@@ -32,7 +33,6 @@ async function runSync({ keepalive = false, onStatus } = {}) {
   const payload = await exportSyncPayload();
   const bodyStr = JSON.stringify(payload);
 
-  // Lors de la fermeture / mise en arrière-plan iPhone, keepalive permet au navigateur de finir la requête
   if (keepalive) {
     const canKeepalive = bodyStr.length < 60000;
     try {
@@ -73,20 +73,22 @@ async function runSync({ keepalive = false, onStatus } = {}) {
       await replaceAllFromMergedState(mergedState);
     }
 
-    // Synchroniser les fichiers PDF (envoi des nouveaux + téléchargement des manquants)
+    // Synchroniser les fichiers PDF et Photos
     const localPrayers = await getAllPrayers();
     for (const p of localPrayers) {
-      if (p.type !== 'pdf') continue;
-      if (p.pdfBlob && !p.pdfSynced) {
+      if (p.type !== 'pdf' && p.type !== 'image') continue;
+      const bin = getPrayerBinary(p);
+      if (bin && !p.pdfSynced) {
+        const contentType = bin.type || p.mimeType || (p.type === 'pdf' ? 'application/pdf' : 'image/jpeg');
         const putResp = await fetch(`${SYNC_API_URL}/api/pdfs/${encodeURIComponent(p.id)}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/pdf' },
-          body: p.pdfBlob
+          headers: { 'Content-Type': contentType },
+          body: bin
         });
         if (putResp.ok) {
           await updatePrayerPdfSync(p.id, true);
         }
-      } else if (!p.pdfBlob) {
+      } else if (!bin) {
         const getResp = await fetch(`${SYNC_API_URL}/api/pdfs/${encodeURIComponent(p.id)}`);
         if (getResp.ok) {
           const blob = await getResp.blob();

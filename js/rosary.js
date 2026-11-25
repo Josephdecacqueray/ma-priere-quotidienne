@@ -181,3 +181,57 @@ export function getTodayRosaryGroup(date = new Date()) {
   const day = date.getDay();
   return ROSARY_GROUPS.find((g) => g.days.includes(day)) || ROSARY_GROUPS[0];
 }
+
+export const ROSARY_PRAYERS = [
+  {
+    title: 'Signe de la Croix',
+    text: 'Au nom du Père, et du Fils, et du Saint-Esprit. Amen.'
+  },
+  {
+    title: 'Je crois en Dieu (Symbole des Apôtres)',
+    text: `Je crois en Dieu, le Père tout-puissant, Créateur du ciel et de la terre.
+Et en Jésus-Christ, son Fils unique, notre Seigneur, qui a été conçu du Saint-Esprit, est né de la Vierge Marie, a souffert sous Ponce Pilate, a été crucifié, est mort et a été enseveli, est descendu aux enfers ; le troisième jour est ressuscité des morts, est monté aux cieux, est assis à la droite de Dieu le Père tout-puissant, d'où il viendra juger les vivants et les morts.
+Je crois en l'Esprit Saint, à la sainte Église catholique, à la communion des saints, à la rémission des péchés, à la résurrection de la chair, à la vie éternelle. Amen.`
+  },
+  {
+    title: 'Notre Père',
+    text: `Notre Père, qui es aux cieux,
+que ton nom soit sanctifié,
+que ton règne vienne,
+que ta volonté soit faite sur la terre comme au ciel.
+Donne-nous aujourd'hui notre pain de ce jour.
+Pardonne-nous nos offenses,
+comme nous pardonnons aussi à ceux qui nous ont offensés.
+Et ne nous laisse pas entrer en tentation,
+mais délivre-nous du Mal. Amen.`
+  },
+  {
+    title: 'Je vous salue Marie',
+    text: `Je vous salue, Marie pleine de grâce ;
+le Seigneur est avec vous.
+Vous êtes bénie entre toutes les femmes
+et Jésus, le fruit de vos entrailles, est béni.
+Sainte Marie, Mère de Dieu,
+priez pour nous pauvres pécheurs,
+maintenant et à l'heure de notre mort. Amen.`
+  },
+  {
+    title: 'Gloire au Père',
+    text: `Gloire au Père, et au Fils, et au Saint-Esprit,
+comme il était au commencement, maintenant et toujours,
+et dans les siècles des siècles. Amen.`
+  },
+  {
+    title: 'Prière de Fatima',
+    text: `Ô mon Jésus, pardonnez-nous nos péchés, préservez-nous du feu de l'enfer, et conduisez au Ciel toutes les âmes, surtout celles qui ont le plus besoin de votre miséricorde.`
+  },
+  {
+    title: 'Salve Regina',
+    text: `Salut, ô Reine, Mère de miséricorde, notre vie, notre douceur et notre espérance, salut !
+Vers vous nous élevons nos cris, pauvres enfants d'Ève exilés.
+Vers vous nous soupirons, gémissant et pleurant dans cette vallée de larmes.
+Ô vous, notre avocate, tournez donc vers nous vos regards miséricordieux.
+Et après cet exil, montrez-nous Jésus, le fruit béni de vos entrailles.
+Ô clémente, ô pieuse, ô douce Vierge Marie !`
+  }
+];

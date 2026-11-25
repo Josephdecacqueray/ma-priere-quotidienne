@@ -5,6 +5,8 @@ export const SAINT_JOSEPH_PRAYER = {
   id: 'prayer-saint-joseph',
   type: 'text',
   title: 'Prière à saint Joseph',
+  pinned: false,
+  folder: '',
   content: `Glorieux saint Joseph,
 époux de Marie,
 accordez-nous votre protection paternelle,
@@ -67,6 +69,10 @@ function txPromise(storeName, mode, operation) {
   }));
 }
 
+export function getPrayerBinary(prayer) {
+  return prayer?.mediaBlob || prayer?.pdfBlob || null;
+}
+
 export async function getMeta(key) {
   const row = await txPromise('meta', 'readonly', (s) => s.get(key));
   return row ? row.value : undefined;
@@ -80,7 +86,6 @@ export async function initDbAndSeed() {
   await openDb();
   const seeded = await getMeta('seeded_v1');
   if (!seeded) {
-    // Timestamps faibles (1) afin qu'une édition ou suppression serveur prenne toujours le dessus
     await txPromise('prayers', 'readwrite', (s) => s.put({
       ...SAINT_JOSEPH_PRAYER,
       createdAt: 1,
@@ -92,7 +97,11 @@ export async function initDbAndSeed() {
 
 export async function getAllPrayers() {
   const list = await txPromise('prayers', 'readonly', (s) => s.getAll());
-  return list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  return list.sort((a, b) => {
+    const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+    if (pinDiff !== 0) return pinDiff;
+    return (b.updatedAt || 0) - (a.updatedAt || 0);
+  });
 }
 
 export async function getPrayer(id) {
@@ -100,8 +109,13 @@ export async function getPrayer(id) {
 }
 
 export async function savePrayer(prayer) {
-  const toSave = { ...prayer };
-  if (toSave.type === 'pdf' && toSave.pdfBlob && typeof toSave.pdfSynced !== 'boolean') {
+  const toSave = {
+    pinned: false,
+    folder: '',
+    ...prayer
+  };
+  const hasBin = Boolean(getPrayerBinary(toSave));
+  if ((toSave.type === 'pdf' || toSave.type === 'image') && hasBin && typeof toSave.pdfSynced !== 'boolean') {
     toSave.pdfSynced = false;
   }
   await txPromise('prayers', 'readwrite', (s) => s.put(toSave));
@@ -118,7 +132,11 @@ export async function updatePrayerPdfSync(id, synced) {
 export async function attachPdfBlobFromServer(id, blob) {
   const prayer = await getPrayer(id);
   if (!prayer) return;
-  prayer.pdfBlob = blob;
+  if (prayer.type === 'image') {
+    prayer.mediaBlob = blob;
+  } else {
+    prayer.pdfBlob = blob;
+  }
   prayer.pdfSynced = true;
   await txPromise('prayers', 'readwrite', (s) => s.put(prayer));
 }
@@ -202,10 +220,12 @@ export async function exportSyncPayload() {
   ]);
 
   const serializablePrayers = prayers.map((p) => {
-    const { pdfBlob, pdfSynced, ...rest } = p;
+    const { pdfBlob, mediaBlob, pdfSynced, ...rest } = p;
     return {
       ...rest,
-      hasPdf: p.type === 'pdf'
+      pinned: Boolean(p.pinned),
+      folder: p.folder || '',
+      hasPdf: p.type === 'pdf' || p.type === 'image'
     };
   });
 
@@ -221,10 +241,14 @@ export async function exportSyncPayload() {
 export async function replaceAllFromMergedState(mergedState) {
   const db = await openDb();
   const existingPrayers = await getAllPrayers();
-  const blobById = new Map();
+  const binById = new Map();
   for (const p of existingPrayers) {
-    if (p.pdfBlob) {
-      blobById.set(p.id, { pdfBlob: p.pdfBlob, pdfSynced: Boolean(p.pdfSynced) });
+    if (p.pdfBlob || p.mediaBlob) {
+      binById.set(p.id, {
+        pdfBlob: p.pdfBlob,
+        mediaBlob: p.mediaBlob,
+        pdfSynced: Boolean(p.pdfSynced)
+      });
     }
   }
 
@@ -237,10 +261,12 @@ export async function replaceAllFromMergedState(mergedState) {
 
     pStore.clear();
     for (const p of mergedState.prayers || []) {
-      const localBin = blobById.get(p.id);
+      const localBin = binById.get(p.id);
       pStore.put({
         ...p,
-        ...(localBin ? { pdfBlob: localBin.pdfBlob, pdfSynced: localBin.pdfSynced } : {})
+        ...(localBin?.pdfBlob ? { pdfBlob: localBin.pdfBlob } : {}),
+        ...(localBin?.mediaBlob ? { mediaBlob: localBin.mediaBlob } : {}),
+        ...(localBin ? { pdfSynced: localBin.pdfSynced } : {})
       });
     }
 
@@ -262,6 +288,80 @@ export async function replaceAllFromMergedState(mergedState) {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [header, b64] = String(dataUrl).split(',');
+  const mime = (header.match(/data:([^;]+)/) || [])[1] || 'application/octet-stream';
+  const bin = atob(b64 || '');
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+export async function exportBackupData() {
+  const [prayers, novenas, intentions] = await Promise.all([
+    getAllPrayers(),
+    getAllNovenas(),
+    getAllIntentions()
+  ]);
+
+  const encodedPrayers = [];
+  for (const p of prayers) {
+    const { pdfBlob, mediaBlob, ...rest } = p;
+    const bin = mediaBlob || pdfBlob;
+    if (bin && bin.size <= 8 * 1024 * 1024) {
+      rest.embeddedDataUrl = await blobToDataUrl(bin);
+    }
+    encodedPrayers.push(rest);
+  }
+
+  return {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    prayers: encodedPrayers,
+    novenas,
+    intentions
+  };
+}
+
+export async function importBackupData(backup) {
+  if (!backup || typeof backup !== 'object') {
+    throw new Error('Sauvegarde invalide');
+  }
+  const now = Date.now();
+
+  for (const p of backup.prayers || []) {
+    if (!p?.id) continue;
+    const { embeddedDataUrl, ...rest } = p;
+    const item = { ...rest, updatedAt: Number(p.updatedAt) || now };
+    if (embeddedDataUrl) {
+      const blob = dataUrlToBlob(embeddedDataUrl);
+      if (item.type === 'image') item.mediaBlob = blob;
+      else item.pdfBlob = blob;
+      item.pdfSynced = false;
+    }
+    await savePrayer(item);
+  }
+
+  for (const n of backup.novenas || []) {
+    if (!n?.id) continue;
+    await saveNovena({ ...n, updatedAt: Number(n.updatedAt) || now });
+  }
+
+  for (const i of backup.intentions || []) {
+    if (!i?.id) continue;
+    await saveIntention({ ...i, updatedAt: Number(i.updatedAt) || now });
+  }
 }
 
 export function generateId(prefix = 'item') {
