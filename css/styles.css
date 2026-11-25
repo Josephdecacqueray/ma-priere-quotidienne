@@ -1,0 +1,1331 @@
+/* =========================================================
+   POLICES : Shelley Volante Script (prioritaire si déposée dans ./fonts/)
+   + Fallback local libre Great Vibes + Georgia pour le corps
+   ========================================================= */
+@font-face {
+  font-family: 'Shelley Volante Script';
+  src: url('../fonts/ShelleyVolanteScript.otf') format('opentype'),
+       url('../fonts/ShelleyVolanteScript.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Great Vibes';
+  src: url('../fonts/GreatVibes-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-script: 'Shelley Volante Script', 'Great Vibes', 'Snell Roundhand', cursive;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+
+  --bg-app: #F5F2EB;
+  --bg-card: #FFFFFF;
+  --bg-paper: #FFFDF9;
+  --bg-nav: rgba(245, 242, 235, 0.88);
+  --bg-input: rgba(118, 118, 128, 0.12);
+
+  --text-primary: #1F1B16;
+  --text-secondary: #6E655A;
+  --text-muted: #998F82;
+
+  --accent-notes: #C4911F;
+  --accent-red: #B22222;
+  --accent-green: #1E7E34;
+  --danger: #C62828;
+  --border-hairline: rgba(60, 48, 30, 0.11);
+
+  --prayer-font-size: 15.5px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+  overscroll-behavior-y: contain;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  touch-action: manipulation;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.app-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+
+.view {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================================
+   HEADER & NAVIGATION STYLE APPLE NOTES iOS
+   ========================================================= */
+.ios-header-large {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-nav);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  padding: calc(var(--safe-top) + 10px) 16px 12px;
+  border-bottom: 0.5px solid var(--border-hairline);
+}
+
+.header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.65);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 0.5px solid var(--border-hairline);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-green);
+}
+
+.status-pill.is-offline .status-dot {
+  background: var(--accent-notes);
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--accent-notes);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.app-brand-title {
+  margin: 2px 0 10px;
+  font-family: var(--font-script);
+  font-size: clamp(2.1rem, 8.8vw, 2.75rem);
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 11px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  height: 38px;
+  border: none;
+  border-radius: 10px;
+  background: var(--bg-input);
+  padding: 0 34px 0 34px;
+  font-size: 16px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-clear {
+  position: absolute;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(110, 101, 90, 0.2);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(118, 118, 128, 0.13);
+  border-radius: 9px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.segment-btn {
+  height: 34px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.segment-btn.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.segment-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-notes);
+}
+
+/* =========================================================
+   LISTE DES NOTES & NEUVAINES
+   ========================================================= */
+.list-content {
+  flex: 1;
+  padding: 12px 16px calc(86px + var(--safe-bottom));
+}
+
+.filter-pills {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pill-btn {
+  border: 0.5px solid var(--border-hairline);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.pill-btn.active {
+  background: var(--accent-notes);
+  color: #fff;
+  border-color: var(--accent-notes);
+}
+
+.notes-group {
+  background: var(--bg-card);
+  border-radius: 14px;
+  border: 0.5px solid var(--border-hairline);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(31, 27, 22, 0.04);
+}
+
+.notes-group:empty {
+  display: none;
+}
+
+.note-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 0.5px solid var(--border-hairline);
+  background: var(--bg-card);
+}
+
+.note-row:last-child {
+  border-bottom: none;
+}
+
+.note-row-main {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 13px 10px 13px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note-row-main:active {
+  background: rgba(196, 145, 31, 0.08);
+}
+
+.note-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.note-row-title {
+  font-family: var(--font-script);
+  font-size: 1.55rem;
+  line-height: 1.15;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-row-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.badge-pdf {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--accent-red);
+  background: rgba(178, 34, 34, 0.1);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.badge-novena {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-green);
+  background: rgba(30, 126, 52, 0.11);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.note-row-preview {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-row-meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.row-delete-btn {
+  width: 46px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.row-delete-btn:active {
+  color: var(--danger);
+  background: rgba(198, 40, 40, 0.07);
+}
+
+/* Neuvaine cards */
+.reminder-banner {
+  background: linear-gradient(135deg, rgba(196, 145, 31, 0.14), rgba(178, 34, 34, 0.08));
+  border: 0.5px solid rgba(196, 145, 31, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.novena-row-progress {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(60, 48, 30, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-green);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.progress-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-title {
+  font-family: var(--font-script);
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.empty-sub {
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0 0 18px;
+}
+
+/* Barre inférieure Apple Notes */
+.ios-bottom-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 100%;
+  max-width: 720px;
+  z-index: 25;
+  background: var(--bg-nav);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-top: 0.5px solid var(--border-hairline);
+  padding: 10px 18px calc(var(--safe-bottom) + 10px);
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+}
+
+.bottom-summary {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.compose-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--accent-notes);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.compose-btn:active {
+  background: rgba(196, 145, 31, 0.14);
+}
+
+/* =========================================================
+   BARRE DE NAVIGATION DES VUES DÉTAIL
+   ========================================================= */
+.ios-nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-nav);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-bottom: 0.5px solid var(--border-hairline);
+  padding: calc(var(--safe-top) + 6px) 10px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nav-back-btn {
+  min-height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--accent-notes);
+  font-size: 16.5px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px 0 2px;
+  cursor: pointer;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-text-btn {
+  min-height: 36px;
+  border: none;
+  background: rgba(196, 145, 31, 0.11);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 11px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.nav-text-btn.nav-accent {
+  background: transparent;
+  color: var(--accent-notes);
+  font-size: 16px;
+}
+
+.nav-icon-btn {
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.nav-icon-btn.danger {
+  color: var(--danger);
+}
+
+/* Contexte neuvaine dans vue prière */
+.novena-context-bar {
+  background: rgba(30, 126, 52, 0.09);
+  border-bottom: 0.5px solid rgba(30, 126, 52, 0.25);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.novena-context-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.novena-context-info span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.btn-validate-day {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-green);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-validate-day.is-done {
+  background: rgba(30, 126, 52, 0.18);
+  color: var(--accent-green);
+}
+
+/* =========================================================
+   LECTURE PRIÈRE : TYPOGRAPHIE EXACTE ADAPTÉE IPHONE
+   ========================================================= */
+.prayer-scroll-area,
+.novena-scroll-area {
+  flex: 1;
+  padding: 14px 14px calc(36px + var(--safe-bottom));
+}
+
+.prayer-sheet {
+  background: var(--bg-paper);
+  border: 0.5px solid var(--border-hairline);
+  border-radius: 16px;
+  padding: 18px 18px 26px;
+  box-shadow: 0 2px 10px rgba(31, 27, 22, 0.05);
+}
+
+.prayer-sheet-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.font-size-controls {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.font-size-controls button {
+  border: 0.5px solid var(--border-hairline);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Titre de couverture : Shelley Volante Script + souligné rouge */
+.prayer-cover-title {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: clamp(2rem, 8.2vw, 2.55rem);
+  line-height: 1.22;
+  color: var(--text-primary);
+  margin: 0 0 18px;
+  display: inline-block;
+  border-bottom: 2.5px solid var(--accent-red);
+  padding-bottom: 3px;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* Corps du texte : Georgia (~10.5–11pt), interligne ~1.35–1.42, justifié */
+.prayer-body {
+  font-family: var(--font-body);
+  font-size: var(--prayer-font-size);
+  line-height: 1.4;
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  color: var(--text-primary);
+}
+
+.prayer-body p {
+  margin: 0 0 1em;
+}
+
+.prayer-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Hiérarchie niveau 1 : 25pt (adapté mobile), chiffres romains, souligné rouge, alinéa 0.5cm */
+.prayer-h1 {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: clamp(1.85rem, 7vw, 2.08rem);
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin: 1.15em 0 0.55em clamp(0.35rem, 2.4vw, 0.5cm);
+  text-align: left;
+}
+
+.prayer-h1 span {
+  display: inline-block;
+  border-bottom: 2px solid var(--accent-red);
+  padding-bottom: 2px;
+}
+
+/* Hiérarchie niveau 2 : 18pt (adapté mobile), chiffres arabes 1), souligné vert, alinéa 1.25cm */
+.prayer-h2 {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: clamp(1.42rem, 5.4vw, 1.55rem);
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin: 0.95em 0 0.45em clamp(0.95rem, 5.2vw, 1.25cm);
+  text-align: left;
+}
+
+.prayer-h2 span {
+  display: inline-block;
+  border-bottom: 1.8px solid var(--accent-green);
+  padding-bottom: 1px;
+}
+
+/* Hiérarchie niveau 3 : 14pt (adapté mobile), lettres a), souligné vert, alinéa 2.0cm */
+.prayer-h3 {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: clamp(1.18rem, 4.4vw, 1.32rem);
+  line-height: 1.28;
+  color: var(--text-primary);
+  margin: 0.75em 0 0.35em clamp(1.5rem, 8.2vw, 2.0cm);
+  text-align: left;
+}
+
+.prayer-h3 span {
+  display: inline-block;
+  border-bottom: 1.5px solid var(--accent-green);
+  padding-bottom: 1px;
+}
+
+/* =========================================================
+   ÉDITEUR DE PRIÈRE
+   ========================================================= */
+.prayer-edit-area {
+  flex: 1;
+  padding: 14px 14px calc(24px + var(--safe-bottom));
+}
+
+.edit-card {
+  background: var(--bg-paper);
+  border: 0.5px solid var(--border-hairline);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-title-input {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid var(--accent-red);
+  background: transparent;
+  font-family: var(--font-script);
+  font-size: 2rem;
+  color: var(--text-primary);
+  padding: 4px 2px;
+  outline: none;
+}
+
+.format-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fmt-btn {
+  border: 0.5px solid var(--border-hairline);
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fmt-h1 { border-bottom: 2px solid var(--accent-red); }
+.fmt-h2, .fmt-h3 { border-bottom: 2px solid var(--accent-green); }
+
+.format-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.edit-textarea {
+  width: 100%;
+  min-height: 46dvh;
+  border: 0.5px solid var(--border-hairline);
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  font-family: var(--font-body);
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  resize: vertical;
+  outline: none;
+}
+
+/* =========================================================
+   LECTEUR PDF
+   ========================================================= */
+.pdf-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 0.5px solid var(--border-hairline);
+  font-size: 13px;
+}
+
+.pdf-info {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.pdf-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-zoom-controls button {
+  min-width: 32px;
+  height: 30px;
+  border: 0.5px solid var(--border-hairline);
+  background: var(--bg-card);
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.pdf-zoom-controls .pdf-native-btn {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 0 10px;
+  color: var(--accent-notes);
+}
+
+.pdf-pages-container {
+  flex: 1;
+  padding: 14px 12px calc(30px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.pdf-page-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* =========================================================
+   MODULE NEUVAINE
+   ========================================================= */
+.novena-scroll-area {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.novena-intention-text {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+}
+
+.novena-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.novena-counter-pill {
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.linked-prayer-card {
+  width: 100%;
+  margin-top: 14px;
+  border: 0.5px solid var(--border-hairline);
+  border-radius: 12px;
+  background: var(--bg-card);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  cursor: pointer;
+}
+
+.linked-label {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.linked-prayer-card strong {
+  font-family: var(--font-script);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.linked-prayer-card .chevron {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-notes);
+}
+
+.ios-card {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border-hairline);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.card-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.section-heading-script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: 1.7rem;
+  margin: 0;
+  border-bottom: 1.8px solid var(--accent-green);
+  padding-bottom: 1px;
+}
+
+.section-sub-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 8px;
+}
+
+.day-cell {
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-paper);
+  border-radius: 11px;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.day-cell.is-today {
+  border-color: var(--accent-notes);
+  box-shadow: 0 0 0 1px var(--accent-notes);
+}
+
+.day-cell.is-checked {
+  background: rgba(30, 126, 52, 0.12);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.day-cell-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.day-cell.is-checked .day-cell-sub {
+  color: var(--accent-green);
+}
+
+.mini-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(110, 101, 90, 0.12);
+  color: var(--text-secondary);
+}
+
+.mini-pill.active {
+  background: rgba(30, 126, 52, 0.14);
+  color: var(--accent-green);
+}
+
+.reminder-summary-text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+}
+
+.reminder-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.reminder-quick-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.btn-primary-ios,
+.btn-secondary-ios,
+.btn-outline-ios,
+.btn-primary-soft {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  padding: 10px 14px;
+}
+
+.btn-primary-ios {
+  background: var(--accent-notes);
+  color: #fff;
+}
+
+.btn-secondary-ios {
+  background: rgba(196, 145, 31, 0.13);
+  color: var(--text-primary);
+}
+
+.btn-outline-ios {
+  background: var(--bg-paper);
+  border: 0.5px solid var(--border-hairline);
+  color: var(--text-primary);
+}
+
+.btn-primary-soft {
+  width: auto;
+  background: var(--accent-notes);
+  color: #fff;
+  padding: 10px 18px;
+}
+
+.ios-footnote {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   MODALES & BOTTOM SHEETS iOS
+   ========================================================= */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 16, 12, 0.42);
+  z-index: 40;
+}
+
+.action-sheet {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(10px + var(--safe-bottom));
+  width: calc(100% - 20px);
+  max-width: 500px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-sheet-group {
+  background: rgba(255, 253, 249, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.action-sheet-title {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 12px 16px;
+  border-bottom: 0.5px solid var(--border-hairline);
+}
+
+.action-sheet-btn {
+  width: 100%;
+  min-height: 52px;
+  border: none;
+  border-bottom: 0.5px solid var(--border-hairline);
+  background: transparent;
+  font-size: 17px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.action-sheet-btn:last-child {
+  border-bottom: none;
+}
+
+.action-sheet-cancel {
+  width: 100%;
+  min-height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--accent-notes);
+  cursor: pointer;
+}
+
+.bottom-sheet {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90dvh;
+  background: var(--bg-app);
+  border-radius: 18px 18px 0 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.18);
+}
+
+.sheet-header {
+  display: grid;
+  grid-template-columns: 76px 1fr 84px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 0.5px solid var(--border-hairline);
+  background: var(--bg-nav);
+  border-radius: 18px 18px 0 0;
+}
+
+.sheet-title {
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sheet-cancel,
+.sheet-done {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+.sheet-cancel {
+  text-align: left;
+  color: var(--text-secondary);
+}
+
+.sheet-done {
+  text-align: right;
+  font-weight: 600;
+  color: var(--accent-notes);
+}
+
+.sheet-body {
+  overflow-y: auto;
+  padding: 16px 16px calc(24px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.field-help {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.ios-input,
+.file-input-ios {
+  width: 100%;
+  border: 0.5px solid var(--border-hairline);
+  border-radius: 11px;
+  background: var(--bg-card);
+  padding: 11px 12px;
+  font-size: 16px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.day-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.preset-chip {
+  border: 0.5px solid var(--border-hairline);
+  background: var(--bg-card);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.preset-chip.active {
+  background: var(--accent-notes);
+  color: #fff;
+  border-color: var(--accent-notes);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border-hairline);
+  border-radius: 11px;
+  padding: 11px 12px;
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.ios-switch {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent-green);
+}
+
+.reminder-fields-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 0.5px solid var(--border-hairline);
+}
+
+.info-sheet-body {
+  gap: 14px;
+}
+
+.info-block {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border-hairline);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.info-block h3 {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: 1.65rem;
+  margin: 0 0 8px;
+  border-bottom: 1.5px solid var(--accent-red);
+  display: inline-block;
+}
+
+.info-block ol {
+  margin: 6px 0 8px 18px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(74px + var(--safe-bottom));
+  z-index: 70;
+  background: rgba(31, 27, 22, 0.92);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  max-width: calc(100% - 32px);
+  text-align: center;
+}

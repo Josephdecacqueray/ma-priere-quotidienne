@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="108" fill="#FAF6EE"/>
+  <rect x="28" y="28" width="456" height="456" rx="84" fill="none" stroke="#B8860B" stroke-width="6" stroke-opacity="0.72"/>
+  <rect x="44" y="44" width="424" height="424" rx="70" fill="none" stroke="#B8860B" stroke-width="2" stroke-opacity="0.35"/>
+  <!-- Lignes de cahier subtiles -->
+  <line x1="92" y1="382" x2="420" y2="382" stroke="#1E7E34" stroke-width="4" stroke-linecap="round" stroke-opacity="0.7"/>
+  <line x1="128" y1="406" x2="384" y2="406" stroke="#B22222" stroke-width="4" stroke-linecap="round" stroke-opacity="0.8"/>
+  <!-- Croix élégante -->
+  <path d="M256 106 V336 M174 188 H338" stroke="#B22222" stroke-width="26" stroke-linecap="round"/>
+  <path d="M256 106 V336 M174 188 H338" stroke="#B8860B" stroke-width="6" stroke-linecap="round" stroke-opacity="0.65"/>
+  <circle cx="256" cy="188" r="14" fill="#FAF6EE" stroke="#B8860B" stroke-width="5"/>
+</svg>
