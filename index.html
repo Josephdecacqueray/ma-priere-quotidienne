@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Ma prière quotidienne</title>
-  <meta name="description" content="Carnet de prières hors-ligne (notes & PDF) et suivi de neuvaines pour iPhone.">
+  <meta name="description" content="Carnet de prières hors-ligne (notes & PDF), intentions et neuvaines pour iPhone.">
 
   <!-- iOS / PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Ma prière">
   <meta name="theme-color" content="#F5F2EB">
-  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
-  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=2">
+  <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png?v=2">
   <link rel="manifest" href="./manifest.webmanifest">
 
   <link rel="stylesheet" href="./css/styles.css">
@@ -25,13 +25,13 @@
     <!-- =========================================================
          VUE 1 : LISTE PRINCIPALE (STYLE APPLE NOTES)
          ========================================================= -->
-    <section id="view-list" class="view view-active" aria-label="Liste des prières et neuvaines">
+    <section id="view-list" class="view view-active" aria-label="Accueil du carnet">
       <header class="ios-header ios-header-large">
         <div class="header-top-row">
-          <span id="offline-pill" class="status-pill" title="État hors-ligne">
+          <button id="sync-status-btn" class="status-pill" type="button" title="Synchronisation iPhone & serveur">
             <span class="status-dot" aria-hidden="true"></span>
             <span id="offline-label">Hors-ligne prêt</span>
-          </span>
+          </button>
           <button id="btn-open-info" class="icon-btn" type="button" aria-label="Installer sur iPhone et informations sur les polices" title="Installer sur iPhone & Polices">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10"></circle>
@@ -63,6 +63,21 @@
       </header>
 
       <main class="list-content">
+        <!-- Bouton d'accès direct Mes intentions sur la page d'accueil -->
+        <button id="btn-open-intentions" class="intentions-home-card" type="button">
+          <div class="intentions-home-left">
+            <span class="intentions-home-icon" aria-hidden="true">🕊️</span>
+            <div class="intentions-home-text">
+              <span class="intentions-home-title">Mes intentions</span>
+              <span id="intentions-home-sub" class="intentions-home-sub">Carnet de toutes mes intentions</span>
+            </div>
+          </div>
+          <div class="intentions-home-right">
+            <span id="count-intentions-badge" class="intentions-count-pill">0</span>
+            <span class="chevron" aria-hidden="true">›</span>
+          </div>
+        </button>
+
         <!-- Panneau Prières -->
         <div id="panel-prayers">
           <div class="filter-pills" role="group" aria-label="Filtrer par format">
@@ -265,6 +280,49 @@
     </section>
 
     <!-- =========================================================
+         VUE 4 : CARNET « MES INTENTIONS »
+         ========================================================= -->
+    <section id="view-intentions" class="view hidden" aria-label="Mes intentions">
+      <header class="ios-nav-bar">
+        <button id="btn-intentions-back" class="nav-back-btn" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Accueil</span>
+        </button>
+
+        <div class="nav-actions">
+          <button id="btn-intentions-export" class="nav-text-btn" type="button">Exporter (.txt)</button>
+        </div>
+      </header>
+
+      <div class="prayer-scroll-area intentions-scroll-area">
+        <article class="prayer-sheet">
+          <h1 class="prayer-cover-title">Mes intentions</h1>
+          <p class="intentions-intro">Toutes vos intentions sont conservées sur votre iPhone et synchronisées automatiquement dès qu'une connexion est disponible.</p>
+
+          <form id="intention-add-form" class="intentions-add-form">
+            <textarea id="intention-quick-input" class="ios-input intentions-textarea" rows="2" placeholder="Écrire une nouvelle intention de prière…"></textarea>
+            <button id="btn-add-intention" class="btn-primary-ios" type="submit">+ Ajouter l'intention</button>
+          </form>
+
+          <div id="intentions-list" class="intentions-list"></div>
+          <div id="intentions-empty" class="empty-state hidden">
+            <p class="empty-title">Aucune intention enregistrée</p>
+            <p class="empty-sub">Ajoutez une première intention ci-dessus pour la garder dans votre carnet.</p>
+          </div>
+        </article>
+
+        <div id="novena-intentions-section" class="ios-card hidden">
+          <div class="card-section-header">
+            <h2 class="section-heading-script">Intentions des neuvaines</h2>
+          </div>
+          <div id="novena-intentions-list" class="novena-intentions-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
          MODALES & SHEETS STYLE iOS
          ========================================================= -->
     <div id="modal-backdrop" class="modal-backdrop hidden" aria-hidden="true"></div>
@@ -276,6 +334,7 @@
         <button id="act-new-text-prayer" class="action-sheet-btn" type="button">✍️ Nouvelle prière (note)</button>
         <button id="act-new-pdf-prayer" class="action-sheet-btn" type="button">📄 Importer un PDF</button>
         <button id="act-new-novena" class="action-sheet-btn" type="button">🕯️ Nouvelle neuvaine</button>
+        <button id="act-new-intention" class="action-sheet-btn" type="button">🕊️ Ajouter une intention</button>
       </div>
       <button id="act-cancel-add" class="action-sheet-cancel" type="button">Annuler</button>
     </div>
@@ -288,12 +347,16 @@
         <button id="btn-save-pdf" type="button" class="sheet-done">Ajouter</button>
       </div>
       <div class="sheet-body">
-        <label class="field-label" for="pdf-file-input">Fichier PDF de la prière</label>
-        <input id="pdf-file-input" type="file" accept="application/pdf,.pdf" class="file-input-ios">
-        <p id="pdf-file-meta" class="field-help">Le fichier est enregistré directement sur votre iPhone pour fonctionner sans connexion.</p>
+        <div class="form-field">
+          <label class="field-label" for="pdf-file-input">Fichier PDF de la prière</label>
+          <input id="pdf-file-input" type="file" accept="application/pdf,.pdf" class="file-input-ios">
+          <p id="pdf-file-meta" class="field-help">Le fichier est enregistré sur votre iPhone et sauvegardé sur le serveur dès que vous êtes connecté.</p>
+        </div>
 
-        <label class="field-label" for="pdf-title-input">Titre dans le carnet</label>
-        <input id="pdf-title-input" type="text" class="ios-input" placeholder="Ex. Litanies de saint Joseph">
+        <div class="form-field">
+          <label class="field-label" for="pdf-title-input">Titre dans le carnet</label>
+          <input id="pdf-title-input" type="text" class="ios-input" placeholder="Ex. Litanies de saint Joseph">
+        </div>
       </div>
     </div>
 
@@ -307,27 +370,37 @@
       <div class="sheet-body">
         <input type="hidden" id="novena-edit-id">
 
-        <label class="field-label" for="novena-title-input">Nom de la neuvaine</label>
-        <input id="novena-title-input" type="text" class="ios-input" placeholder="Ex. Neuvaine à saint Joseph">
-
-        <label class="field-label" for="novena-prayer-select">Prière associée</label>
-        <select id="novena-prayer-select" class="ios-input"></select>
-
-        <label class="field-label" for="novena-intention-input">Intention (optionnel)</label>
-        <textarea id="novena-intention-input" class="ios-input" rows="2" placeholder="Ex. Pour la paix et la providence dans ma famille…"></textarea>
-
-        <label class="field-label" for="novena-days-input">Nombre de jours</label>
-        <div class="day-presets">
-          <button type="button" class="preset-chip" data-days="3">3 j</button>
-          <button type="button" class="preset-chip" data-days="7">7 j</button>
-          <button type="button" class="preset-chip" data-days="9">9 j</button>
-          <button type="button" class="preset-chip" data-days="30">30 j</button>
-          <button type="button" class="preset-chip" data-days="54">54 j</button>
+        <div class="form-field">
+          <label class="field-label" for="novena-title-input">Nom de la neuvaine</label>
+          <input id="novena-title-input" type="text" class="ios-input" placeholder="Ex. Neuvaine à saint Joseph">
         </div>
-        <input id="novena-days-input" type="number" min="1" max="365" value="9" class="ios-input">
 
-        <label class="field-label" for="novena-start-input">Date de début</label>
-        <input id="novena-start-input" type="date" class="ios-input">
+        <div class="form-field">
+          <label class="field-label" for="novena-prayer-select">Prière associée</label>
+          <select id="novena-prayer-select" class="ios-input"></select>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="novena-intention-input">Intention (optionnel)</label>
+          <textarea id="novena-intention-input" class="ios-input" rows="3" placeholder="Ex. Pour la paix et la providence dans ma famille…"></textarea>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="novena-days-input">Nombre de jours</label>
+          <div class="day-presets">
+            <button type="button" class="preset-chip" data-days="3">3 j</button>
+            <button type="button" class="preset-chip" data-days="7">7 j</button>
+            <button type="button" class="preset-chip" data-days="9">9 j</button>
+            <button type="button" class="preset-chip" data-days="30">30 j</button>
+            <button type="button" class="preset-chip" data-days="54">54 j</button>
+          </div>
+          <input id="novena-days-input" type="number" min="1" max="365" value="9" class="ios-input">
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="novena-start-input">Date de début</label>
+          <input id="novena-start-input" type="date" class="ios-input">
+        </div>
 
         <div class="toggle-row">
           <label for="novena-reminder-enabled">Activer un rappel quotidien</label>
@@ -335,22 +408,26 @@
         </div>
 
         <div id="novena-reminder-fields" class="reminder-fields-box">
-          <label class="field-label" for="novena-reminder-time">Heure du rappel</label>
-          <input id="novena-reminder-time" type="time" value="08:00" class="ios-input">
+          <div class="form-field">
+            <label class="field-label" for="novena-reminder-time">Heure du rappel</label>
+            <input id="novena-reminder-time" type="time" value="08:00" class="ios-input">
+          </div>
 
-          <label class="field-label" for="novena-reminder-channel">Mode de notification</label>
-          <select id="novena-reminder-channel" class="ios-input">
-            <option value="iphone">Notification iPhone (Calendrier .ics + App)</option>
-            <option value="sms">SMS</option>
-            <option value="email">E-mail</option>
-          </select>
+          <div class="form-field">
+            <label class="field-label" for="novena-reminder-channel">Mode de notification</label>
+            <select id="novena-reminder-channel" class="ios-input">
+              <option value="iphone">Notification iPhone (Calendrier .ics + App)</option>
+              <option value="sms">SMS</option>
+              <option value="email">E-mail</option>
+            </select>
+          </div>
 
-          <div id="novena-phone-wrap" class="hidden">
+          <div id="novena-phone-wrap" class="form-field hidden">
             <label class="field-label" for="novena-reminder-phone">Numéro de téléphone (SMS)</label>
             <input id="novena-reminder-phone" type="tel" class="ios-input" placeholder="+33 6 …">
           </div>
 
-          <div id="novena-email-wrap" class="hidden">
+          <div id="novena-email-wrap" class="form-field hidden">
             <label class="field-label" for="novena-reminder-email">Adresse e-mail</label>
             <input id="novena-reminder-email" type="email" class="ios-input" placeholder="prenom@exemple.fr">
           </div>
@@ -362,7 +439,7 @@
     <div id="sheet-info" class="bottom-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-info-title">
       <div class="sheet-header">
         <span></span>
-        <h2 id="sheet-info-title" class="sheet-title">iPhone & Polices</h2>
+        <h2 id="sheet-info-title" class="sheet-title">iPhone, Synchro & Polices</h2>
         <button type="button" class="sheet-done" data-close-sheet>OK</button>
       </div>
       <div class="sheet-body info-sheet-body">
@@ -373,7 +450,7 @@
             <li>Touchez le bouton <strong>Partager</strong> (carré avec flèche vers le haut).</li>
             <li>Choisissez <strong>« Sur l'écran d'accueil »</strong> puis touchez <strong>Ajouter</strong>.</li>
           </ol>
-          <p class="field-help">Une fois ouverte une première fois, l'application, vos notes et vos PDF fonctionnent <strong>hors connexion</strong>.</p>
+          <p class="field-help">Vos prières, PDF, neuvaines et intentions sont enregistrés sur votre iPhone (hors-ligne) et synchronisés sur le serveur dès que vous fermez l'app ou êtes connecté.</p>
         </div>
 
         <div class="info-block">

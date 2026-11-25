@@ -8,11 +8,16 @@ import {
   getNovena,
   saveNovena,
   deleteNovena,
+  getAllIntentions,
+  getIntention,
+  saveIntention,
+  deleteIntention,
   generateId
 } from './db.js';
 import { formatPrayerContent, stripFormattingForPreview } from './formatter.js';
 import { downloadNovenaIcs, buildSmsLink, buildMailtoLink, buildReminderMessage } from './ics.js';
 import { renderPdfIntoContainer, openPdfNatively } from './pdf-viewer.js';
+import { syncWithServer, deleteServerPdf } from './sync.js';
 
 const FONT_SIZE_KEY = 'mpq_font_size_px';
 const NOTIF_LOG_KEY = 'mpq_notified_today';
@@ -20,6 +25,7 @@ const NOTIF_LOG_KEY = 'mpq_notified_today';
 const state = {
   prayers: [],
   novenas: [],
+  intentions: [],
   activeTab: 'prayers',
   filterType: 'all',
   searchQuery: '',
@@ -28,7 +34,8 @@ const state = {
   returnView: 'list',
   editingPrayer: false,
   fontSizePx: Number(localStorage.getItem(FONT_SIZE_KEY)) || 15.5,
-  pdfScale: 1
+  pdfScale: 1,
+  syncStatus: navigator.onLine ? 'idle' : 'offline'
 };
 
 const $ = (id) => document.getElementById(id);
@@ -70,16 +77,37 @@ function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.add('hidden'), 2800);
 }
 
-function updateOnlineBadge() {
-  const pill = $('offline-pill');
+function setSyncStatus(status) {
+  state.syncStatus = status;
+  const pill = $('sync-status-btn');
   const label = $('offline-label');
-  if (navigator.onLine) {
-    pill.classList.remove('is-offline');
-    label.textContent = 'Hors-ligne prêt';
-  } else {
+  pill.classList.remove('is-offline', 'is-syncing', 'is-error');
+
+  if (!navigator.onLine || status === 'offline') {
     pill.classList.add('is-offline');
-    label.textContent = 'Mode hors-ligne actif';
+    label.textContent = 'Hors-ligne (iPhone)';
+  } else if (status === 'syncing') {
+    pill.classList.add('is-syncing');
+    label.textContent = 'Sauvegarde serveur…';
+  } else if (status === 'error') {
+    pill.classList.add('is-error');
+    label.textContent = 'Enregistré sur iPhone';
+  } else if (status === 'synced') {
+    label.textContent = 'Synchronisé ✓';
+  } else {
+    label.textContent = 'Hors-ligne prêt';
   }
+}
+
+let syncDebounceTimer = null;
+function scheduleServerSync() {
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(async () => {
+    const res = await syncWithServer({ onStatus: setSyncStatus });
+    if (res?.ok) {
+      await refreshFromDbOnly();
+    }
+  }, 700);
 }
 
 function applyPrayerFontSize() {
@@ -94,6 +122,7 @@ function showView(name) {
   $('view-list').classList.toggle('hidden', name !== 'list');
   $('view-prayer').classList.toggle('hidden', name !== 'prayer');
   $('view-novena').classList.toggle('hidden', name !== 'novena');
+  $('view-intentions').classList.toggle('hidden', name !== 'intentions');
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -112,19 +141,54 @@ function openSheet(sheetId) {
 }
 
 /* =========================================================
-   RENDU DE LA LISTE PRINCIPALE
+   CHARGEMENT & RENDU GLOBAL
    ========================================================= */
-async function reloadData() {
-  const [prayers, novenas] = await Promise.all([getAllPrayers(), getAllNovenas()]);
+async function refreshFromDbOnly() {
+  const [prayers, novenas, intentions] = await Promise.all([
+    getAllPrayers(),
+    getAllNovenas(),
+    getAllIntentions()
+  ]);
   state.prayers = prayers;
   state.novenas = novenas;
+  state.intentions = intentions;
+
   renderList();
+  if (!$('view-intentions').classList.contains('hidden')) {
+    renderIntentionsView();
+  }
+  if (!$('view-novena').classList.contains('hidden') && state.currentNovenaId) {
+    await renderCurrentNovena();
+  }
+  if (!$('view-prayer').classList.contains('hidden') && !state.editingPrayer && state.currentPrayerId) {
+    await renderCurrentPrayer();
+  }
   checkInAppReminders();
+}
+
+async function reloadData({ sync = true } = {}) {
+  await refreshFromDbOnly();
+  if (sync) {
+    scheduleServerSync();
+  }
 }
 
 function renderList() {
   $('count-prayers-badge').textContent = String(state.prayers.length);
   $('count-novenas-badge').textContent = String(state.novenas.length);
+
+  // Carte « Mes intentions » sur l'accueil
+  const activeIntentions = state.intentions.filter((i) => !i.done);
+  const novenaWithIntentions = state.novenas.filter((n) => (n.intention || '').trim() !== '');
+  const totalBadge = activeIntentions.length || state.intentions.length;
+  $('count-intentions-badge').textContent = String(totalBadge);
+  if (activeIntentions.length > 0) {
+    $('intentions-home-sub').textContent = activeIntentions[0].text;
+  } else if (novenaWithIntentions.length > 0) {
+    $('intentions-home-sub').textContent = `${novenaWithIntentions.length} intention${novenaWithIntentions.length > 1 ? 's' : ''} de neuvaine`;
+  } else {
+    $('intentions-home-sub').textContent = 'Carnet de toutes mes intentions';
+  }
 
   const isPrayers = state.activeTab === 'prayers';
   $('tab-prayers').classList.toggle('active', isPrayers);
@@ -204,7 +268,9 @@ function renderPrayersList() {
 
     const meta = document.createElement('div');
     meta.className = 'note-row-meta';
-    meta.textContent = `Modifiée ${formatShortDate(p.updatedAt)}`;
+    meta.textContent = p.updatedAt && p.updatedAt > 1000
+      ? `Modifiée ${formatShortDate(p.updatedAt)}`
+      : 'Prière incluse';
     mainBtn.appendChild(meta);
 
     mainBtn.addEventListener('click', () => openPrayer(p.id, 'list'));
@@ -233,7 +299,6 @@ function renderNovenasList() {
     return hay.includes(q);
   });
 
-  // Bannière de rappel du jour
   const dueToday = state.novenas.filter((n) => {
     const doneCount = (n.completedDays || []).length;
     if (doneCount >= n.totalDays) return false;
@@ -358,7 +423,6 @@ async function renderCurrentPrayer() {
   $('btn-prayer-edit-toggle').classList.toggle('hidden', !isText);
   $('btn-prayer-edit-toggle').textContent = state.editingPrayer ? 'OK' : 'Modifier';
 
-  // Barre contexte neuvaine si ouverte depuis une neuvaine ou liée
   const linkedNovena = state.returnView === 'novena' && state.currentNovenaId
     ? await getNovena(state.currentNovenaId)
     : state.novenas.find((n) => n.prayerId === prayer.id);
@@ -390,7 +454,9 @@ async function renderCurrentPrayer() {
       $('edit-prayer-title').value = prayer.title || '';
       $('edit-prayer-content').value = prayer.content || '';
     } else {
-      $('prayer-meta-date').textContent = `Modifiée le ${new Date(prayer.updatedAt || Date.now()).toLocaleDateString('fr-FR')}`;
+      $('prayer-meta-date').textContent = prayer.updatedAt && prayer.updatedAt > 1000
+        ? `Modifiée le ${new Date(prayer.updatedAt).toLocaleDateString('fr-FR')}`
+        : 'Carnet de prières';
       $('prayer-cover-title').textContent = prayer.title || 'Prière sans titre';
       $('prayer-rendered-body').innerHTML = formatPrayerContent(prayer.content || '');
     }
@@ -401,7 +467,7 @@ async function renderCurrentPrayer() {
     };
     const container = $('pdf-pages-container');
     if (!prayer.pdfBlob) {
-      container.innerHTML = '<p class="empty-sub">Fichier PDF introuvable.</p>';
+      container.innerHTML = '<p class="empty-sub" style="padding:24px;text-align:center;">PDF en cours de récupération depuis le serveur…</p>';
       return;
     }
     try {
@@ -419,18 +485,22 @@ async function renderCurrentPrayer() {
   }
 }
 
-async function saveEditedPrayer({ exitEdit = false } = {}) {
+async function saveEditedPrayer({ exitEdit = false, silent = false } = {}) {
   const prayer = await getPrayer(state.currentPrayerId);
   if (!prayer || prayer.type !== 'text') return;
-  prayer.title = $('edit-prayer-title').value.trim() || 'Prière sans titre';
-  prayer.content = $('edit-prayer-content').value;
+  const nextTitle = $('edit-prayer-title').value.trim() || 'Prière sans titre';
+  const nextContent = $('edit-prayer-content').value;
+  if (prayer.title === nextTitle && prayer.content === nextContent && !exitEdit) return;
+
+  prayer.title = nextTitle;
+  prayer.content = nextContent;
   prayer.updatedAt = Date.now();
   await savePrayer(prayer);
-  await reloadData();
+  await reloadData({ sync: true });
   if (exitEdit) {
     state.editingPrayer = false;
     await renderCurrentPrayer();
-    showToast('Prière enregistrée');
+    if (!silent) showToast('Prière enregistrée');
   }
 }
 
@@ -445,7 +515,7 @@ async function createNewTextPrayer() {
     updatedAt: now
   };
   await savePrayer(prayer);
-  await reloadData();
+  await reloadData({ sync: true });
   await openPrayer(prayer.id, 'list', true);
   $('edit-prayer-title').select();
 }
@@ -455,16 +525,19 @@ async function confirmAndDeletePrayer(id) {
   if (!prayer) return;
   if (!confirm(`Supprimer « ${prayer.title || 'cette prière'} » ?`)) return;
 
+  const wasPdf = prayer.type === 'pdf';
   await deletePrayer(id);
-  // Détacher des neuvaines qui référencent cette prière
+  if (wasPdf) deleteServerPdf(id);
+
   const allNovenas = await getAllNovenas();
   for (const n of allNovenas) {
     if (n.prayerId === id) {
       n.prayerId = '';
+      n.updatedAt = Date.now();
       await saveNovena(n);
     }
   }
-  await reloadData();
+  await reloadData({ sync: true });
   if (state.currentPrayerId === id) {
     state.currentPrayerId = null;
     showView('list');
@@ -483,6 +556,16 @@ function insertHeadingPrefix(prefix) {
   const cursor = lineStart + prefix.length;
   ta.focus();
   ta.setSelectionRange(cursor, cursor);
+  scheduleAutoSaveEdit();
+}
+
+let autoSaveEditTimer = null;
+function scheduleAutoSaveEdit() {
+  if (!state.editingPrayer) return;
+  clearTimeout(autoSaveEditTimer);
+  autoSaveEditTimer = setTimeout(() => {
+    saveEditedPrayer({ exitEdit: false, silent: true });
+  }, 500);
 }
 
 /* =========================================================
@@ -491,7 +574,7 @@ function insertHeadingPrefix(prefix) {
 function openPdfImportSheet() {
   $('pdf-file-input').value = '';
   $('pdf-title-input').value = '';
-  $('pdf-file-meta').textContent = 'Le fichier est enregistré directement sur votre iPhone pour fonctionner sans connexion.';
+  $('pdf-file-meta').textContent = 'Le fichier est enregistré sur votre iPhone et sauvegardé sur le serveur dès que vous êtes connecté.';
   openSheet('sheet-pdf');
 }
 
@@ -508,13 +591,14 @@ async function handleSavePdf() {
     type: 'pdf',
     title,
     pdfBlob: file,
+    pdfSynced: false,
     fileName: file.name,
     fileSize: file.size,
     createdAt: now,
     updatedAt: now
   };
   await savePrayer(prayer);
-  await reloadData();
+  await reloadData({ sync: true });
   closeAllSheets();
   showToast('PDF ajouté au carnet');
   await openPrayer(prayer.id, 'list', false);
@@ -607,7 +691,7 @@ async function handleSaveNovena() {
   };
 
   await saveNovena(novena);
-  await reloadData();
+  await reloadData({ sync: true });
   closeAllSheets();
   state.activeTab = 'novenas';
   await openNovena(novena.id);
@@ -652,7 +736,6 @@ async function renderCurrentNovena() {
     linkedBtn.onclick = null;
   }
 
-  // Grille des jours
   const grid = $('novena-days-grid');
   grid.innerHTML = '';
   for (let d = 1; d <= total; d += 1) {
@@ -677,7 +760,6 @@ async function renderCurrentNovena() {
     grid.appendChild(cell);
   }
 
-  // Résumé rappel
   const rem = n.reminder || {};
   const pill = $('novena-reminder-status-pill');
   pill.textContent = rem.enabled ? `Actif • ${rem.time || '08:00'}` : 'Désactivé';
@@ -720,7 +802,7 @@ async function toggleNovenaDay(novenaId, dayNumber) {
   n.completedDays = Array.from(set).sort((a, b) => a - b);
   n.updatedAt = Date.now();
   await saveNovena(n);
-  await reloadData();
+  await reloadData({ sync: true });
 }
 
 async function confirmAndDeleteNovena(id) {
@@ -728,12 +810,193 @@ async function confirmAndDeleteNovena(id) {
   if (!n) return;
   if (!confirm(`Supprimer le module neuvaine « ${n.title} » ?`)) return;
   await deleteNovena(id);
-  await reloadData();
+  await reloadData({ sync: true });
   if (state.currentNovenaId === id) {
     state.currentNovenaId = null;
     showView('list');
   }
   showToast('Neuvaine supprimée');
+}
+
+/* =========================================================
+   VUE « MES INTENTIONS »
+   ========================================================= */
+function openIntentionsView() {
+  showView('intentions');
+  renderIntentionsView();
+}
+
+function renderIntentionsView() {
+  const listEl = $('intentions-list');
+  listEl.innerHTML = '';
+  $('intentions-empty').classList.toggle('hidden', state.intentions.length > 0);
+
+  for (const item of state.intentions) {
+    const row = document.createElement('div');
+    row.className = 'intention-item';
+
+    const checkBtn = document.createElement('button');
+    checkBtn.type = 'button';
+    checkBtn.className = `intention-check-btn${item.done ? ' is-done' : ''}`;
+    checkBtn.setAttribute('aria-label', item.done ? 'Marquer comme en cours' : 'Marquer comme exaucée / confiée');
+    checkBtn.textContent = item.done ? '✓' : '';
+    checkBtn.addEventListener('click', async () => {
+      const fresh = await getIntention(item.id);
+      if (!fresh) return;
+      fresh.done = !fresh.done;
+      fresh.updatedAt = Date.now();
+      await saveIntention(fresh);
+      await reloadData({ sync: true });
+    });
+
+    const contentCol = document.createElement('div');
+    contentCol.className = 'intention-content-col';
+
+    const textP = document.createElement('p');
+    textP.className = `intention-text${item.done ? ' is-done' : ''}`;
+    textP.textContent = item.text;
+    contentCol.appendChild(textP);
+
+    const meta = document.createElement('div');
+    meta.className = 'intention-meta';
+    meta.textContent = `${item.done ? 'Exaucée / confiée • ' : ''}${formatShortDate(item.updatedAt || item.createdAt)}`;
+    contentCol.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'intention-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'intention-mini-btn';
+    editBtn.setAttribute('aria-label', "Modifier l'intention");
+    editBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+    editBtn.addEventListener('click', async () => {
+      const updated = prompt("Modifier l'intention :", item.text);
+      if (updated === null) return;
+      const clean = updated.trim();
+      if (!clean) return;
+      const fresh = await getIntention(item.id);
+      if (!fresh) return;
+      fresh.text = clean;
+      fresh.updatedAt = Date.now();
+      await saveIntention(fresh);
+      await reloadData({ sync: true });
+      showToast('Intention mise à jour');
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'intention-mini-btn danger';
+    delBtn.setAttribute('aria-label', "Supprimer l'intention");
+    delBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>`;
+    delBtn.addEventListener('click', async () => {
+      if (!confirm('Supprimer cette intention ?')) return;
+      await deleteIntention(item.id);
+      await reloadData({ sync: true });
+      showToast('Intention supprimée');
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+
+    row.appendChild(checkBtn);
+    row.appendChild(contentCol);
+    row.appendChild(actions);
+    listEl.appendChild(row);
+  }
+
+  // Section secondaire : intentions des neuvaines
+  const novenaWithIntentions = state.novenas.filter((n) => (n.intention || '').trim() !== '');
+  const sec = $('novena-intentions-section');
+  const novList = $('novena-intentions-list');
+  novList.innerHTML = '';
+  sec.classList.toggle('hidden', novenaWithIntentions.length === 0);
+
+  for (const n of novenaWithIntentions) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'novena-intention-link';
+    const left = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.textContent = n.title;
+    const span = document.createElement('span');
+    span.textContent = n.intention;
+    left.appendChild(strong);
+    left.appendChild(span);
+    const arrow = document.createElement('span');
+    arrow.className = 'chevron';
+    arrow.textContent = '›';
+    btn.appendChild(left);
+    btn.appendChild(arrow);
+    btn.addEventListener('click', () => openNovena(n.id));
+    novList.appendChild(btn);
+  }
+}
+
+async function handleAddIntention(e) {
+  e.preventDefault();
+  const input = $('intention-quick-input');
+  const text = input.value.trim();
+  if (!text) {
+    showToast('Écrivez votre intention avant de l’ajouter.');
+    return;
+  }
+  const now = Date.now();
+  await saveIntention({
+    id: generateId('intent'),
+    text,
+    done: false,
+    createdAt: now,
+    updatedAt: now
+  });
+  input.value = '';
+  await reloadData({ sync: true });
+  showToast('Intention enregistrée');
+}
+
+function buildIntentionsTxt() {
+  const lines = ['MES INTENTIONS — Ma prière quotidienne', '========================================', ''];
+  if (state.intentions.length === 0) {
+    lines.push('(Aucune intention personnelle)');
+  } else {
+    for (const item of state.intentions) {
+      const mark = item.done ? '[x]' : '[ ]';
+      const dateStr = formatShortDate(item.updatedAt || item.createdAt);
+      lines.push(`${mark} ${item.text} (${dateStr})`);
+    }
+  }
+  const novenaIntentions = state.novenas.filter((n) => (n.intention || '').trim());
+  if (novenaIntentions.length > 0) {
+    lines.push('', 'INTENTIONS DES NEUVAINES', '------------------------');
+    for (const n of novenaIntentions) {
+      lines.push(`• ${n.title} : ${n.intention}`);
+    }
+  }
+  return lines.join('\n');
+}
+
+async function exportIntentionsFile() {
+  const text = buildIntentionsTxt();
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const file = new File([blob], 'mes-intentions.txt', { type: 'text/plain' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ title: 'Mes intentions', files: [file] });
+      return;
+    } catch {
+      // Fallback téléchargement
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mes-intentions.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  showToast('Fichier mes-intentions.txt exporté');
 }
 
 /* =========================================================
@@ -755,7 +1018,7 @@ async function requestAndTestPwaNotification(novena, prayerTitle, curDay) {
     if (reg?.showNotification) {
       await reg.showNotification('Ma prière quotidienne', {
         body,
-        icon: './icons/icon-192.png',
+        icon: './icons/icon-192.png?v=2',
         tag: `novena-${novena.id}`
       });
     } else {
@@ -785,7 +1048,7 @@ function checkInAppReminders() {
       const body = buildReminderMessage(n, prayer?.title || '', curDay);
       navigator.serviceWorker?.ready.then((reg) => {
         if (reg?.showNotification) {
-          reg.showNotification('Ma prière quotidienne', { body, icon: './icons/icon-192.png', tag: logKey });
+          reg.showNotification('Ma prière quotidienne', { body, icon: './icons/icon-192.png?v=2', tag: logKey });
         }
       }).catch(() => {});
       sentMap[logKey] = true;
@@ -795,11 +1058,57 @@ function checkInAppReminders() {
 }
 
 /* =========================================================
+   SAUVEGARDE AUTOMATIQUE À LA FERMETURE / ARRIÈRE-PLAN
+   ========================================================= */
+async function flushAndSyncOnLeave() {
+  clearTimeout(autoSaveEditTimer);
+  clearTimeout(syncDebounceTimer);
+  if (state.editingPrayer && state.currentPrayerId) {
+    try {
+      await saveEditedPrayer({ exitEdit: false, silent: true });
+    } catch {
+      // Ignoré
+    }
+  }
+  syncWithServer({ keepalive: true, onStatus: setSyncStatus });
+}
+
+/* =========================================================
    INITIALISATION & ÉVÉNEMENTS
    ========================================================= */
 function bindEvents() {
-  window.addEventListener('online', updateOnlineBadge);
-  window.addEventListener('offline', updateOnlineBadge);
+  window.addEventListener('online', async () => {
+    setSyncStatus('syncing');
+    const res = await syncWithServer({ onStatus: setSyncStatus });
+    if (res?.ok) await refreshFromDbOnly();
+  });
+  window.addEventListener('offline', () => setSyncStatus('offline'));
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushAndSyncOnLeave();
+    } else if (document.visibilityState === 'visible' && navigator.onLine) {
+      syncWithServer({ onStatus: setSyncStatus }).then((r) => {
+        if (r?.ok) refreshFromDbOnly();
+      });
+    }
+  });
+  window.addEventListener('pagehide', () => flushAndSyncOnLeave());
+  window.addEventListener('beforeunload', () => flushAndSyncOnLeave());
+
+  $('sync-status-btn').addEventListener('click', async () => {
+    if (!navigator.onLine) {
+      showToast('Hors-ligne : vos données sont enregistrées sur votre iPhone.');
+      return;
+    }
+    const res = await syncWithServer({ onStatus: setSyncStatus });
+    if (res?.ok) {
+      await refreshFromDbOnly();
+      showToast('Sauvegardé sur l’iPhone et le serveur');
+    } else {
+      showToast('Serveur indisponible : enregistré sur l’iPhone');
+    }
+  });
 
   $('btn-open-info').addEventListener('click', () => openSheet('sheet-info'));
   $('modal-backdrop').addEventListener('click', closeAllSheets);
@@ -836,6 +1145,15 @@ function bindEvents() {
     });
   });
 
+  // Mes intentions
+  $('btn-open-intentions').addEventListener('click', openIntentionsView);
+  $('btn-intentions-back').addEventListener('click', () => {
+    showView('list');
+    renderList();
+  });
+  $('intention-add-form').addEventListener('submit', handleAddIntention);
+  $('btn-intentions-export').addEventListener('click', exportIntentionsFile);
+
   // Action Sheet ajout
   $('btn-add-menu').addEventListener('click', () => openSheet('sheet-add'));
   $('act-cancel-add').addEventListener('click', closeAllSheets);
@@ -845,6 +1163,11 @@ function bindEvents() {
   });
   $('act-new-pdf-prayer').addEventListener('click', openPdfImportSheet);
   $('act-new-novena').addEventListener('click', () => openNovenaSheet());
+  $('act-new-intention').addEventListener('click', () => {
+    closeAllSheets();
+    openIntentionsView();
+    $('intention-quick-input').focus();
+  });
   $('btn-empty-new-novena').addEventListener('click', () => openNovenaSheet());
 
   // Import PDF
@@ -862,7 +1185,7 @@ function bindEvents() {
   // Navigation Vue Prière
   $('btn-prayer-back').addEventListener('click', async () => {
     if (state.editingPrayer) {
-      await saveEditedPrayer({ exitEdit: false });
+      await saveEditedPrayer({ exitEdit: false, silent: true });
       state.editingPrayer = false;
     }
     if (state.returnView === 'novena' && state.currentNovenaId) {
@@ -882,6 +1205,9 @@ function bindEvents() {
       await renderCurrentPrayer();
     }
   });
+
+  $('edit-prayer-title').addEventListener('input', scheduleAutoSaveEdit);
+  $('edit-prayer-content').addEventListener('input', scheduleAutoSaveEdit);
 
   $('btn-prayer-delete').addEventListener('click', () => {
     if (state.currentPrayerId) confirmAndDeletePrayer(state.currentPrayerId);
@@ -953,11 +1279,17 @@ async function registerServiceWorker() {
 
 async function boot() {
   applyPrayerFontSize();
-  updateOnlineBadge();
+  setSyncStatus(navigator.onLine ? 'idle' : 'offline');
   bindEvents();
   await initDbAndSeed();
-  await reloadData();
+  await refreshFromDbOnly();
   await registerServiceWorker();
+
+  // Synchronisation initiale avec le serveur dès le démarrage si connecté
+  if (navigator.onLine) {
+    const res = await syncWithServer({ onStatus: setSyncStatus });
+    if (res?.ok) await refreshFromDbOnly();
+  }
   setInterval(checkInAppReminders, 60000);
 }
 

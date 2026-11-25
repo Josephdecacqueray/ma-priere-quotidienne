@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ma-priere-v1';
+const CACHE_NAME = 'ma-priere-v2';
 
-// Uniquement les fichiers présents dans le dépôt (ne pas mettre ShelleyVolanteScript tant qu'il n'est pas déposé dans ./fonts/)
+// Uniquement les fichiers présents dans le dépôt
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -11,10 +11,11 @@ const PRECACHE_URLS = [
   './js/formatter.js',
   './js/ics.js',
   './js/pdf-viewer.js',
+  './js/sync.js',
   './fonts/GreatVibes-Regular.ttf',
   './vendor/pdf.min.js',
   './vendor/pdf.worker.min.js',
-  './icons/icon.svg',
+  './icons/favicon-64.png',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
