@@ -309,7 +309,7 @@ function renderNovenasList() {
   const banner = $('novena-reminder-banner');
   if (dueToday.length > 0) {
     banner.classList.remove('hidden');
-    banner.innerHTML = `<span>🕯️ <strong>${dueToday.length}</strong> neuvaine${dueToday.length > 1 ? 's' : ''} à prier aujourd'hui</span>`;
+    banner.innerHTML = `<span><strong>${dueToday.length}</strong> neuvaine${dueToday.length > 1 ? 's' : ''} à prier aujourd'hui</span>`;
     const quickBtn = document.createElement('button');
     quickBtn.type = 'button';
     quickBtn.className = 'btn-validate-day';
@@ -368,7 +368,7 @@ function renderNovenasList() {
     const meta = document.createElement('div');
     meta.className = 'note-row-meta';
     meta.textContent = n.reminder?.enabled
-      ? `🔔 Rappel ${n.reminder.time || '08:00'} (${channelLabel(n.reminder.channel)})`
+      ? `Rappel ${n.reminder.time || '08:00'} • ${channelLabel(n.reminder.channel)}`
       : 'Rappel désactivé';
     mainBtn.appendChild(meta);
 
@@ -749,7 +749,7 @@ async function renderCurrentNovena() {
     top.textContent = `J${d}`;
     const sub = document.createElement('span');
     sub.className = 'day-cell-sub';
-    sub.textContent = doneSet.has(d) ? 'Fait ✓' : (d === curDay ? "Aujourd'hui" : 'À faire');
+    sub.textContent = doneSet.has(d) ? 'Fait ✓' : (d === curDay ? 'Auj.' : 'À faire');
 
     cell.appendChild(top);
     cell.appendChild(sub);
