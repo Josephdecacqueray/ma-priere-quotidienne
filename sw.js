@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ma-priere-v4';
+const CACHE_NAME = 'ma-priere-v5';
 
 // Uniquement les fichiers présents dans le dépôt
 const PRECACHE_URLS = [
@@ -11,6 +11,7 @@ const PRECACHE_URLS = [
   './js/formatter.js',
   './js/ics.js',
   './js/pdf-viewer.js',
+  './js/rosary.js',
   './js/sync.js',
   './fonts/GreatVibes-Regular.ttf',
   './vendor/pdf.min.js',

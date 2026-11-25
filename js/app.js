@@ -18,6 +18,7 @@ import { formatPrayerContent, stripFormattingForPreview } from './formatter.js';
 import { downloadNovenaIcs, buildSmsLink, buildMailtoLink, buildReminderMessage } from './ics.js';
 import { renderPdfIntoContainer, openPdfNatively } from './pdf-viewer.js';
 import { syncWithServer, deleteServerPdf } from './sync.js';
+import { ROSARY_GROUPS, getTodayRosaryGroup } from './rosary.js';
 
 const FONT_SIZE_KEY = 'mpq_font_size_px';
 const NOTIF_LOG_KEY = 'mpq_notified_today';
@@ -35,6 +36,7 @@ const state = {
   editingPrayer: false,
   fontSizePx: Number(localStorage.getItem(FONT_SIZE_KEY)) || 15.5,
   pdfScale: 1,
+  rosaryFilter: 'all',
   syncStatus: navigator.onLine ? 'idle' : 'offline'
 };
 
@@ -123,6 +125,7 @@ function showView(name) {
   $('view-prayer').classList.toggle('hidden', name !== 'prayer');
   $('view-novena').classList.toggle('hidden', name !== 'novena');
   $('view-intentions').classList.toggle('hidden', name !== 'intentions');
+  $('view-rosary').classList.toggle('hidden', name !== 'rosary');
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -189,6 +192,9 @@ function renderList() {
   } else {
     $('intentions-home-sub').textContent = 'Carnet de toutes mes intentions';
   }
+
+  const todayRosary = getTodayRosaryGroup();
+  $('rosary-home-sub').textContent = `Aujourd'hui : ${todayRosary.title}`;
 
   const isPrayers = state.activeTab === 'prayers';
   $('tab-prayers').classList.toggle('active', isPrayers);
@@ -1000,6 +1006,102 @@ async function exportIntentionsFile() {
 }
 
 /* =========================================================
+   VUE « MYSTÈRES DU CHAPELET »
+   ========================================================= */
+function openRosaryView(filterKey = 'all') {
+  state.rosaryFilter = filterKey;
+  showView('rosary');
+  renderRosaryView();
+}
+
+function renderRosaryView() {
+  const todayGroup = getTodayRosaryGroup();
+  $('rosary-today-banner').textContent = `Aujourd'hui (${todayGroup.daysLabel}) : ${todayGroup.title}`;
+
+  document.querySelectorAll('.rosary-pill').forEach((btn) => {
+    const k = btn.dataset.rosaryFilter;
+    btn.classList.toggle('active', k === state.rosaryFilter);
+    btn.classList.toggle('is-today-pill', k === todayGroup.key);
+  });
+
+  const groupsToShow = state.rosaryFilter === 'all'
+    ? ROSARY_GROUPS
+    : ROSARY_GROUPS.filter((g) => g.key === state.rosaryFilter);
+
+  const container = $('rosary-groups-container');
+  container.innerHTML = '';
+
+  for (const group of groupsToShow) {
+    const card = document.createElement('article');
+    card.className = 'prayer-sheet rosary-group-card';
+
+    const head = document.createElement('div');
+    head.className = 'rosary-group-head';
+
+    const title = document.createElement('h2');
+    title.className = 'prayer-h1 rosary-group-title';
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = `${group.roman} ${group.title}`;
+    title.appendChild(titleSpan);
+    head.appendChild(title);
+
+    const badges = document.createElement('div');
+    badges.className = 'rosary-group-badges';
+
+    const daysBadge = document.createElement('span');
+    daysBadge.className = 'rosary-days-badge';
+    daysBadge.textContent = group.daysLabel;
+    badges.appendChild(daysBadge);
+
+    if (group.key === todayGroup.key) {
+      const todayBadge = document.createElement('span');
+      todayBadge.className = 'badge-novena';
+      todayBadge.textContent = "Aujourd'hui";
+      badges.appendChild(todayBadge);
+    }
+
+    head.appendChild(badges);
+    card.appendChild(head);
+
+    for (const m of group.mysteries) {
+      const item = document.createElement('div');
+      item.className = 'rosary-mystery-item';
+
+      const mHead = document.createElement('div');
+      mHead.className = 'rosary-mystery-head';
+
+      const mTitle = document.createElement('h3');
+      mTitle.className = 'prayer-h2 rosary-mystery-title';
+      const mSpan = document.createElement('span');
+      mSpan.textContent = `${m.number}) ${m.title}`;
+      mTitle.appendChild(mSpan);
+      mHead.appendChild(mTitle);
+
+      const refPill = document.createElement('span');
+      refPill.className = 'rosary-ref-pill';
+      refPill.textContent = m.ref;
+      mHead.appendChild(refPill);
+
+      item.appendChild(mHead);
+
+      const fruitP = document.createElement('p');
+      fruitP.className = 'rosary-fruit';
+      fruitP.textContent = `Fruit du mystère : ${m.fruit}`;
+      item.appendChild(fruitP);
+
+      const medP = document.createElement('p');
+      medP.className = 'prayer-body rosary-meditation';
+      medP.textContent = m.meditation;
+      item.appendChild(medP);
+
+      card.appendChild(item);
+    }
+
+    container.appendChild(card);
+  }
+}
+
+/* =========================================================
    NOTIFICATIONS PWA LOCALES (LORSQUE SUPPORTÉ SUR iOS 16.4+)
    ========================================================= */
 async function requestAndTestPwaNotification(novena, prayerTitle, curDay) {
@@ -1153,6 +1255,25 @@ function bindEvents() {
   });
   $('intention-add-form').addEventListener('submit', handleAddIntention);
   $('btn-intentions-export').addEventListener('click', exportIntentionsFile);
+
+  // Mystères du chapelet
+  $('btn-open-rosary').addEventListener('click', () => openRosaryView('all'));
+  $('btn-rosary-back').addEventListener('click', () => {
+    showView('list');
+    renderList();
+  });
+  $('btn-rosary-today').addEventListener('click', () => {
+    const today = getTodayRosaryGroup();
+    state.rosaryFilter = today.key;
+    renderRosaryView();
+    showToast(`${today.title} (${today.daysLabel})`);
+  });
+  document.querySelectorAll('.rosary-pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.rosaryFilter = btn.dataset.rosaryFilter;
+      renderRosaryView();
+    });
+  });
 
   // Action Sheet ajout
   $('btn-add-menu').addEventListener('click', () => openSheet('sheet-add'));

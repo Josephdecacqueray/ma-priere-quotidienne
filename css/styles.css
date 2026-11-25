@@ -313,24 +313,38 @@ button:active:not(:disabled) {
 }
 
 /* =========================================================
-   BOUTON ACCUEIL « MES INTENTIONS » (LIQUID GLASS PROPRE)
+   RACCOURCIS ACCUEIL GROUPÉS (MES INTENTIONS & CHAPELET)
    ========================================================= */
-.intentions-home-card {
-  width: 100%;
+.home-shortcuts-group {
   margin-bottom: 14px;
-  padding: 12px 15px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: none;
   border-radius: 22px;
+  overflow: hidden;
   box-shadow: var(--glass-shadow);
+}
+
+.shortcut-row-btn {
+  width: 100%;
+  padding: 12px 15px;
+  background: transparent;
+  border: none;
+  border-bottom: 0.5px solid rgba(34, 28, 20, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   text-align: left;
   cursor: pointer;
+}
+
+.shortcut-row-btn:last-child {
+  border-bottom: none;
+}
+
+.shortcut-row-btn:active {
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .intentions-home-left {
@@ -341,17 +355,26 @@ button:active:not(:disabled) {
   flex: 1;
 }
 
-.intentions-icon-pill {
+.shortcut-icon-pill {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(155deg, rgba(178, 34, 34, 0.14), rgba(255, 255, 255, 0.65));
-  color: var(--accent-red);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.shortcut-icon-red {
+  background: linear-gradient(155deg, rgba(178, 34, 34, 0.14), rgba(255, 255, 255, 0.65));
+  color: var(--accent-red);
   box-shadow: 0 0 0 0.5px rgba(178, 34, 34, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.shortcut-icon-gold {
+  background: linear-gradient(155deg, rgba(184, 134, 27, 0.18), rgba(255, 255, 255, 0.68));
+  color: var(--accent-notes);
+  box-shadow: 0 0 0 0.5px rgba(184, 134, 27, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .intentions-home-text {
@@ -362,9 +385,9 @@ button:active:not(:disabled) {
 
 .intentions-home-title {
   font-family: var(--font-script);
-  font-size: 1.6rem;
+  font-size: 1.56rem;
   line-height: 1.44;
-  padding: 0.04em 0.2em 0.08em 0.06em;
+  padding: 0.04em 0.22em 0.08em 0.06em;
   color: var(--text-primary);
   overflow: visible;
 }
@@ -391,6 +414,16 @@ button:active:not(:disabled) {
   color: var(--accent-red);
   background: rgba(178, 34, 34, 0.10);
   box-shadow: 0 0 0 0.5px rgba(178, 34, 34, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.rosary-count-pill {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-notes);
+  background: rgba(184, 134, 27, 0.12);
+  box-shadow: 0 0 0 0.5px rgba(184, 134, 27, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   padding: 3px 10px;
   border-radius: 999px;
 }
@@ -1886,4 +1919,185 @@ input[type="time"].ios-input {
   border-radius: 999px;
   max-width: calc(100% - 32px);
   text-align: center;
+}
+
+/* =========================================================
+   VUE « MYSTÈRES DU CHAPELET »
+   ========================================================= */
+.nav-gold-pill {
+  background: var(--glass-gold-bg);
+  color: #fff;
+  box-shadow: var(--glass-gold-shadow);
+}
+
+.rosary-scroll-area {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rosary-header-block {
+  padding: 4px 4px 0;
+}
+
+.rosary-header-block .prayer-cover-title {
+  margin-bottom: 8px;
+}
+
+.rosary-today-subtitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.rosary-filter-scroll {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 2px 0 4px;
+}
+
+.rosary-pill {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rosary-pill.is-today-pill::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green);
+}
+
+.rosary-pill.active.is-today-pill::after {
+  background: #fff;
+}
+
+.rosary-groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rosary-group-card {
+  padding-top: 18px;
+  padding-bottom: 22px;
+}
+
+.rosary-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 14px;
+}
+
+.rosary-group-title {
+  margin: 0;
+  margin-left: 0 !important;
+}
+
+.rosary-group-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rosary-days-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--glass-bg-subtle);
+  box-shadow: 0 0 0 0.5px rgba(34, 28, 20, 0.08);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.rosary-mystery-item {
+  padding: 12px 0 14px;
+  border-top: 0.5px solid rgba(34, 28, 20, 0.08);
+}
+
+.rosary-mystery-item:first-child {
+  border-top: none;
+  padding-top: 2px;
+}
+
+.rosary-mystery-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rosary-mystery-title {
+  margin: 0;
+  margin-left: 0 !important;
+  flex: 1;
+}
+
+.rosary-ref-pill {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent-green);
+  background: rgba(30, 126, 52, 0.09);
+  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.2);
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-top: 8px;
+}
+
+.rosary-fruit {
+  margin: 0 0 6px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.rosary-meditation {
+  margin: 0;
+  font-size: 14.8px;
+  line-height: 1.42;
+}
+
+.rosary-guide-card {
+  padding: 14px 16px;
+}
+
+.rosary-guide-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rosary-guide-summary::-webkit-details-marker {
+  display: none;
+}
+
+.rosary-guide-summary::after {
+  content: '›';
+  font-size: 20px;
+  color: var(--accent-notes);
+  transition: transform 0.2s ease;
+}
+
+.rosary-guide-card[open] .rosary-guide-summary::after {
+  transform: rotate(90deg);
+}
+
+.rosary-guide-body {
+  margin-top: 12px;
+  font-size: 14.5px;
 }
