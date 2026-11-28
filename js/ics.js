@@ -54,7 +54,7 @@ export function generateNovenaIcs(novena, prayerTitle = '', appUrl = '') {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Ma priere quotidienne//PWA iPhone//FR',
+    'PRODID:-//Ma priere quotidienne//PWA//FR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',

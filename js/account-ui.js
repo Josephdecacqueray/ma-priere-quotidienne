@@ -1,8 +1,9 @@
 /* =========================================================
-   INTERFACE COMPTE, SESSIONS MULTI-APPAREILS & 5 Go GOOGLE DRIVE
-   - Chargée dynamiquement uniquement à l'ouverture de #sheet-account
+   INTERFACE COMPTE SIMPLE, MOT DE PASSE OUBLIÉ & APPAREILS
+   - Création / Connexion ultra-simple : e-mail + mot de passe uniquement
+   - Mode « Mot de passe oublié ? » intégré (clé de récupération 160 bits)
+   - Aucune option technique serveur/OAuth exposée aux utilisateurs
    - Zéro innerHTML sur données utilisateur ou externes (DOM pur)
-   - Formulaires standard autocomplete="username" / password (Trousseau iCloud / Face ID)
    ========================================================= */
 
 import {
@@ -15,14 +16,8 @@ import {
   revokeSession,
   logoutAccount
 } from './auth.js';
-import {
-  getApiBaseUrl,
-  setCustomApiBaseUrl,
-  getGoogleClientId,
-  setCustomGoogleClientId,
-  fetchServerConfig
-} from './config.js';
-import { getLocalStorageStats, requestPersistentStorage } from './db.js';
+import { getApiBaseUrl, fetchServerConfig } from './config.js';
+import { getLocalStorageStats, getBackupWitness, requestPersistentStorage } from './db.js';
 import {
   isDriveSyncEnabled,
   isDriveConfigured,
@@ -31,7 +26,7 @@ import {
   syncAllMediaWithDrive
 } from './drive-sync.js';
 
-let activeTab = 'login';
+let activeMode = 'login'; // 'login' | 'register' | 'forgot'
 let pendingRecoveryKey = '';
 let turnstileToken = '';
 let turnstileWidgetId = null;
@@ -61,7 +56,7 @@ function formatSize(bytes) {
 }
 
 function formatDateTime(ts) {
-  if (!ts) return '—';
+  if (!ts) return 'jamais';
   try {
     return new Date(ts).toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -112,104 +107,70 @@ async function mountTurnstileIfNeeded(slotEl) {
   }
 }
 
-function buildAdvancedServerDetails(container) {
-  const details = el('details', 'account-advanced-details');
-  details.id = 'account-server-details';
-  if (!getApiBaseUrl()) details.open = true;
-  const summary = el('summary', 'account-advanced-summary', 'Configuration du serveur Cloudflare (avancé)');
-  summary.id = 'account-server-summary';
-  details.appendChild(summary);
-
-  const box = el('div', 'account-advanced-body');
-  box.appendChild(
-    el(
-      'p',
-      'field-help',
-      'Indiquez l’URL de votre Cloudflare Worker (ex. https://ma-priere-api.votre-compte.workers.dev) pour activer la synchronisation multi-appareils 0 €.'
-    )
-  );
-
-  const urlInput = el('input', 'ios-input');
-  urlInput.id = 'account-server-url-input';
-  urlInput.type = 'url';
-  urlInput.placeholder = 'https://ma-priere-api.exemple.workers.dev';
-  urlInput.value = getApiBaseUrl();
-  urlInput.setAttribute('aria-label', 'URL du serveur Cloudflare Worker');
-  box.appendChild(urlInput);
-
-  const saveUrlBtn = el('button', 'btn-outline-ios', 'Enregistrer l’adresse du serveur');
-  saveUrlBtn.id = 'btn-account-server-save';
-  saveUrlBtn.type = 'button';
-  saveUrlBtn.addEventListener('click', async () => {
-    const saved = setCustomApiBaseUrl(urlInput.value);
-    if (urlInput.value.trim() && !saved) {
-      hostCallbacks.showToast('Adresse invalide (HTTPS requis).');
-      return;
-    }
-    hostCallbacks.showToast(saved ? 'Serveur Cloudflare enregistré ✓' : 'Adresse serveur effacée');
-    await renderAccountSheet();
-  });
-  box.appendChild(saveUrlBtn);
-  details.appendChild(box);
-  container.appendChild(details);
-}
-
 async function renderGuestView(body) {
   const apiUrl = getApiBaseUrl();
 
-  const intro = el('div', 'info-block');
-  intro.appendChild(el('h3', '', 'Mode local & Compte gratuit'));
-  intro.appendChild(
-    el(
-      'p',
-      'field-help',
-      'Vous pouvez utiliser toute l’application librement sans compte. Connectez-vous pour retrouver vos prières, neuvaines et intentions sur tous vos appareils : vos données locales seront fusionnées sans perte.'
-    )
-  );
-  intro.appendChild(
-    el(
-      'p',
-      'field-help account-pwa-note',
-      'Connexion persistante 180 jours (compatible Trousseau iCloud / Face ID). En mode avion, votre session reste ouverte.'
-    )
-  );
-  body.appendChild(intro);
-
-  if (!apiUrl) {
-    const warn = el('div', 'account-notice-card');
-    warn.appendChild(el('strong', '', 'Serveur Cloudflare non encore relié'));
-    warn.appendChild(
+  if (activeMode !== 'forgot') {
+    const intro = el('div', 'info-block');
+    intro.appendChild(el('h3', '', 'Mon compte gratuit'));
+    intro.appendChild(
       el(
         'p',
         'field-help',
-        'L’application fonctionne déjà à 100 % hors connexion sur cet appareil. Pour activer la synchronisation cloud gratuite, déployez le Worker puis renseignez son URL ci-dessous.'
+        'Connectez-vous ou créez un compte en 10 secondes pour retrouver vos prières, neuvaines et intentions sur tous vos appareils. Vos données déjà enregistrées sur cet appareil seront fusionnées sans perte.'
       )
     );
-    body.appendChild(warn);
-  }
+    intro.appendChild(
+      el(
+        'p',
+        'field-help account-pwa-note',
+        'Session persistante 180 jours · utilisable en mode avion sans reconnexion.'
+      )
+    );
+    body.appendChild(intro);
 
-  // Onglets Connexion / Créer un compte / Récupération
-  const tabs = el('div', 'segmented-control account-tabs');
-  tabs.setAttribute('role', 'tablist');
-  [
-    { id: 'login', label: 'Connexion' },
-    { id: 'register', label: 'Créer un compte' },
-    { id: 'recover', label: 'Récupérer' }
-  ].forEach((t) => {
-    const b = el('button', `segment-btn${activeTab === t.id ? ' active' : ''}`, t.label);
-    b.type = 'button';
-    b.dataset.accountTab = t.id;
-    b.addEventListener('click', () => {
-      activeTab = t.id;
+    // 2 onglets simples : Connexion | Créer un compte
+    const tabs = el('div', 'segmented-control account-tabs-two');
+    tabs.setAttribute('role', 'tablist');
+    [
+      { id: 'login', label: 'Connexion' },
+      { id: 'register', label: 'Créer un compte' }
+    ].forEach((t) => {
+      const b = el('button', `segment-btn${activeMode === t.id ? ' active' : ''}`, t.label);
+      b.type = 'button';
+      b.dataset.accountTab = t.id;
+      b.addEventListener('click', () => {
+        activeMode = t.id;
+        renderAccountSheet();
+      });
+      tabs.appendChild(b);
+    });
+    body.appendChild(tabs);
+  } else {
+    const backBtn = el('button', 'account-back-link', '← Retour à la connexion');
+    backBtn.id = 'btn-forgot-back';
+    backBtn.type = 'button';
+    backBtn.addEventListener('click', () => {
+      activeMode = 'login';
       renderAccountSheet();
     });
-    tabs.appendChild(b);
-  });
-  body.appendChild(tabs);
+    body.appendChild(backBtn);
+  }
 
   const card = el('div', 'info-block');
+  if (activeMode === 'forgot') {
+    card.appendChild(el('h3', '', 'Mot de passe oublié'));
+    card.appendChild(
+      el(
+        'p',
+        'field-help',
+        'Saisissez votre adresse e-mail, la clé de récupération fournie lors de la création de votre compte, puis choisissez un nouveau mot de passe.'
+      )
+    );
+  }
+
   const form = el('form', 'account-form');
-  form.id = `account-form-${activeTab}`;
+  form.id = activeMode === 'forgot' ? 'account-form-recover' : `account-form-${activeMode}`;
 
   const errBox = el('p', 'account-error-msg hidden');
   errBox.id = 'account-error-msg';
@@ -230,16 +191,16 @@ async function renderGuestView(body) {
   form.appendChild(emailField);
 
   let recoveryInput = null;
-  if (activeTab === 'recover') {
+  if (activeMode === 'forgot') {
     const recField = el('div', 'form-field');
-    const recLabel = el('label', 'field-label', 'Clé de récupération (notée lors de l’inscription)');
+    const recLabel = el('label', 'field-label', 'Clé de récupération');
     recLabel.htmlFor = 'acc-recovery-input';
     recoveryInput = el('input', 'ios-input account-mono-input');
     recoveryInput.id = 'acc-recovery-input';
     recoveryInput.type = 'text';
     recoveryInput.required = true;
     recoveryInput.autocomplete = 'off';
-    recoveryInput.placeholder = 'XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX';
+    recoveryInput.placeholder = 'XXXX-XXXX-XXXX-XXXX…';
     recField.append(recLabel, recoveryInput);
     form.appendChild(recField);
   }
@@ -248,7 +209,7 @@ async function renderGuestView(body) {
   const pwLabel = el(
     'label',
     'field-label',
-    activeTab === 'recover' ? 'Nouveau mot de passe (10 caractères min.)' : 'Mot de passe'
+    activeMode === 'forgot' ? 'Nouveau mot de passe (10 caractères min.)' : 'Mot de passe'
   );
   pwLabel.htmlFor = 'acc-password-input';
   const pwInput = el('input', 'ios-input');
@@ -256,13 +217,13 @@ async function renderGuestView(body) {
   pwInput.name = 'password';
   pwInput.type = 'password';
   pwInput.required = true;
-  pwInput.minLength = activeTab === 'login' ? 1 : 10;
-  pwInput.autocomplete = activeTab === 'login' ? 'current-password' : 'new-password';
-  pwInput.placeholder = activeTab === 'login' ? 'Votre mot de passe' : 'Au moins 10 caractères';
+  pwInput.minLength = activeMode === 'login' ? 1 : 10;
+  pwInput.autocomplete = activeMode === 'login' ? 'current-password' : 'new-password';
+  pwInput.placeholder = activeMode === 'login' ? 'Votre mot de passe' : 'Au moins 10 caractères';
   pwField.append(pwLabel, pwInput);
-  if (activeTab !== 'login') {
+  if (activeMode !== 'login') {
     pwField.appendChild(
-      el('p', 'field-help', 'Choisissez une phrase secrète personnelle d’au moins 10 caractères. Votre iPhone pourra l’enregistrer avec Face ID.')
+      el('p', 'field-help', 'Choisissez au moins 10 caractères. Votre appareil pourra enregistrer ce mot de passe automatiquement.')
     );
   }
   form.appendChild(pwField);
@@ -274,9 +235,9 @@ async function renderGuestView(body) {
   const submitBtn = el(
     'button',
     'btn-primary-ios',
-    activeTab === 'login'
+    activeMode === 'login'
       ? 'Se connecter'
-      : activeTab === 'register'
+      : activeMode === 'register'
         ? 'Créer mon compte gratuit'
         : 'Réinitialiser mon mot de passe'
   );
@@ -284,6 +245,25 @@ async function renderGuestView(body) {
   submitBtn.type = 'submit';
   if (!apiUrl) submitBtn.disabled = true;
   form.appendChild(submitBtn);
+
+  if (activeMode === 'login') {
+    const forgotBtn = el('button', 'account-forgot-link', 'Mot de passe oublié ?');
+    forgotBtn.id = 'btn-open-forgot-password';
+    forgotBtn.type = 'button';
+    forgotBtn.addEventListener('click', () => {
+      activeMode = 'forgot';
+      renderAccountSheet();
+    });
+    form.appendChild(forgotBtn);
+  } else if (activeMode === 'forgot') {
+    form.appendChild(
+      el(
+        'p',
+        'field-help',
+        'Clé de récupération perdue ? Votre carnet reste accessible localement sur cet appareil : exportez une sauvegarde (.json) depuis les informations puis importez-la dans un nouveau compte.'
+      )
+    );
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -301,14 +281,14 @@ async function renderGuestView(body) {
     submitBtn.textContent = 'Connexion en cours…';
 
     try {
-      if (activeTab === 'login') {
+      if (activeMode === 'login') {
         await loginAccount({
           email: emailInput.value.trim(),
           password: pwInput.value,
           turnstileToken
         });
-        hostCallbacks.showToast('Connecté ✓ Fusion de vos données…');
-      } else if (activeTab === 'register') {
+        hostCallbacks.showToast('Connecté ✓ Synchronisation en cours…');
+      } else if (activeMode === 'register') {
         const res = await registerAccount({
           email: emailInput.value.trim(),
           password: pwInput.value,
@@ -324,6 +304,7 @@ async function renderGuestView(body) {
           turnstileToken
         });
         pendingRecoveryKey = res.recoveryKey || '';
+        activeMode = 'login';
         hostCallbacks.showToast('Mot de passe réinitialisé ✓');
       }
 
@@ -344,26 +325,23 @@ async function renderGuestView(body) {
   card.appendChild(form);
   body.appendChild(card);
 
-  // Stockage local + option Drive même avant connexion
-  await appendStorageAndDriveCard(body);
-  buildAdvancedServerDetails(body);
-
-  if (activeTab !== 'login' && apiUrl) {
+  if (activeMode !== 'login' && apiUrl) {
     mountTurnstileIfNeeded(tsSlot);
   }
 }
 
 async function appendStorageAndDriveCard(body) {
-  const stats = await getLocalStorageStats();
+  const [stats, witness] = await Promise.all([getLocalStorageStats(), getBackupWitness()]);
   const driveCard = el('div', 'info-block');
-  driveCard.appendChild(el('h3', '', 'PDF & Photos (jusqu’à 5 Go)'));
+  driveCard.appendChild(el('h3', '', 'PDF, Photos & Sauvegarde'));
 
-  const summary = el(
-    'p',
-    'field-help',
-    `Stockage local : ${stats.mediaCount} fichier${stats.mediaCount > 1 ? 's' : ''} (${formatSize(stats.mediaBytes)}) conservé${stats.mediaCount > 1 ? 's' : ''} hors-ligne sur cet appareil${stats.persisted ? ' · stockage persistant activé ✓' : ''}.`
+  driveCard.appendChild(
+    el(
+      'p',
+      'field-help',
+      `Stockage local : ${stats.mediaCount} fichier${stats.mediaCount > 1 ? 's' : ''} (${formatSize(stats.mediaBytes)}) conservé${stats.mediaCount > 1 ? 's' : ''} hors connexion sur cet appareil${stats.persisted ? ' · stockage persistant activé ✓' : ''}.`
+    )
   );
-  driveCard.appendChild(summary);
 
   if (stats.quotaBytes > 0) {
     const pct = Math.min(100, Math.round((stats.usageBytes / stats.quotaBytes) * 100));
@@ -372,100 +350,73 @@ async function appendStorageAndDriveCard(body) {
     const fill = el('div', 'progress-fill');
     fill.style.width = `${Math.max(2, pct)}%`;
     track.appendChild(fill);
-    const capLabel = el('span', 'storage-bar-label', `${formatSize(stats.usageBytes)} / ${formatSize(stats.quotaBytes)} dispo navigateur`);
+    const capLabel = el('span', 'storage-bar-label', `${formatSize(stats.usageBytes)} / ${formatSize(stats.quotaBytes)} disponibles sur cet appareil`);
     barWrap.append(track, capLabel);
     driveCard.appendChild(barWrap);
   }
 
-  driveCard.appendChild(
-    el(
-      'p',
-      'field-help',
-      'Pour synchroniser jusqu’à 5 Go de PDF et photos entre vos appareils à 0 €, reliez votre Google Drive personnel (dossier privé caché de l’application uniquement, aucun accès à vos autres fichiers).'
-    )
-  );
+  const witnessLines = [];
+  if (witness.lastSyncAt) witnessLines.push(`Synchro cloud : ${formatDateTime(witness.lastSyncAt)}`);
+  if (witness.lastDriveSyncAt) witnessLines.push(`Google Drive : ${formatDateTime(witness.lastDriveSyncAt)}`);
+  witnessLines.push(`Export .json : ${formatDateTime(witness.lastBackupExportAt)}`);
+  driveCard.appendChild(el('p', 'field-help backup-witness-inline', witnessLines.join(' · ')));
 
-  const driveEnabled = isDriveSyncEnabled();
-  const stack = el('div', 'info-btn-stack');
+  if (isDriveConfigured()) {
+    const driveEnabled = isDriveSyncEnabled();
+    const stack = el('div', 'info-btn-stack');
 
-  const toggleDriveBtn = el(
-    'button',
-    driveEnabled ? 'btn-secondary-ios' : 'btn-primary-ios',
-    driveEnabled
-      ? `Google Drive personnel relié (${stats.driveSyncedCount}/${stats.mediaCount} synchronisés)`
-      : 'Synchroniser mes PDF sur mon Google Drive personnel'
-  );
-  toggleDriveBtn.id = 'btn-drive-connect';
-  toggleDriveBtn.type = 'button';
-  toggleDriveBtn.addEventListener('click', async () => {
-    if (!navigator.onLine) {
-      hostCallbacks.showToast('Connexion Internet requise pour relier Google Drive.');
-      return;
-    }
-    if (!isDriveConfigured()) {
-      hostCallbacks.showToast('Ajoutez d’abord un Client ID Google OAuth dans le bloc ci-dessous.');
-      return;
-    }
-    toggleDriveBtn.disabled = true;
-    try {
-      await connectGoogleDrive({ prompt: driveEnabled ? '' : 'consent' });
-      const res = await syncAllMediaWithDrive();
-      await hostCallbacks.onSynced();
-      hostCallbacks.showToast(
-        res.uploaded > 0
-          ? `${res.uploaded} fichier${res.uploaded > 1 ? 's' : ''} envoyé${res.uploaded > 1 ? 's' : ''} sur votre Google Drive ✓`
-          : 'Google Drive personnel prêt ✓'
-      );
-      await renderAccountSheet();
-    } catch (err) {
-      hostCallbacks.showToast(err?.message === 'GOOGLE_CLIENT_ID_MISSING'
-        ? 'Client ID Google OAuth non configuré.'
-        : (err?.message || 'Connexion Google Drive annulée.'));
-      toggleDriveBtn.disabled = false;
-    }
-  });
-  stack.appendChild(toggleDriveBtn);
-
-  if (driveEnabled) {
-    const disconnectBtn = el('button', 'btn-outline-ios', 'Déconnecter Google Drive');
-    disconnectBtn.id = 'btn-drive-disconnect';
-    disconnectBtn.type = 'button';
-    disconnectBtn.addEventListener('click', async () => {
-      disconnectGoogleDrive();
-      await hostCallbacks.onSynced();
-      hostCallbacks.showToast('Synchronisation Google Drive désactivée');
-      await renderAccountSheet();
+    const toggleDriveBtn = el(
+      'button',
+      driveEnabled ? 'btn-secondary-ios' : 'btn-primary-ios',
+      driveEnabled
+        ? `Google Drive personnel relié (${stats.driveSyncedCount}/${stats.mediaCount} synchronisés)`
+        : 'Synchroniser mes PDF sur mon Google Drive personnel'
+    );
+    toggleDriveBtn.id = 'btn-drive-connect';
+    toggleDriveBtn.type = 'button';
+    toggleDriveBtn.addEventListener('click', async () => {
+      if (!navigator.onLine) {
+        hostCallbacks.showToast('Connexion Internet requise pour relier Google Drive.');
+        return;
+      }
+      toggleDriveBtn.disabled = true;
+      try {
+        await connectGoogleDrive({ prompt: driveEnabled ? '' : 'consent' });
+        const res = await syncAllMediaWithDrive();
+        await hostCallbacks.onSynced();
+        hostCallbacks.showToast(
+          res.uploaded > 0
+            ? `${res.uploaded} fichier${res.uploaded > 1 ? 's' : ''} envoyé${res.uploaded > 1 ? 's' : ''} sur votre Google Drive ✓`
+            : 'Google Drive personnel prêt ✓'
+        );
+        await renderAccountSheet();
+      } catch (err) {
+        hostCallbacks.showToast(err?.message || 'Connexion Google Drive annulée.');
+        toggleDriveBtn.disabled = false;
+      }
     });
-    stack.appendChild(disconnectBtn);
-  }
+    stack.appendChild(toggleDriveBtn);
 
-  driveCard.appendChild(stack);
+    if (driveEnabled) {
+      const disconnectBtn = el('button', 'btn-outline-ios', 'Déconnecter Google Drive');
+      disconnectBtn.id = 'btn-drive-disconnect';
+      disconnectBtn.type = 'button';
+      disconnectBtn.addEventListener('click', async () => {
+        disconnectGoogleDrive();
+        await hostCallbacks.onSynced();
+        hostCallbacks.showToast('Synchronisation Google Drive désactivée');
+        await renderAccountSheet();
+      });
+      stack.appendChild(disconnectBtn);
+    }
 
-  if (!isDriveConfigured()) {
-    const gDet = el('details', 'account-advanced-details');
-    gDet.appendChild(el('summary', 'account-advanced-summary', 'Configurer le Client ID Google OAuth (optionnel)'));
-    const gBox = el('div', 'account-advanced-body');
-    const gInput = el('input', 'ios-input');
-    gInput.type = 'text';
-    gInput.placeholder = '1234567890-xxxx.apps.googleusercontent.com';
-    gInput.value = getGoogleClientId();
-    const gSave = el('button', 'btn-outline-ios', 'Enregistrer le Client ID Google');
-    gSave.type = 'button';
-    gSave.addEventListener('click', async () => {
-      setCustomGoogleClientId(gInput.value);
-      hostCallbacks.showToast('Client ID Google enregistré ✓');
-      await renderAccountSheet();
-    });
-    gBox.append(gInput, gSave);
-    gDet.appendChild(gBox);
-    driveCard.appendChild(gDet);
+    driveCard.appendChild(stack);
   }
 
   body.appendChild(driveCard);
 }
 
 async function renderSignedInView(body, authState) {
-  // Bannière clé de récupération affichée UNE SEULE FOIS après inscription/récupération
   if (pendingRecoveryKey) {
     const keyCard = el('div', 'recovery-key-card');
     keyCard.id = 'recovery-key-banner';
@@ -474,7 +425,7 @@ async function renderSignedInView(body, authState) {
       el(
         'p',
         'field-help',
-        'Conservez cette clé dans un endroit sûr (ex. Notes sécurisées ou gestionnaire de mots de passe). Elle permet de récupérer votre compte sans jamais exposer vos données.'
+        'Conservez cette clé en lieu sûr (ex. gestionnaire de mots de passe ou note sécurisée) : elle sert en cas de mot de passe oublié.'
       )
     );
     const codeEl = el('code', 'recovery-key-code', pendingRecoveryKey);
@@ -503,7 +454,6 @@ async function renderSignedInView(body, authState) {
     body.appendChild(keyCard);
   }
 
-  // Carte profil & synchronisation texte
   const profileCard = el('div', 'info-block');
   profileCard.appendChild(el('h3', '', 'Mon compte'));
   profileCard.appendChild(el('p', 'account-email-line', authState.user?.email || 'Compte connecté'));
@@ -543,6 +493,7 @@ async function renderSignedInView(body, authState) {
       return;
     }
     pendingRecoveryKey = '';
+    activeMode = 'login';
     await logoutAccount();
     hostCallbacks.onStatusChange('local');
     hostCallbacks.showToast('Déconnecté');
@@ -553,10 +504,8 @@ async function renderSignedInView(body, authState) {
   profileCard.appendChild(btnStack);
   body.appendChild(profileCard);
 
-  // Stockage 5 Go PDF / Google Drive
   await appendStorageAndDriveCard(body);
 
-  // Liste des appareils connectés
   const sessionsCard = el('div', 'info-block');
   sessionsCard.appendChild(el('h3', '', 'Appareils connectés'));
   const sessionsList = el('div', 'sessions-list');
@@ -566,7 +515,6 @@ async function renderSignedInView(body, authState) {
   sessionsCard.appendChild(sessionsList);
   body.appendChild(sessionsCard);
 
-  // Changement de mot de passe
   const pwDetails = el('details', 'account-advanced-details');
   pwDetails.appendChild(el('summary', 'account-advanced-summary', 'Changer mon mot de passe'));
   const pwForm = el('form', 'account-advanced-body');
@@ -601,7 +549,6 @@ async function renderSignedInView(body, authState) {
   pwDetails.appendChild(pwForm);
   body.appendChild(pwDetails);
 
-  // Charger les sessions & quota D1 en direct si en ligne
   if (navigator.onLine) {
     try {
       const data = await listSessions();
@@ -673,7 +620,7 @@ export async function renderAccountSheet() {
   const authState = getAuthState();
   const titleEl = $('sheet-account-title');
   if (titleEl) {
-    titleEl.textContent = authState.signedIn ? 'Mon compte & Synchro' : 'Compte & Synchronisation';
+    titleEl.textContent = authState.signedIn ? 'Mon compte & Synchro' : 'Compte';
   }
 
   if (authState.signedIn) {
@@ -685,5 +632,6 @@ export async function renderAccountSheet() {
 
 export async function openAccountSheet(callbacks = {}) {
   hostCallbacks = { ...hostCallbacks, ...callbacks };
+  if (activeMode === 'forgot') activeMode = 'login';
   await renderAccountSheet();
 }

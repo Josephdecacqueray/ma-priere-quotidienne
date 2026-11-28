@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.workers.dev https://www.googleapis.com https://accounts.google.com https://challenges.cloudflare.com http://127.0.0.1:* http://localhost:*; frame-src https://challenges.cloudflare.com https://accounts.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Ma prière quotidienne</title>
-  <meta name="description" content="Carnet de prières hors-ligne (notes, PDF, photos), chapelet interactif, intentions et neuvaines pour iPhone.">
+  <meta name="description" content="Carnet de prières hors connexion (notes, PDF, photos), chapelet interactif, intentions et neuvaines pour mobile et ordinateur.">
 
   <!-- iOS / PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,23 +23,29 @@
   <div id="app" class="app-shell">
 
     <!-- =========================================================
-         VUE 1 : LISTE PRINCIPALE (LIQUID GLASS iOS 26/27)
+         VUE 1 : ACCUEIL, CARNET & NEUVAINES (LIQUID GLASS)
          ========================================================= -->
-    <section id="view-list" class="view view-active" aria-label="Accueil du carnet">
+    <section id="view-list" class="view view-active" aria-label="Espace principal">
       <header class="ios-header ios-header-large">
         <div class="header-top-row">
-          <button id="sync-status-btn" class="status-pill" type="button" title="Synchronisation iPhone & serveur">
+          <button id="sync-status-btn" class="status-pill" type="button" title="Compte et synchronisation">
             <span class="status-dot" aria-hidden="true"></span>
-            <span id="offline-label">Hors-ligne prêt</span>
+            <span id="offline-label">Hors connexion prêt</span>
           </button>
 
           <div class="header-right-actions">
+            <button id="btn-header-search" class="icon-btn" type="button" aria-label="Rechercher dans le carnet" title="Rechercher">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
             <button id="btn-toggle-theme" class="icon-btn" type="button" aria-label="Changer de thème (Auto, Nuit, Jour)" title="Mode Jour / Nuit">
               <svg id="theme-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
             </button>
-            <button id="btn-open-info" class="icon-btn" type="button" aria-label="Installer sur iPhone, sauvegarde et informations" title="Informations & Sauvegarde">
+            <button id="btn-open-info" class="icon-btn" type="button" aria-label="Installation, hors-ligne, sauvegarde et informations" title="Informations &amp; Sauvegarde">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -49,117 +55,122 @@
           </div>
         </div>
 
-        <h1 class="app-brand-title">Ma prière quotidienne</h1>
+        <h1 id="main-brand-title" class="app-brand-title">Ma prière quotidienne</h1>
 
-        <div class="search-wrap">
+        <div id="carnet-search-wrap" class="search-wrap hidden">
           <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="search-input" type="search" class="search-input" placeholder="Rechercher prière, intention, mystère…" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher">
+          <input id="search-input" type="search" class="search-input" placeholder="Rechercher par mot-clé (prière, dossier, intention, mystère)…" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher par mot-clé">
+          <span id="search-results-count" class="search-results-count hidden"></span>
           <button id="btn-clear-search" class="search-clear hidden" type="button" aria-label="Effacer la recherche">✕</button>
-        </div>
-
-        <div class="segmented-control" role="tablist" aria-label="Modules">
-          <button id="tab-prayers" class="segment-btn active" type="button" role="tab" aria-selected="true" data-tab="prayers">
-            Prières <span id="count-prayers-badge" class="segment-count">0</span>
-          </button>
-          <button id="tab-novenas" class="segment-btn" type="button" role="tab" aria-selected="false" data-tab="novenas">
-            Neuvaines <span id="count-novenas-badge" class="segment-count">0</span>
-          </button>
         </div>
       </header>
 
       <main class="list-content">
-        <!-- Bloc « Aujourd'hui » + Temps liturgique -->
-        <section id="today-card" class="today-card" aria-label="Aujourd'hui">
-          <div class="today-card-top">
-            <span id="today-date-label" class="today-date-label">Aujourd'hui</span>
-            <span id="liturgy-pill" class="liturgy-pill">
-              <span class="liturgy-dot" aria-hidden="true"></span>
-              <span id="liturgy-name">Temps ordinaire</span>
-            </span>
+        <!-- ONGLET 1 : ACCUEIL AÉRÉ -->
+        <div id="panel-home">
+          <!-- Bloc « Aujourd'hui » + Temps liturgique -->
+          <section id="today-card" class="today-card" aria-label="Aujourd'hui">
+            <div class="today-card-top">
+              <span id="today-date-label" class="today-date-label">Aujourd'hui</span>
+              <span id="liturgy-pill" class="liturgy-pill">
+                <span class="liturgy-dot" aria-hidden="true"></span>
+                <span id="liturgy-name">Temps ordinaire</span>
+              </span>
+            </div>
+            <div id="today-summary-links" class="today-summary-links"></div>
+            <div id="today-pinned-chips" class="today-pinned-chips hidden"></div>
+          </section>
+
+          <!-- Raccourcis essentiels (Chapelet & Neuvaines sont directement en bas) -->
+          <div id="home-shortcuts-group" class="home-shortcuts-group">
+            <button id="btn-open-intentions" class="shortcut-row-btn" type="button">
+              <div class="intentions-home-left">
+                <span class="shortcut-icon-pill shortcut-icon-red" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </span>
+                <div class="intentions-home-text">
+                  <span class="intentions-home-title">Mes intentions</span>
+                  <span id="intentions-home-sub" class="intentions-home-sub">Carnet de toutes mes intentions</span>
+                </div>
+              </div>
+              <div class="intentions-home-right">
+                <span id="count-intentions-badge" class="intentions-count-pill">0</span>
+                <span class="chevron" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </span>
+              </div>
+            </button>
+
+            <button id="btn-open-la-priere" class="shortcut-row-btn" type="button">
+              <div class="intentions-home-left">
+                <span class="shortcut-icon-pill shortcut-icon-green" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                  </svg>
+                </span>
+                <div class="intentions-home-text">
+                  <span class="intentions-home-title">La prière</span>
+                  <span class="intentions-home-sub">CEC, saint Thomas &amp; guides</span>
+                </div>
+              </div>
+              <div class="intentions-home-right">
+                <span class="lp-count-pill">66</span>
+                <span class="chevron" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </span>
+              </div>
+            </button>
           </div>
-          <div id="today-summary-links" class="today-summary-links"></div>
-          <div id="today-pinned-chips" class="today-pinned-chips hidden"></div>
-        </section>
 
-        <!-- Résultats de recherche globale (intentions + mystères du chapelet) -->
-        <section id="global-search-results" class="global-search-results hidden" aria-label="Autres résultats"></section>
+          <!-- Aperçu rapide des prières récentes -->
+          <section id="home-recent-section" class="home-recent-section" aria-label="Prières récentes">
+            <div class="home-section-head">
+              <h2 class="section-heading-script home-section-title">Prières récentes</h2>
+              <button id="btn-home-open-carnet" class="home-see-all-btn" type="button">
+                <span id="home-carnet-count-label">Tout voir</span> ›
+              </button>
+            </div>
+            <div id="home-recent-list" class="notes-group"></div>
+          </section>
 
-        <!-- Raccourcis d'accueil groupés style Liquid Glass -->
-        <div id="home-shortcuts-group" class="home-shortcuts-group">
-          <button id="btn-open-intentions" class="shortcut-row-btn" type="button">
-            <div class="intentions-home-left">
-              <span class="shortcut-icon-pill shortcut-icon-red" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          <!-- Pied de page discret Liquid Glass : Contact privé, Partage & Témoin sauvegarde -->
+          <div class="home-discrete-footer" aria-label="Assistance, partage et sauvegarde">
+            <div class="home-footer-links">
+              <button id="btn-open-feedback" class="home-footer-btn" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
-              </span>
-              <div class="intentions-home-text">
-                <span class="intentions-home-title">Mes intentions</span>
-                <span id="intentions-home-sub" class="intentions-home-sub">Carnet de toutes mes intentions</span>
-              </div>
-            </div>
-            <div class="intentions-home-right">
-              <span id="count-intentions-badge" class="intentions-count-pill">0</span>
-              <span class="chevron" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
+                <span>Signaler un bug ou suggérer une amélioration</span>
+              </button>
+              <button id="btn-share-app" class="home-footer-btn" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
                 </svg>
-              </span>
+                <span>Partager l’application</span>
+              </button>
             </div>
-          </button>
-
-          <button id="btn-open-rosary" class="shortcut-row-btn" type="button">
-            <div class="intentions-home-left">
-              <span class="shortcut-icon-pill shortcut-icon-gold" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 3v18"></path>
-                  <path d="M7 8h10"></path>
-                </svg>
-              </span>
-              <div class="intentions-home-text">
-                <span class="intentions-home-title">Mystères du chapelet</span>
-                <span id="rosary-home-sub" class="intentions-home-sub">Joyeux, lumineux, douloureux, glorieux</span>
-              </div>
-            </div>
-            <div class="intentions-home-right">
-              <span class="rosary-count-pill">20</span>
-              <span class="chevron" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </span>
-            </div>
-          </button>
-
-          <button id="btn-open-la-priere" class="shortcut-row-btn" type="button">
-            <div class="intentions-home-left">
-              <span class="shortcut-icon-pill shortcut-icon-green" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                </svg>
-              </span>
-              <div class="intentions-home-text">
-                <span class="intentions-home-title">La prière</span>
-                <span class="intentions-home-sub">CEC, saint Thomas &amp; guides</span>
-              </div>
-            </div>
-            <div class="intentions-home-right">
-              <span class="lp-count-pill">66</span>
-              <span class="chevron" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </span>
-            </div>
-          </button>
+            <p id="home-backup-witness" class="home-backup-witness"></p>
+            <p id="home-offline-corpus-note" class="home-offline-note hidden"></p>
+          </div>
         </div>
 
-        <!-- Panneau Prières -->
-        <div id="panel-prayers">
+        <!-- ONGLET 2 : CARNET DE PRIÈRES (FILTRES + RECHERCHE INSTANTANÉE) -->
+        <div id="panel-prayers" class="hidden">
+          <!-- Résultats de recherche globale (intentions + mystères du chapelet) -->
+          <section id="global-search-results" class="global-search-results hidden" aria-label="Autres résultats"></section>
+
           <div class="filter-pills-scroll" role="group" aria-label="Filtrer par format ou dossier">
             <button class="pill-btn active" type="button" data-filter="all">Toutes</button>
             <button class="pill-btn" type="button" data-filter="pinned">Épinglées</button>
@@ -171,54 +182,21 @@
           <div id="prayers-list" class="notes-group"></div>
           <div id="prayers-empty" class="empty-state hidden">
             <p class="empty-title">Aucune prière trouvée</p>
-            <p class="empty-sub">Touchez le bouton en bas à droite pour rédiger une prière, importer un PDF ou prendre une photo.</p>
+            <p class="empty-sub">Touchez le bouton + en bas à droite pour rédiger une prière, importer un PDF ou prendre une photo.</p>
           </div>
         </div>
 
-        <!-- Panneau Neuvaines -->
+        <!-- ONGLET 4 : NEUVAINES -->
         <div id="panel-novenas" class="hidden">
           <div id="novena-reminder-banner" class="reminder-banner hidden"></div>
           <div id="novenas-list" class="notes-group"></div>
           <div id="novenas-empty" class="empty-state hidden">
             <p class="empty-title">Aucune neuvaine en cours</p>
-            <p class="empty-sub">Créez un module de neuvaine pour suivre vos jours et activer un rappel quotidien (Push iPhone, Calendrier, SMS ou e-mail).</p>
+            <p class="empty-sub">Créez un module de neuvaine pour suivre vos jours et activer un rappel quotidien (notifications Push, Calendrier, SMS ou e-mail).</p>
             <button id="btn-empty-new-novena" class="btn-primary-soft" type="button">+ Créer une neuvaine</button>
           </div>
         </div>
-
-        <!-- Pied de page discret Liquid Glass : Contact privé & Partage -->
-        <div class="home-discrete-footer" aria-label="Assistance et partage">
-          <div class="home-footer-links">
-            <button id="btn-open-feedback" class="home-footer-btn" type="button">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-              <span>Signaler un bug ou suggérer une amélioration</span>
-            </button>
-            <button id="btn-share-app" class="home-footer-btn" type="button">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                <polyline points="16 6 12 2 8 6"></polyline>
-                <line x1="12" y1="2" x2="12" y2="15"></line>
-              </svg>
-              <span>Partager l’application</span>
-            </button>
-          </div>
-          <p id="home-offline-corpus-note" class="home-offline-note hidden"></p>
-        </div>
       </main>
-
-      <!-- Dock flottant Liquid Glass (pilule compteur + bulle d'action détachée) -->
-      <footer class="ios-bottom-dock">
-        <div class="dock-spacer"></div>
-        <div id="bottom-summary" class="dock-count-pill">0 prière</div>
-        <button id="btn-add-menu" class="compose-btn" type="button" aria-label="Ajouter une prière ou une neuvaine" title="Ajouter">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-        </button>
-      </footer>
     </section>
 
     <!-- =========================================================
@@ -285,7 +263,7 @@
               <span id="prayer-folder-badge" class="folder-tag hidden"></span>
             </div>
             <div class="font-size-controls" aria-label="Options de lecture">
-              <button id="btn-wake-lock" class="wake-lock-btn" type="button" title="Empêcher la mise en veille de l'iPhone">Veille off</button>
+              <button id="btn-wake-lock" class="wake-lock-btn" type="button" title="Empêcher la mise en veille de l’écran">Veille off</button>
               <button id="btn-font-smaller" type="button" aria-label="Réduire la taille du texte">A-</button>
               <button id="btn-font-larger" type="button" aria-label="Agrandir la taille du texte">A+</button>
             </div>
@@ -436,7 +414,7 @@
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
-              <span id="novena-push-toggle-label">Activer les notifications Push iPhone</span>
+              <span id="novena-push-toggle-label">Activer les notifications Push</span>
             </button>
 
             <button id="btn-novena-push-test" class="btn-outline-ios hidden" type="button">Envoyer une notification Push de test</button>
@@ -448,7 +426,7 @@
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <span>Ajouter au Calendrier iPhone (.ics)</span>
+              <span>Ajouter au Calendrier (.ics)</span>
             </button>
 
             <div class="reminder-quick-row">
@@ -468,7 +446,7 @@
             </div>
           </div>
           <p id="novena-push-note" class="ios-footnote">
-            Les notifications Push envoient un rappel directement sur votre écran verrouillé iPhone (lorsque l'app est sur l'écran d'accueil iOS 16.4+). Le fichier <strong>.ics</strong> reste disponible en secours 100% hors-ligne.
+            Les notifications Push envoient un rappel directement sur l’écran verrouillé de votre appareil (lorsque l’application est installée sur l’écran d’accueil). Le fichier <strong>.ics</strong> reste disponible en secours 100 % hors connexion.
           </p>
         </div>
       </div>
@@ -494,7 +472,7 @@
       <div class="prayer-scroll-area intentions-scroll-area">
         <article class="prayer-sheet">
           <h1 class="prayer-cover-title">Mes intentions</h1>
-          <p class="intentions-intro">Toutes vos intentions sont conservées sur votre iPhone et synchronisées automatiquement dès qu'une connexion est disponible.</p>
+          <p class="intentions-intro">Toutes vos intentions sont conservées hors connexion sur votre appareil et synchronisées automatiquement dès qu’une connexion est disponible.</p>
 
           <form id="intention-add-form" class="intentions-add-form">
             <textarea id="intention-quick-input" class="ios-input intentions-textarea" rows="2" placeholder="Écrire une nouvelle intention de prière…"></textarea>
@@ -708,7 +686,7 @@
         <div class="form-field">
           <label class="field-label" for="photo-file-input">Prendre une photo ou choisir dans la galerie</label>
           <input id="photo-file-input" type="file" accept="image/*" capture="environment" class="file-input-ios">
-          <p id="photo-file-meta" class="field-help">La photo est compressée proprement et conservée hors-ligne sur votre iPhone.</p>
+          <p id="photo-file-meta" class="field-help">La photo est compressée proprement et conservée hors connexion sur votre appareil.</p>
         </div>
 
         <div id="photo-preview-wrap" class="photo-preview-wrap hidden">
@@ -791,7 +769,7 @@
           <div class="form-field">
             <label class="field-label" for="novena-reminder-channel">Mode de notification</label>
             <select id="novena-reminder-channel" class="ios-input">
-              <option value="iphone">Notification Push &amp; Calendrier iPhone</option>
+              <option value="iphone">Notification Push &amp; Calendrier (.ics)</option>
               <option value="sms">SMS</option>
               <option value="email">E-mail</option>
             </select>
@@ -857,8 +835,8 @@
         </div>
 
         <div class="info-block">
-          <h3>Notifications Push iPhone</h3>
-          <p id="info-push-status" class="field-help">Activez les notifications Push pour recevoir les rappels de neuvaine même appli fermée.</p>
+          <h3>Notifications Push</h3>
+          <p id="info-push-status" class="field-help">Activez les notifications Push pour recevoir vos rappels de neuvaine même application fermée.</p>
           <div class="info-btn-stack">
             <button id="btn-info-push-toggle" class="btn-primary-ios" type="button">Activer les notifications Push</button>
             <button id="btn-info-push-test" class="btn-outline-ios hidden" type="button">Tester une notification Push</button>
@@ -867,7 +845,8 @@
 
         <div class="info-block">
           <h3>Sauvegarde &amp; Restauration</h3>
-          <p class="field-help">Exportez tout votre carnet en fichier <code>.json</code> ou importez une sauvegarde (y compris une sauvegarde v7).</p>
+          <p class="field-help">Exportez tout votre carnet en fichier <code>.json</code> ou importez une sauvegarde existante.</p>
+          <p id="info-backup-witness" class="field-help backup-witness-inline"></p>
           <div class="info-btn-stack">
             <button id="btn-export-backup" class="btn-secondary-ios" type="button">Exporter mon carnet (.json)</button>
             <button id="btn-import-backup" class="btn-outline-ios" type="button">Importer une sauvegarde (.json)</button>
@@ -945,6 +924,50 @@
         </form>
       </div>
     </div>
+
+    <!-- Barre de navigation fixe Liquid Glass (Accueil / Carnet / Chapelet / Neuvaines + Ajout) -->
+    <nav id="bottom-tab-bar" class="bottom-tab-dock" aria-label="Navigation principale">
+      <div class="bottom-nav-capsule" role="tablist">
+        <button type="button" class="bottom-tab-btn active" role="tab" aria-selected="true" data-nav-tab="home">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 10.5L12 3l9 7.5"></path>
+            <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"></path>
+          </svg>
+          <span>Accueil</span>
+        </button>
+        <button type="button" class="bottom-tab-btn" role="tab" aria-selected="false" data-nav-tab="carnet">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>Carnet</span>
+          <span id="count-prayers-badge" class="tab-mini-badge hidden">0</span>
+        </button>
+        <button type="button" class="bottom-tab-btn" role="tab" aria-selected="false" data-nav-tab="rosary">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3v18"></path>
+            <path d="M7 8h10"></path>
+          </svg>
+          <span>Chapelet</span>
+        </button>
+        <button type="button" class="bottom-tab-btn" role="tab" aria-selected="false" data-nav-tab="novenas">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>Neuvaines</span>
+          <span id="count-novenas-badge" class="tab-mini-badge hidden">0</span>
+        </button>
+      </div>
+      <button id="btn-add-menu" class="compose-btn bottom-compose-btn" type="button" aria-label="Ajouter une prière, un PDF, une neuvaine ou une intention" title="Ajouter">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </nav>
 
     <!-- Toast discret -->
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>

@@ -1,7 +1,7 @@
 {
   "name": "Ma prière quotidienne",
   "short_name": "Ma prière",
-  "description": "Carnet de prières (notes & PDF), intentions et neuvaines hors-ligne pour iPhone.",
+  "description": "Carnet de prières hors connexion (notes, PDF, photos), chapelet interactif, intentions et neuvaines.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

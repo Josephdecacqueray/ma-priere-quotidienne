@@ -629,12 +629,11 @@ html[data-theme="dark"] .shortcut-icon-green {
 }
 
 .intentions-home-title {
-  font-family: var(--font-script);
-  font-size: 1.56rem;
-  line-height: 1.44;
-  padding: 0.04em 0.22em 0.08em 0.06em;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
   color: var(--text-primary);
-  overflow: visible;
 }
 
 .intentions-home-sub {
@@ -855,12 +854,11 @@ html[data-theme="dark"] .lp-count-pill {
 }
 
 .note-row-title {
-  font-family: var(--font-script);
-  font-size: 1.56rem;
-  line-height: 1.44;
-  padding: 0.08em 0.24em 0.14em 0.08em;
+  font-family: var(--font-body);
+  font-size: 16.5px;
+  font-weight: 700;
+  line-height: 1.32;
   color: var(--text-primary);
-  overflow: visible;
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -1014,10 +1012,10 @@ html[data-theme="dark"] .lp-count-pill {
 }
 
 .empty-title {
-  font-family: var(--font-script);
-  font-size: 1.8rem;
-  line-height: 1.46;
-  padding: 0.08em 0.22em 0.12em;
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
   color: var(--text-primary);
   margin: 0 0 6px;
 }
@@ -1442,15 +1440,16 @@ body.focus-mode .prayer-scroll-area {
 
 .edit-title-input {
   width: 100%;
-  min-height: 64px;
+  min-height: 52px;
   border: none;
   border-bottom: 2px solid var(--accent-red);
   background: transparent;
-  font-family: var(--font-script);
-  font-size: 1.95rem;
-  line-height: 1.5;
+  font-family: var(--font-body);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.35;
   color: var(--text-primary);
-  padding: 8px 14px 12px 14px;
+  padding: 8px 10px 10px;
   outline: none;
 }
 
@@ -1669,13 +1668,11 @@ body.focus-mode .prayer-scroll-area {
 
 .linked-prayer-card strong {
   display: block;
-  font-family: var(--font-script);
-  font-size: 1.5rem;
-  font-weight: 400;
-  line-height: 1.45;
-  padding: 0.06em 0.22em 0.1em 0.06em;
+  font-family: var(--font-body);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.32;
   color: var(--text-primary);
-  overflow: visible;
 }
 
 .linked-prayer-card .chevron {
@@ -2007,11 +2004,10 @@ body.focus-mode .prayer-scroll-area {
 
 .novena-intention-link strong {
   display: block;
-  font-family: var(--font-script);
-  font-size: 1.42rem;
-  font-weight: 400;
-  line-height: 1.45;
-  padding: 0.04em 0.2em 0.08em 0.04em;
+  font-family: var(--font-body);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.32;
   color: var(--text-primary);
 }
 
@@ -2429,11 +2425,10 @@ input[type="time"].ios-input {
 }
 
 .rosary-counter-mystery {
-  font-family: var(--font-script);
-  font-size: 1.52rem;
-  font-weight: 400;
-  line-height: 1.44;
-  padding: 0.04em 0.16em 0.08em 0.04em;
+  font-family: var(--font-body);
+  font-size: 16.5px;
+  font-weight: 700;
+  line-height: 1.34;
   color: var(--text-primary);
 }
 
@@ -2658,15 +2653,15 @@ input[type="time"].ios-input {
 }
 
 .rosary-prayer-block h4 {
-  font-family: var(--font-script);
-  font-size: 1.42rem;
-  font-weight: 400;
-  line-height: 1.44;
+  font-family: var(--font-body);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.34;
   margin: 0 0 6px;
   color: var(--text-primary);
   display: inline-block;
   border-bottom: 1.5px solid var(--accent-green);
-  padding: 0.04em 0.16em 0.12em 0.04em;
+  padding: 0 2px 3px 0;
 }
 
 
@@ -2824,12 +2819,11 @@ html[data-theme="dark"] .lp-methods-hero-btn {
 }
 
 .lp-methods-title {
-  font-family: var(--font-script);
-  font-size: clamp(1.62rem, 6vw, 1.92rem);
-  line-height: 1.44;
-  padding: 0.04em 0.18em 0.08em 0.04em;
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.32;
   color: var(--text-primary);
-  overflow: visible;
 }
 
 .lp-methods-sub {
@@ -3872,4 +3866,191 @@ html[data-theme="dark"] .recovery-key-card {
 
 .status-pill.is-local .status-dot {
   background: var(--accent-notes);
+}
+
+/* =========================================================
+   v8.1 : BARRE DE NAVIGATION BASSE LIQUID GLASS, ACCUEIL AÉRÉ,
+          MOT DE PASSE OUBLIÉ & TÉMOIN DE SAUVEGARDE
+   ========================================================= */
+.bottom-tab-dock {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(12px + var(--safe-bottom));
+  width: calc(100% - 24px);
+  max-width: 704px;
+  z-index: 30;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bottom-nav-capsule {
+  pointer-events: auto;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+
+.bottom-tab-btn {
+  position: relative;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 6px 4px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.bottom-tab-btn span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.bottom-tab-btn.active {
+  background: var(--glass-gold-bg);
+  color: #fff;
+  box-shadow: var(--glass-gold-shadow);
+}
+
+.tab-mini-badge {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: rgba(184, 134, 27, 0.16);
+  color: var(--accent-notes);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.bottom-tab-btn.active .tab-mini-badge {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+.bottom-compose-btn {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+}
+
+.rosary-scroll-area {
+  padding-bottom: calc(104px + var(--safe-bottom));
+}
+
+.home-recent-section {
+  margin-top: 16px;
+}
+
+.home-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 6px;
+}
+
+.home-section-title {
+  margin: 0;
+}
+
+.home-see-all-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent-notes);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.search-results-count {
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-notes);
+  pointer-events: none;
+}
+
+.home-backup-witness {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.backup-witness-inline {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Compte simplifié & Mot de passe oublié */
+.account-tabs-two {
+  margin: 0;
+  grid-template-columns: 1fr 1fr;
+}
+
+.account-forgot-link,
+.account-back-link {
+  border: none;
+  background: transparent;
+  color: var(--accent-notes);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 6px 4px;
+  cursor: pointer;
+  align-self: center;
+}
+
+.account-back-link {
+  align-self: flex-start;
+  padding-left: 0;
+}
+
+.account-forgot-link:hover,
+.account-back-link:hover {
+  text-decoration: underline;
+}
+
+@media (min-width: 760px) {
+  .bottom-tab-dock {
+    max-width: 748px;
+  }
 }

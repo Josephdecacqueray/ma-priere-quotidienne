@@ -493,6 +493,19 @@ function dataUrlToBlob(dataUrl) {
   return new Blob([bytes], { type: mime });
 }
 
+export async function getBackupWitness() {
+  const [lastSyncAt, lastDriveSyncAt, lastBackupExportAt] = await Promise.all([
+    getMeta('lastSyncAt'),
+    getMeta('lastDriveSyncAt'),
+    getMeta('lastBackupExportAt')
+  ]);
+  return {
+    lastSyncAt: Number(lastSyncAt) || 0,
+    lastDriveSyncAt: Number(lastDriveSyncAt) || 0,
+    lastBackupExportAt: Number(lastBackupExportAt) || 0
+  };
+}
+
 export async function exportBackupData() {
   const [prayers, novenas, intentions] = await Promise.all([
     getAllPrayers(),
@@ -509,6 +522,8 @@ export async function exportBackupData() {
     }
     encodedPrayers.push(rest);
   }
+
+  await setMeta('lastBackupExportAt', Date.now());
 
   return {
     version: 3,

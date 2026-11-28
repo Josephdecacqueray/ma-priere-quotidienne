@@ -11,7 +11,8 @@ import {
   getPrayerBinary,
   updatePrayerDriveMeta,
   attachMediaBlob,
-  computeBlobSha256
+  computeBlobSha256,
+  setMeta
 } from './db.js';
 import { getGoogleClientId } from './config.js';
 
@@ -153,6 +154,7 @@ export async function uploadPrayerMediaToDrive(prayer) {
   if (mock) {
     const fileId = await mock.upload({ prayerId: prayer.id, fileName, mimeType, sha256, blob: bin });
     await updatePrayerDriveMeta(prayer.id, { driveFileId: fileId, fileSha256: sha256, pdfSynced: true });
+    await setMeta('lastDriveSyncAt', Date.now());
     return fileId;
   }
 
@@ -187,6 +189,7 @@ export async function uploadPrayerMediaToDrive(prayer) {
     fileSha256: sha256,
     pdfSynced: true
   });
+  await setMeta('lastDriveSyncAt', Date.now());
   return data.id;
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ma-priere-v8';
+const CACHE_NAME = 'ma-priere-v8-1';
 
 // App Shell ultra-léger au démarrage (0 octet du corpus CEC/Thomas bloquant au boot)
 const PRECACHE_URLS = [
