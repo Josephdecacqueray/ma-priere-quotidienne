@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.workers.dev https://www.googleapis.com https://accounts.google.com https://challenges.cloudflare.com http://127.0.0.1:* http://localhost:*; frame-src https://challenges.cloudflare.com https://accounts.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Ma prière quotidienne</title>
   <meta name="description" content="Carnet de prières hors-ligne (notes, PDF, photos), chapelet interactif, intentions et neuvaines pour iPhone.">
 
@@ -183,6 +184,27 @@
             <p class="empty-sub">Créez un module de neuvaine pour suivre vos jours et activer un rappel quotidien (Push iPhone, Calendrier, SMS ou e-mail).</p>
             <button id="btn-empty-new-novena" class="btn-primary-soft" type="button">+ Créer une neuvaine</button>
           </div>
+        </div>
+
+        <!-- Pied de page discret Liquid Glass : Contact privé & Partage -->
+        <div class="home-discrete-footer" aria-label="Assistance et partage">
+          <div class="home-footer-links">
+            <button id="btn-open-feedback" class="home-footer-btn" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Signaler un bug ou suggérer une amélioration</span>
+            </button>
+            <button id="btn-share-app" class="home-footer-btn" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16 6 12 2 8 6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
+              </svg>
+              <span>Partager l’application</span>
+            </button>
+          </div>
+          <p id="home-offline-corpus-note" class="home-offline-note hidden"></p>
         </div>
       </main>
 
@@ -652,7 +674,7 @@
         <div class="form-field">
           <label class="field-label" for="pdf-file-input">Fichier PDF de la prière</label>
           <input id="pdf-file-input" type="file" accept="application/pdf,.pdf" class="file-input-ios">
-          <p id="pdf-file-meta" class="field-help">Le fichier est enregistré sur votre iPhone et sauvegardé sur le serveur dès que vous êtes connecté.</p>
+          <p id="pdf-file-meta" class="field-help">Conservé hors connexion sur cet appareil (et synchronisable sur votre Google Drive personnel jusqu’à 5 Go).</p>
         </div>
 
         <div class="form-field">
@@ -806,22 +828,32 @@
       </div>
     </div>
 
-    <!-- Sheet Infos Installation iPhone, Push, Sauvegarde & Polices -->
+    <!-- Sheet Infos Installation iPhone, Hors-ligne, Push, Sauvegarde & Polices -->
     <div id="sheet-info" class="bottom-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-info-title">
       <div class="sheet-header">
         <span></span>
-        <h2 id="sheet-info-title" class="sheet-title">iPhone, Push &amp; Sauvegarde</h2>
+        <h2 id="sheet-info-title" class="sheet-title">App, Hors-ligne &amp; Sauvegarde</h2>
         <button type="button" class="sheet-done" data-close-sheet>OK</button>
       </div>
       <div class="sheet-body info-sheet-body">
         <div class="info-block">
-          <h3>Installer comme appli sur iPhone</h3>
+          <h3>Installer &amp; Partager</h3>
           <ol>
-            <li>Ouvrez ce site dans <strong>Safari</strong> sur votre iPhone.</li>
-            <li>Touchez le bouton <strong>Partager</strong> (carré avec flèche vers le haut).</li>
-            <li>Choisissez <strong>« Sur l'écran d'accueil »</strong> puis touchez <strong>Ajouter</strong>.</li>
+            <li><strong>iPhone (Safari) :</strong> touchez <strong>Partager</strong> puis <strong>« Sur l’écran d’accueil »</strong>.</li>
+            <li><strong>Android (Chrome) :</strong> touchez le menu <strong>⋮</strong> puis <strong>« Installer l’application »</strong>.</li>
+            <li><strong>Compte persistant :</strong> connectez-vous une seule fois dans l’application installée pour rester connecté 180 jours.</li>
           </ol>
-          <p class="field-help">Vos prières, PDF, photos, neuvaines et intentions sont enregistrés sur votre iPhone (hors-ligne) et synchronisés sur le serveur dès que vous fermez l'app ou êtes connecté.</p>
+          <div class="info-btn-stack">
+            <button id="btn-info-share-app" class="btn-secondary-ios" type="button">Partager l’application</button>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <h3>Mode hors connexion complet</h3>
+          <p id="info-offline-corpus-status" class="field-help">Préparation silencieuse des 66 textes (CEC &amp; saint Thomas) et des 10 guides pour une lecture 100 % en mode avion…</p>
+          <div class="info-btn-stack">
+            <button id="btn-trigger-offline-precache" class="btn-outline-ios" type="button">Vérifier / Télécharger pour le mode avion</button>
+          </div>
         </div>
 
         <div class="info-block">
@@ -835,7 +867,7 @@
 
         <div class="info-block">
           <h3>Sauvegarde &amp; Restauration</h3>
-          <p class="field-help">Exportez tout votre carnet en fichier <code>.json</code> ou restaurez une sauvegarde existante.</p>
+          <p class="field-help">Exportez tout votre carnet en fichier <code>.json</code> ou importez une sauvegarde (y compris une sauvegarde v7).</p>
           <div class="info-btn-stack">
             <button id="btn-export-backup" class="btn-secondary-ios" type="button">Exporter mon carnet (.json)</button>
             <button id="btn-import-backup" class="btn-outline-ios" type="button">Importer une sauvegarde (.json)</button>
@@ -846,9 +878,71 @@
         <div class="info-block">
           <h3>Police des titres</h3>
           <p class="field-help">
-            Ce prototype cherche d'abord <code>./fonts/ShelleyVolanteScript.ttf</code> (ou <code>.otf</code>). Comme ce fichier n'était pas présent localement, la police calligraphique libre <strong>Great Vibes</strong> est utilisée provisoirement en local.
+            Ce site cherche d’abord <code>./fonts/ShelleyVolanteScript.ttf</code> (ou <code>.otf</code>). À défaut, la police calligraphique libre <strong>Great Vibes</strong> est utilisée localement.
           </p>
         </div>
+      </div>
+    </div>
+
+    <!-- Sheet Compte, Sessions persistantes & Google Drive 5 Go -->
+    <div id="sheet-account" class="bottom-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-account-title">
+      <div class="sheet-header">
+        <span></span>
+        <h2 id="sheet-account-title" class="sheet-title">Compte &amp; Synchronisation</h2>
+        <button type="button" class="sheet-done" data-close-sheet>Fermer</button>
+      </div>
+      <div id="account-sheet-body" class="sheet-body info-sheet-body"></div>
+    </div>
+
+    <!-- Sheet Contact discret (Bug & Suggestion) -->
+    <div id="sheet-feedback" class="bottom-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-feedback-title">
+      <div class="sheet-header">
+        <button type="button" class="sheet-cancel" data-close-sheet>Annuler</button>
+        <h2 id="sheet-feedback-title" class="sheet-title">Bug ou suggestion</h2>
+        <span></span>
+      </div>
+      <div class="sheet-body">
+        <form id="feedback-form" class="account-form">
+          <p class="field-help">Un bug repéré ou une idée pour améliorer l’application ? Votre message est transmis directement au créateur de façon privée.</p>
+
+          <div class="form-field">
+            <span class="field-label">Catégorie</span>
+            <div id="feedback-category-group" class="feedback-category-group" role="group" aria-label="Catégorie du message">
+              <button type="button" class="pill-btn active" data-fb-cat="bug" aria-pressed="true">Signaler un bug</button>
+              <button type="button" class="pill-btn" data-fb-cat="suggestion" aria-pressed="false">Suggérer une amélioration</button>
+              <button type="button" class="pill-btn" data-fb-cat="other" aria-pressed="false">Autre</button>
+            </div>
+          </div>
+
+          <!-- Piège honeypot anti-spam (invisible pour les utilisateurs) -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="feedback-hp-input">Site web</label>
+            <input id="feedback-hp-input" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div class="form-field">
+            <div class="feedback-char-row">
+              <label class="field-label" for="feedback-message-input">Votre message</label>
+              <span id="feedback-char-count" class="feedback-char-count">0 / 3 000</span>
+            </div>
+            <textarea id="feedback-message-input" class="ios-input" rows="5" maxlength="3000" required placeholder="Décrivez le problème rencontré ou votre idée d’amélioration…"></textarea>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label" for="feedback-reply-input">Contact pour vous répondre (optionnel)</label>
+            <input id="feedback-reply-input" type="text" class="ios-input" maxlength="180" placeholder="Votre e-mail ou prénom (facultatif)">
+          </div>
+
+          <label class="feedback-context-label">
+            <input id="feedback-include-context" type="checkbox" checked>
+            <span>Inclure le contexte technique (version, taille d’écran, navigateur — aucune prière ni donnée privée n’est envoyée)</span>
+          </label>
+
+          <div id="feedback-turnstile-slot" class="turnstile-slot hidden"></div>
+          <p id="feedback-status-msg" class="feedback-status-msg hidden" role="status"></p>
+
+          <button id="btn-feedback-submit" class="btn-primary-ios" type="submit">Envoyer le message</button>
+        </form>
       </div>
     </div>
 

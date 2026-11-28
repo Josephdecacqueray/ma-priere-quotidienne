@@ -1,0 +1,30 @@
+name = "ma-priere-api"
+main = "src/index.js"
+compatibility_date = "2025-02-01"
+workers_dev = true
+
+[triggers]
+# Vérification des rappels Web Push toutes les 5 minutes (lots stricts <= 40 envois/run)
+crons = ["*/5 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ma_priere_db"
+# Remplacez par l'ID retourné par : npx wrangler d1 create ma_priere_db
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[vars]
+ENVIRONMENT = "production"
+APP_ORIGIN = "https://josephdecacqueray.github.io"
+APP_URL = "https://josephdecacqueray.github.io/ma-priere-quotidienne/"
+MAX_USERS = "1000"
+MAX_USER_TEXT_BYTES = "2097152"
+MAX_PUSH_PER_CRON = "40"
+EMAIL_RELAY_PROVIDER = "resend"
+EMAIL_FROM = "Ma priere quotidienne <onboarding@resend.dev>"
+VAPID_SUBJECT = "mailto:noreply@ma-priere-quotidienne.app"
+# Clé publique VAPID (non secrète — à renseigner après génération de votre paire VAPID)
+VAPID_PUBLIC_KEY = ""
+# Clé publique de site Cloudflare Turnstile (non secrète)
+TURNSTILE_SITE_KEY = ""

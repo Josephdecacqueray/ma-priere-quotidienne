@@ -1,0 +1,11 @@
+# Copiez ce fichier vers .dev.vars pour le développement local uniquement.
+# En production, configurez CHAQUE secret exclusivement via : npx wrangler secret put <NOM>
+# Ne commitez JAMAIS de valeur réelle dans Git.
+
+ENVIRONMENT=development
+JWT_SIGNING_KEY=
+VAPID_PRIVATE_KEY=
+CONTACT_TARGET_EMAIL=
+EMAIL_RELAY_KEY=
+TURNSTILE_SECRET_KEY=
+OWNER_MIGRATION_CODE=

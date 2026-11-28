@@ -1,5 +1,5 @@
 const DB_NAME = 'ma_priere_quotidienne_db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export const SAINT_JOSEPH_PRAYER = {
   id: 'prayer-saint-joseph',
@@ -52,6 +52,9 @@ function openDb() {
       if (!db.objectStoreNames.contains('meta')) {
         db.createObjectStore('meta', { keyPath: 'key' });
       }
+      if (!db.objectStoreNames.contains('feedbackQueue')) {
+        db.createObjectStore('feedbackQueue', { keyPath: 'id' });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -95,6 +98,72 @@ export async function initDbAndSeed() {
   }
 }
 
+export async function computeBlobSha256(blob) {
+  if (!blob || typeof crypto === 'undefined' || !crypto.subtle) return '';
+  try {
+    const buf = await blob.arrayBuffer();
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return '';
+  }
+}
+
+export async function requestPersistentStorage() {
+  try {
+    if (navigator.storage?.persisted && navigator.storage?.persist) {
+      const already = await navigator.storage.persisted();
+      if (!already) {
+        return await navigator.storage.persist();
+      }
+      return true;
+    }
+  } catch {
+    // Ignoré
+  }
+  return false;
+}
+
+export async function getLocalStorageStats() {
+  const prayers = await getAllPrayers();
+  let mediaBytes = 0;
+  let mediaCount = 0;
+  let driveSyncedCount = 0;
+  for (const p of prayers) {
+    if (p.type === 'pdf' || p.type === 'image') {
+      mediaCount += 1;
+      const bin = getPrayerBinary(p);
+      mediaBytes += bin?.size || p.fileSize || 0;
+      if (p.driveFileId) driveSyncedCount += 1;
+    }
+  }
+
+  let quotaBytes = 0;
+  let usageBytes = 0;
+  let persisted = false;
+  try {
+    if (navigator.storage?.estimate) {
+      const est = await navigator.storage.estimate();
+      quotaBytes = Number(est.quota) || 0;
+      usageBytes = Number(est.usage) || 0;
+    }
+    if (navigator.storage?.persisted) {
+      persisted = await navigator.storage.persisted();
+    }
+  } catch {
+    // Ignoré
+  }
+
+  return {
+    mediaBytes,
+    mediaCount,
+    driveSyncedCount,
+    quotaBytes,
+    usageBytes,
+    persisted
+  };
+}
+
 export async function getAllPrayers() {
   const list = await txPromise('prayers', 'readonly', (s) => s.getAll());
   return list.sort((a, b) => {
@@ -114,22 +183,32 @@ export async function savePrayer(prayer) {
     folder: '',
     ...prayer
   };
-  const hasBin = Boolean(getPrayerBinary(toSave));
-  if ((toSave.type === 'pdf' || toSave.type === 'image') && hasBin && typeof toSave.pdfSynced !== 'boolean') {
-    toSave.pdfSynced = false;
+  const bin = getPrayerBinary(toSave);
+  if ((toSave.type === 'pdf' || toSave.type === 'image') && bin) {
+    if (!toSave.fileSize) toSave.fileSize = bin.size;
+    if (!toSave.fileSha256) {
+      toSave.fileSha256 = await computeBlobSha256(bin);
+    }
+    if (typeof toSave.pdfSynced !== 'boolean') {
+      toSave.pdfSynced = Boolean(toSave.driveFileId);
+    }
   }
   await txPromise('prayers', 'readwrite', (s) => s.put(toSave));
   await markSyncDirty(true);
 }
 
-export async function updatePrayerPdfSync(id, synced) {
+export async function updatePrayerDriveMeta(id, { driveFileId, fileSha256, pdfSynced } = {}) {
   const prayer = await getPrayer(id);
   if (!prayer) return;
-  prayer.pdfSynced = Boolean(synced);
+  if (driveFileId !== undefined) prayer.driveFileId = driveFileId;
+  if (fileSha256 !== undefined) prayer.fileSha256 = fileSha256;
+  if (pdfSynced !== undefined) prayer.pdfSynced = Boolean(pdfSynced);
+  prayer.updatedAt = Date.now();
   await txPromise('prayers', 'readwrite', (s) => s.put(prayer));
+  await markSyncDirty(true);
 }
 
-export async function attachPdfBlobFromServer(id, blob) {
+export async function attachMediaBlob(id, blob, { driveFileId } = {}) {
   const prayer = await getPrayer(id);
   if (!prayer) return;
   if (prayer.type === 'image') {
@@ -137,7 +216,12 @@ export async function attachPdfBlobFromServer(id, blob) {
   } else {
     prayer.pdfBlob = blob;
   }
-  prayer.pdfSynced = true;
+  prayer.fileSize = blob.size;
+  if (!prayer.fileSha256) {
+    prayer.fileSha256 = await computeBlobSha256(blob);
+  }
+  if (driveFileId) prayer.driveFileId = driveFileId;
+  prayer.pdfSynced = Boolean(prayer.driveFileId);
   await txPromise('prayers', 'readwrite', (s) => s.put(prayer));
 }
 
@@ -187,6 +271,19 @@ export async function deleteIntention(id) {
   await markSyncDirty(true);
 }
 
+/* File d'attente hors-ligne pour les signalements / suggestions */
+export async function getFeedbackQueue() {
+  return txPromise('feedbackQueue', 'readonly', (s) => s.getAll());
+}
+
+export async function enqueueFeedback(item) {
+  return txPromise('feedbackQueue', 'readwrite', (s) => s.put(item));
+}
+
+export async function removeFeedbackQueueItem(id) {
+  return txPromise('feedbackQueue', 'readwrite', (s) => s.delete(id));
+}
+
 export async function getDeletedIds() {
   const existing = await getMeta('deletedIds');
   return {
@@ -211,6 +308,36 @@ export async function isSyncDirty() {
   return Boolean(await getMeta('syncDirty'));
 }
 
+function readLocalRosaryState() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('mpq_rosary_counter') || 'null');
+    if (raw && raw.groupKey) {
+      return {
+        groupKey: raw.groupKey,
+        decadeIndex: Math.max(0, Math.min(4, Number(raw.decadeIndex) || 0)),
+        beadIndex: Math.max(0, Math.min(10, Number(raw.beadIndex) || 0)),
+        updatedAt: Number(raw.updatedAt) || Number(localStorage.getItem('mpq_rosary_updated_at')) || 1
+      };
+    }
+  } catch {
+    // Ignoré
+  }
+  return null;
+}
+
+function readLocalSettingsState() {
+  try {
+    return {
+      themeMode: localStorage.getItem('mpq_theme_mode') || 'auto',
+      fontSizePx: Number(localStorage.getItem('mpq_font_size_px')) || 15.5,
+      driveSyncEnabled: localStorage.getItem('mpq_drive_sync_enabled') === '1',
+      updatedAt: Number(localStorage.getItem('mpq_settings_updated_at')) || 1
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function exportSyncPayload() {
   const [prayers, novenas, intentions, deletedIds] = await Promise.all([
     getAllPrayers(),
@@ -219,40 +346,65 @@ export async function exportSyncPayload() {
     getDeletedIds()
   ]);
 
+  // ZÉRO binaire PDF/image dans le payload synchronisé vers Cloudflare D1
   const serializablePrayers = prayers.map((p) => {
-    const { pdfBlob, mediaBlob, pdfSynced, ...rest } = p;
+    const { pdfBlob, mediaBlob, pdfSynced, embeddedDataUrl, ...rest } = p;
     return {
       ...rest,
       pinned: Boolean(p.pinned),
       folder: p.folder || '',
+      fileName: p.fileName || '',
+      mimeType: p.mimeType || '',
+      fileSize: Number(p.fileSize) || 0,
+      fileSha256: p.fileSha256 || '',
+      driveFileId: p.driveFileId || '',
       hasPdf: p.type === 'pdf' || p.type === 'image'
     };
   });
 
+  const normalizedIntentions = intentions.map((i) => ({
+    id: i.id,
+    text: i.text,
+    done: Boolean(i.done ?? i.answered),
+    createdAt: Number(i.createdAt) || 1,
+    updatedAt: Number(i.updatedAt) || 1
+  }));
+
   return {
-    updatedAt: Date.now(),
     prayers: serializablePrayers,
     novenas,
-    intentions,
+    intentions: normalizedIntentions,
+    rosaryState: readLocalRosaryState(),
+    settings: readLocalSettingsState(),
     deletedIds
   };
+}
+
+export async function computePayloadFingerprint(payload) {
+  const str = JSON.stringify(payload);
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    const buf = new TextEncoder().encode(str);
+    const digest = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
+  }
+  return `${str.length}:${str.slice(0, 40)}`;
 }
 
 export async function replaceAllFromMergedState(mergedState) {
   const db = await openDb();
   const existingPrayers = await getAllPrayers();
-  const binById = new Map();
+  const localById = new Map();
   for (const p of existingPrayers) {
-    if (p.pdfBlob || p.mediaBlob) {
-      binById.set(p.id, {
-        pdfBlob: p.pdfBlob,
-        mediaBlob: p.mediaBlob,
-        pdfSynced: Boolean(p.pdfSynced)
-      });
-    }
+    localById.set(p.id, {
+      pdfBlob: p.pdfBlob,
+      mediaBlob: p.mediaBlob,
+      pdfSynced: Boolean(p.pdfSynced),
+      fileSha256: p.fileSha256 || '',
+      driveFileId: p.driveFileId || ''
+    });
   }
 
-  return new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     const tx = db.transaction(['prayers', 'novenas', 'intentions', 'meta'], 'readwrite');
     const pStore = tx.objectStore('prayers');
     const nStore = tx.objectStore('novenas');
@@ -261,12 +413,16 @@ export async function replaceAllFromMergedState(mergedState) {
 
     pStore.clear();
     for (const p of mergedState.prayers || []) {
-      const localBin = binById.get(p.id);
+      const local = localById.get(p.id);
+      const driveFileId = p.driveFileId || local?.driveFileId || '';
+      const fileSha256 = p.fileSha256 || local?.fileSha256 || '';
       pStore.put({
         ...p,
-        ...(localBin?.pdfBlob ? { pdfBlob: localBin.pdfBlob } : {}),
-        ...(localBin?.mediaBlob ? { mediaBlob: localBin.mediaBlob } : {}),
-        ...(localBin ? { pdfSynced: localBin.pdfSynced } : {})
+        ...(fileSha256 ? { fileSha256 } : {}),
+        ...(driveFileId ? { driveFileId } : {}),
+        ...(local?.pdfBlob ? { pdfBlob: local.pdfBlob } : {}),
+        ...(local?.mediaBlob ? { mediaBlob: local.mediaBlob } : {}),
+        pdfSynced: Boolean(driveFileId || local?.pdfSynced)
       });
     }
 
@@ -277,7 +433,10 @@ export async function replaceAllFromMergedState(mergedState) {
 
     iStore.clear();
     for (const item of mergedState.intentions || []) {
-      iStore.put(item);
+      iStore.put({
+        ...item,
+        done: Boolean(item.done ?? item.answered)
+      });
     }
 
     if (mergedState.deletedIds) {
@@ -288,6 +447,32 @@ export async function replaceAllFromMergedState(mergedState) {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+
+  // Appliquer l'état du chapelet et les préférences s'ils sont plus récents
+  try {
+    if (mergedState.rosaryState?.groupKey) {
+      const localTs = Number(localStorage.getItem('mpq_rosary_updated_at')) || 0;
+      if ((mergedState.rosaryState.updatedAt || 0) > localTs) {
+        localStorage.setItem('mpq_rosary_counter', JSON.stringify(mergedState.rosaryState));
+        localStorage.setItem('mpq_rosary_updated_at', String(mergedState.rosaryState.updatedAt));
+      }
+    }
+    if (mergedState.settings) {
+      const localTs = Number(localStorage.getItem('mpq_settings_updated_at')) || 0;
+      if ((mergedState.settings.updatedAt || 0) > localTs) {
+        if (mergedState.settings.themeMode) {
+          localStorage.setItem('mpq_theme_mode', mergedState.settings.themeMode);
+        }
+        if (mergedState.settings.fontSizePx) {
+          localStorage.setItem('mpq_font_size_px', String(mergedState.settings.fontSizePx));
+        }
+        localStorage.setItem('mpq_drive_sync_enabled', mergedState.settings.driveSyncEnabled ? '1' : '0');
+        localStorage.setItem('mpq_settings_updated_at', String(mergedState.settings.updatedAt));
+      }
+    }
+  } catch {
+    // Ignoré
+  }
 }
 
 function blobToDataUrl(blob) {
@@ -319,14 +504,14 @@ export async function exportBackupData() {
   for (const p of prayers) {
     const { pdfBlob, mediaBlob, ...rest } = p;
     const bin = mediaBlob || pdfBlob;
-    if (bin && bin.size <= 8 * 1024 * 1024) {
+    if (bin && bin.size <= 12 * 1024 * 1024) {
       rest.embeddedDataUrl = await blobToDataUrl(bin);
     }
     encodedPrayers.push(rest);
   }
 
   return {
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     prayers: encodedPrayers,
     novenas,
@@ -339,6 +524,7 @@ export async function importBackupData(backup) {
     throw new Error('Sauvegarde invalide');
   }
   const now = Date.now();
+  let importedCount = 0;
 
   for (const p of backup.prayers || []) {
     if (!p?.id) continue;
@@ -348,20 +534,30 @@ export async function importBackupData(backup) {
       const blob = dataUrlToBlob(embeddedDataUrl);
       if (item.type === 'image') item.mediaBlob = blob;
       else item.pdfBlob = blob;
+      item.fileSize = blob.size;
       item.pdfSynced = false;
     }
     await savePrayer(item);
+    importedCount += 1;
   }
 
   for (const n of backup.novenas || []) {
     if (!n?.id) continue;
     await saveNovena({ ...n, updatedAt: Number(n.updatedAt) || now });
+    importedCount += 1;
   }
 
   for (const i of backup.intentions || []) {
     if (!i?.id) continue;
-    await saveIntention({ ...i, updatedAt: Number(i.updatedAt) || now });
+    await saveIntention({
+      ...i,
+      done: Boolean(i.done ?? i.answered),
+      updatedAt: Number(i.updatedAt) || now
+    });
+    importedCount += 1;
   }
+
+  return importedCount;
 }
 
 export function generateId(prefix = 'item') {

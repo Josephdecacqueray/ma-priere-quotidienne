@@ -15,29 +15,61 @@ import {
   deleteIntention,
   exportBackupData,
   importBackupData,
+  requestPersistentStorage,
   generateId
 } from './db.js';
-import { formatPrayerContent, stripFormattingForPreview } from './formatter.js';
-import { downloadNovenaIcs, buildSmsLink, buildMailtoLink } from './ics.js';
-import { renderPdfIntoContainer, openPdfNatively } from './pdf-viewer.js';
-import { syncWithServer, deleteServerPdf } from './sync.js';
-import { ROSARY_GROUPS, ROSARY_PRAYERS, getTodayRosaryGroup } from './rosary.js';
-import { getLiturgicalSeason } from './liturgy.js';
-import {
-  isPushSupported,
-  getPushSubscription,
-  subscribeToPush,
-  unsubscribeFromPush,
-  sendTestPush
-} from './push.js';
+import { syncWithServer, flushFeedbackQueue } from './sync.js';
+import { initAuth, isSignedIn, onAuthChange } from './auth.js';
+import { getLiturgicalSeason, getTodayRosarySummary } from './liturgy.js';
+
+let formatterModPromise = null;
+let icsModPromise = null;
+let pdfViewerModPromise = null;
+let pushModPromise = null;
+let rosaryModPromise = null;
+let cachedRosaryMod = null;
+
+function loadFormatter() {
+  if (!formatterModPromise) formatterModPromise = import('./formatter.js');
+  return formatterModPromise;
+}
+function loadIcs() {
+  if (!icsModPromise) icsModPromise = import('./ics.js');
+  return icsModPromise;
+}
+function loadPdfViewer() {
+  if (!pdfViewerModPromise) pdfViewerModPromise = import('./pdf-viewer.js');
+  return pdfViewerModPromise;
+}
+function loadPush() {
+  if (!pushModPromise) pushModPromise = import('./push.js');
+  return pushModPromise;
+}
+function loadRosary() {
+  if (!rosaryModPromise) {
+    rosaryModPromise = import('./rosary.js').then((m) => {
+      cachedRosaryMod = m;
+      return m;
+    });
+  }
+  return rosaryModPromise;
+}
+function stripFormattingForPreview(rawText) {
+  return String(rawText ?? '')
+    .replace(/^#{1,3}\s+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 const FONT_SIZE_KEY = 'mpq_font_size_px';
 const THEME_MODE_KEY = 'mpq_theme_mode';
 const ROSARY_COUNTER_KEY = 'mpq_rosary_counter';
+const ROSARY_UPDATED_KEY = 'mpq_rosary_updated_at';
+const SETTINGS_UPDATED_KEY = 'mpq_settings_updated_at';
 const STANDARD_FOLDERS = ['Matin', 'Soir', 'Saints', 'Litanies', 'Messe', 'Psaumes'];
 
 function loadRosaryCounter() {
-  const today = getTodayRosaryGroup();
+  const today = getTodayRosarySummary();
   try {
     const saved = JSON.parse(localStorage.getItem(ROSARY_COUNTER_KEY) || 'null');
     if (saved && saved.groupKey) {
@@ -145,7 +177,9 @@ function cycleTheme() {
   const next = order[(order.indexOf(state.themeMode) + 1) % order.length];
   state.themeMode = next;
   localStorage.setItem(THEME_MODE_KEY, next);
+  localStorage.setItem(SETTINGS_UPDATED_KEY, String(Date.now()));
   applyTheme();
+  scheduleServerSync();
   const labels = { auto: 'Thème automatique (iPhone)', dark: 'Mode Nuit activé', light: 'Mode Jour activé' };
   showToast(labels[next]);
 }
@@ -217,49 +251,131 @@ async function releaseWakeLock() {
 }
 
 /* =========================================================
-   SYNCHRO & POLICES
+   SYNCHRO, COMPTE, CONTACT, PARTAGE & POLICES
    ========================================================= */
 function setSyncStatus(status) {
   state.syncStatus = status;
   const pill = $('sync-status-btn');
   const label = $('offline-label');
-  pill.classList.remove('is-offline', 'is-syncing', 'is-error');
+  pill.classList.remove('is-offline', 'is-syncing', 'is-error', 'is-local');
 
   if (!navigator.onLine || status === 'offline') {
     pill.classList.add('is-offline');
-    label.textContent = 'Hors-ligne (iPhone)';
+    label.textContent = 'Hors connexion · Appareil';
   } else if (status === 'syncing') {
     pill.classList.add('is-syncing');
-    label.textContent = 'Sauvegarde serveur…';
+    label.textContent = 'Synchronisation…';
+  } else if (status === 'quota') {
+    pill.classList.add('is-error');
+    label.textContent = 'Quota texte 2 Mo atteint';
+  } else if (status === 'revoked') {
+    pill.classList.add('is-error');
+    label.textContent = 'Session fermée · Compte';
   } else if (status === 'error') {
     pill.classList.add('is-error');
-    label.textContent = 'Enregistré sur iPhone';
+    label.textContent = 'Sauvegardé sur l’appareil';
   } else if (status === 'synced') {
     label.textContent = 'Synchronisé ✓';
+  } else if (!isSignedIn() || status === 'local') {
+    pill.classList.add('is-local');
+    label.textContent = 'Mode local · Compte';
   } else {
-    label.textContent = 'Hors-ligne prêt';
+    label.textContent = 'Synchronisé ✓';
   }
 }
 
 let syncDebounceTimer = null;
 function scheduleServerSync() {
+  if (!isSignedIn()) return;
   clearTimeout(syncDebounceTimer);
+  // Debounce 6 s pour limiter drastiquement les écritures D1 (1 000 comptes à 0 €)
   syncDebounceTimer = setTimeout(async () => {
     const res = await syncWithServer({ onStatus: setSyncStatus });
-    if (res?.ok) {
+    if (res?.ok && !res.skipped) {
       await refreshFromDbOnly();
+    } else if (res?.quotaExceeded) {
+      showToast('Plafond 2 Mo de texte atteint. Utilisez Google Drive pour vos PDF.');
     }
-  }, 700);
+  }, 6000);
+}
+
+let accountModulePromise = null;
+async function openAccountModal() {
+  openSheet('sheet-account');
+  try {
+    if (!accountModulePromise) {
+      accountModulePromise = import('./account-ui.js');
+    }
+    const mod = await accountModulePromise;
+    await mod.openAccountSheet({
+      onSynced: async ({ force = false } = {}) => {
+        const res = await syncWithServer({ force: true, onStatus: setSyncStatus });
+        if (res?.ok || force) {
+          await refreshFromDbOnly();
+        }
+        await refreshPushUi();
+      },
+      onStatusChange: (s) => setSyncStatus(s),
+      showToast,
+      closeSheet: closeAllSheets
+    });
+  } catch (err) {
+    console.error('Erreur ouverture Compte:', err);
+    showToast('Impossible d’ouvrir le panneau Compte.');
+  }
+}
+
+let feedbackModulePromise = null;
+async function openFeedbackModal() {
+  openSheet('sheet-feedback');
+  try {
+    if (!feedbackModulePromise) {
+      feedbackModulePromise = import('./feedback.js');
+    }
+    const mod = await feedbackModulePromise;
+    await mod.prepareFeedbackSheet({
+      showToast,
+      closeSheet: closeAllSheets
+    });
+  } catch (err) {
+    console.error('Erreur ouverture Contact:', err);
+    showToast('Impossible d’ouvrir le formulaire.');
+  }
+}
+
+async function shareApplication() {
+  const url = window.location.href.split('#')[0];
+  const shareData = {
+    title: 'Ma prière quotidienne',
+    text: 'Carnet de prières hors-ligne, chapelet interactif, neuvaines, Catéchisme & saint Thomas d’Aquin.',
+    url
+  };
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch {
+      // Annulé ou indisponible -> fallback presse-papiers
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Lien de l’application copié ✓');
+  } catch {
+    showToast(url);
+  }
 }
 
 function applyPrayerFontSize() {
   document.documentElement.style.setProperty('--prayer-font-size', `${state.fontSizePx}px`);
   localStorage.setItem(FONT_SIZE_KEY, String(state.fontSizePx));
+  localStorage.setItem(SETTINGS_UPDATED_KEY, String(Date.now()));
 }
 
 function adjustPrayerFontSize(delta) {
   state.fontSizePx = Math.max(13, Math.min(22, Number((state.fontSizePx + delta).toFixed(1))));
   applyPrayerFontSize();
+  scheduleServerSync();
 }
 
 let laPriereModulePromise = null;
@@ -293,9 +409,25 @@ function setFocusMode(enabled) {
   $('btn-exit-focus').classList.toggle('hidden', !state.focusMode);
 }
 
+function releasePrayerMediaResources() {
+  if (pdfViewerModPromise) {
+    pdfViewerModPromise.then((m) => m.releasePdfResources($('pdf-pages-container'))).catch(() => {});
+  } else {
+    const pdfBox = $('pdf-pages-container');
+    if (pdfBox) pdfBox.replaceChildren();
+  }
+  if (currentImageObjectUrl) {
+    URL.revokeObjectURL(currentImageObjectUrl);
+    currentImageObjectUrl = null;
+  }
+  const imgBox = $('prayer-image-container');
+  if (imgBox) imgBox.replaceChildren();
+}
+
 function showView(name) {
   if (name !== 'prayer') {
     setFocusMode(false);
+    releasePrayerMediaResources();
   }
   if (name === 'list') {
     releaseWakeLock();
@@ -317,6 +449,8 @@ function closeAllSheets() {
   $('sheet-novena').classList.add('hidden');
   $('sheet-quick-intentions').classList.add('hidden');
   $('sheet-info').classList.add('hidden');
+  $('sheet-account').classList.add('hidden');
+  $('sheet-feedback').classList.add('hidden');
 }
 
 function openSheet(sheetId) {
@@ -373,7 +507,10 @@ function populateFolderSelects() {
     const sel = $(id);
     if (!sel) continue;
     const prev = sel.value;
-    sel.innerHTML = '<option value="">Aucun dossier</option>';
+    const defOpt = document.createElement('option');
+    defOpt.value = '';
+    defOpt.textContent = 'Aucun dossier';
+    sel.replaceChildren(defOpt);
     for (const f of folders) {
       const opt = document.createElement('option');
       opt.value = f;
@@ -387,7 +524,7 @@ function populateFolderSelects() {
   const usedInPrayers = Array.from(new Set(state.prayers.map((p) => p.folder).filter(Boolean)));
   const container = $('folder-filter-pills');
   if (container) {
-    container.innerHTML = '';
+    container.replaceChildren();
     for (const f of usedInPrayers) {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -432,7 +569,7 @@ function renderTodayCard() {
     }
   }
 
-  const todayRosary = getTodayRosaryGroup();
+  const todayRosary = getTodayRosarySummary();
   const rosaryBtn = document.createElement('button');
   rosaryBtn.type = 'button';
   rosaryBtn.className = 'today-chip-btn';
@@ -479,11 +616,17 @@ function renderGlobalSearchResults() {
 
   const matchingIntentions = state.intentions.filter((i) => (i.text || '').toLowerCase().includes(q));
   const matchingMysteries = [];
-  for (const g of ROSARY_GROUPS) {
-    for (const m of g.mysteries) {
-      const hay = `${g.title} ${m.title} ${m.fruit} ${m.meditation} ${m.ref}`.toLowerCase();
-      if (hay.includes(q)) {
-        matchingMysteries.push({ group: g, mystery: m });
+  if (!cachedRosaryMod) {
+    loadRosary().then(() => {
+      if (state.searchQuery.trim()) renderGlobalSearchResults();
+    }).catch(() => {});
+  } else {
+    for (const g of cachedRosaryMod.ROSARY_GROUPS) {
+      for (const m of g.mysteries) {
+        const hay = `${g.title} ${m.title} ${m.fruit} ${m.meditation} ${m.ref}`.toLowerCase();
+        if (hay.includes(q)) {
+          matchingMysteries.push({ group: g, mystery: m });
+        }
       }
     }
   }
@@ -498,12 +641,19 @@ function renderGlobalSearchResults() {
   if (matchingIntentions.length > 0) {
     const card = document.createElement('div');
     card.className = 'global-search-card';
-    card.innerHTML = '<h3 class="global-search-heading">Dans Mes intentions</h3>';
+    const heading = document.createElement('h3');
+    heading.className = 'global-search-heading';
+    heading.textContent = 'Dans Mes intentions';
+    card.appendChild(heading);
     for (const item of matchingIntentions.slice(0, 4)) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'global-search-hit';
-      btn.innerHTML = `<strong>Intention</strong><span>${escapeText(item.text)}</span>`;
+      const strong = document.createElement('strong');
+      strong.textContent = 'Intention';
+      const span = document.createElement('span');
+      span.textContent = item.text || '';
+      btn.append(strong, span);
       btn.addEventListener('click', openIntentionsView);
       card.appendChild(btn);
     }
@@ -513,24 +663,24 @@ function renderGlobalSearchResults() {
   if (matchingMysteries.length > 0) {
     const card = document.createElement('div');
     card.className = 'global-search-card';
-    card.innerHTML = '<h3 class="global-search-heading">Dans les Mystères du chapelet</h3>';
+    const heading = document.createElement('h3');
+    heading.className = 'global-search-heading';
+    heading.textContent = 'Dans les Mystères du chapelet';
+    card.appendChild(heading);
     for (const hit of matchingMysteries.slice(0, 4)) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'global-search-hit';
-      btn.innerHTML = `<strong>${escapeText(hit.mystery.title)} (${escapeText(hit.group.title)})</strong><span>${escapeText(hit.mystery.meditation)}</span>`;
+      const strong = document.createElement('strong');
+      strong.textContent = `${hit.mystery.title} (${hit.group.title})`;
+      const span = document.createElement('span');
+      span.textContent = hit.mystery.meditation;
+      btn.append(strong, span);
       btn.addEventListener('click', () => openRosaryView(hit.group.key));
       card.appendChild(btn);
     }
     box.appendChild(card);
   }
-}
-
-function escapeText(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }
 
 function renderList() {
@@ -549,7 +699,7 @@ function renderList() {
     $('intentions-home-sub').textContent = 'Carnet de toutes mes intentions';
   }
 
-  const todayRosary = getTodayRosaryGroup();
+  const todayRosary = getTodayRosarySummary();
   $('rosary-home-sub').textContent = `Aujourd'hui : ${todayRosary.title}`;
 
   renderTodayCard();
@@ -804,19 +954,26 @@ function renderNovenasList() {
   const banner = $('novena-reminder-banner');
   if (dueToday.length > 0) {
     banner.classList.remove('hidden');
-    banner.innerHTML = `<span><strong>${dueToday.length}</strong> neuvaine${dueToday.length > 1 ? 's' : ''} à prier aujourd'hui</span>`;
+    const txtSpan = document.createElement('span');
+    const countStrong = document.createElement('strong');
+    countStrong.textContent = String(dueToday.length);
+    txtSpan.append(
+      countStrong,
+      document.createTextNode(` neuvaine${dueToday.length > 1 ? 's' : ''} à prier aujourd'hui`)
+    );
     const quickBtn = document.createElement('button');
     quickBtn.type = 'button';
     quickBtn.className = 'btn-validate-day';
     quickBtn.textContent = 'Ouvrir';
     quickBtn.addEventListener('click', () => openNovena(dueToday[0].id));
-    banner.appendChild(quickBtn);
+    banner.replaceChildren(txtSpan, quickBtn);
   } else {
     banner.classList.add('hidden');
+    banner.replaceChildren();
   }
 
   const container = $('novenas-list');
-  container.innerHTML = '';
+  container.replaceChildren();
   $('novenas-empty').classList.toggle('hidden', filtered.length > 0);
 
   for (const n of filtered) {
@@ -854,10 +1011,16 @@ function renderNovenasList() {
 
     const prog = document.createElement('div');
     prog.className = 'novena-row-progress';
-    prog.innerHTML = `
-      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <span class="progress-label">${done}/${total} j</span>
-    `;
+    const track = document.createElement('div');
+    track.className = 'progress-track';
+    const fill = document.createElement('div');
+    fill.className = 'progress-fill';
+    fill.style.width = `${pct}%`;
+    track.appendChild(fill);
+    const pLabel = document.createElement('span');
+    pLabel.className = 'progress-label';
+    pLabel.textContent = `${done}/${total} j`;
+    prog.append(track, pLabel);
     mainBtn.appendChild(prog);
 
     const meta = document.createElement('div');
@@ -968,39 +1131,60 @@ async function renderCurrentPrayer() {
         fBadge.classList.add('hidden');
       }
       $('prayer-cover-title').textContent = prayer.title || 'Prière sans titre';
-      $('prayer-rendered-body').innerHTML = formatPrayerContent(prayer.content || '');
+      const fmtMod = await loadFormatter();
+      fmtMod.renderPrayerContentToNode($('prayer-rendered-body'), prayer.content || '');
     }
   } else if (isPdf) {
     const bin = getPrayerBinary(prayer);
     $('pdf-zoom-label').textContent = `${Math.round(state.pdfScale * 100)}%`;
-    $('btn-pdf-open-native').onclick = () => {
-      if (bin) openPdfNatively(bin, prayer.fileName || 'priere.pdf');
+    $('btn-pdf-open-native').onclick = async () => {
+      if (bin) {
+        const pdfMod = await loadPdfViewer();
+        pdfMod.openPdfNatively(bin, prayer.fileName || 'priere.pdf');
+      }
     };
     const container = $('pdf-pages-container');
     if (!bin) {
-      container.innerHTML = '<p class="empty-sub" style="padding:24px;text-align:center;">PDF en cours de récupération depuis le serveur…</p>';
+      renderMissingMediaDriveCard(container, prayer, 'PDF');
       return;
     }
     try {
-      await renderPdfIntoContainer(bin, container, {
+      const pdfMod = await loadPdfViewer();
+      await pdfMod.renderPdfIntoContainer(bin, container, {
         scale: state.pdfScale,
         onPageCount: (count) => {
           $('pdf-page-info').textContent = `${prayer.title || 'PDF'} • ${count} page${count > 1 ? 's' : ''}`;
         }
       });
     } catch (err) {
-      container.innerHTML = `<div class="empty-state"><p class="empty-title">Aperçu PDF indisponible</p><p class="empty-sub">${escapeText(err.message)}</p><button id="btn-fallback-pdf" class="btn-primary-soft" type="button">Ouvrir le PDF avec iOS</button></div>`;
-      const fb = document.getElementById('btn-fallback-pdf');
-      if (fb) fb.addEventListener('click', () => openPdfNatively(bin, prayer.fileName));
+      const box = document.createElement('div');
+      box.className = 'empty-state';
+      const titleEl = document.createElement('p');
+      titleEl.className = 'empty-title';
+      titleEl.textContent = 'Aperçu PDF indisponible';
+      const subEl = document.createElement('p');
+      subEl.className = 'empty-sub';
+      subEl.textContent = err?.message || 'Erreur de lecture du document.';
+      const fb = document.createElement('button');
+      fb.id = 'btn-fallback-pdf';
+      fb.className = 'btn-primary-soft';
+      fb.type = 'button';
+      fb.textContent = 'Ouvrir le PDF avec iOS';
+      fb.addEventListener('click', async () => {
+        const pdfMod = await loadPdfViewer();
+        pdfMod.openPdfNatively(bin, prayer.fileName);
+      });
+      box.append(titleEl, subEl, fb);
+      container.replaceChildren(box);
     }
   } else if (isImage) {
     const bin = getPrayerBinary(prayer);
     $('image-title-info').textContent = prayer.title || 'Photo de prière';
     $('image-zoom-label').textContent = `${Math.round(state.imageScale * 100)}%`;
     const container = $('prayer-image-container');
-    container.innerHTML = '';
+    container.replaceChildren();
     if (!bin) {
-      container.innerHTML = '<p class="empty-sub" style="padding:24px;text-align:center;">Photo en cours de récupération depuis le serveur…</p>';
+      renderMissingMediaDriveCard(container, prayer, 'Photo');
       return;
     }
     if (currentImageObjectUrl) URL.revokeObjectURL(currentImageObjectUrl);
@@ -1012,8 +1196,66 @@ async function renderCurrentPrayer() {
     img.style.width = `${Math.round(state.imageScale * 100)}%`;
     container.appendChild(img);
 
-    $('btn-image-open-native').onclick = () => openPdfNatively(bin, prayer.fileName || 'priere.jpg');
+    $('btn-image-open-native').onclick = async () => {
+      const pdfMod = await loadPdfViewer();
+      pdfMod.openPdfNatively(bin, prayer.fileName || 'priere.jpg');
+    };
   }
+}
+
+function renderMissingMediaDriveCard(container, prayer, kindLabel) {
+  const card = document.createElement('div');
+  card.className = 'pdf-drive-card';
+
+  const title = document.createElement('p');
+  title.className = 'empty-title';
+  title.textContent = `${kindLabel} non présent sur cet appareil`;
+  card.appendChild(title);
+
+  const sub = document.createElement('p');
+  sub.className = 'empty-sub';
+
+  if (prayer.driveFileId) {
+    sub.textContent = 'Ce fichier est sauvegardé sur votre Google Drive personnel (0 octet sur notre serveur). Touchez ci-dessous pour le télécharger hors-ligne sur cet appareil.';
+    card.appendChild(sub);
+
+    const dlBtn = document.createElement('button');
+    dlBtn.type = 'button';
+    dlBtn.className = 'btn-primary-ios';
+    dlBtn.textContent = 'Télécharger depuis mon Google Drive';
+    dlBtn.addEventListener('click', async () => {
+      if (!navigator.onLine) {
+        showToast('Connexion Internet requise pour télécharger depuis Google Drive.');
+        return;
+      }
+      dlBtn.disabled = true;
+      dlBtn.textContent = 'Téléchargement…';
+      try {
+        const mod = await import('./drive-sync.js');
+        await mod.downloadPrayerMediaFromDrive(prayer);
+        await refreshFromDbOnly();
+        await renderCurrentPrayer();
+        showToast(`${kindLabel} téléchargé et prêt hors-ligne ✓`);
+      } catch (err) {
+        showToast(err?.message || 'Téléchargement Google Drive impossible.');
+        dlBtn.disabled = false;
+        dlBtn.textContent = 'Télécharger depuis mon Google Drive';
+      }
+    });
+    card.appendChild(dlBtn);
+  } else {
+    sub.textContent = 'Ce fichier a été ajouté depuis un autre appareil sans synchronisation Google Drive. Activez Google Drive (jusqu’à 5 Go gratuit) dans Compte pour retrouver vos PDF partout.';
+    card.appendChild(sub);
+
+    const accBtn = document.createElement('button');
+    accBtn.type = 'button';
+    accBtn.className = 'btn-outline-ios';
+    accBtn.textContent = 'Configurer Google Drive (5 Go)';
+    accBtn.addEventListener('click', openAccountModal);
+    card.appendChild(accBtn);
+  }
+
+  container.replaceChildren(card);
 }
 
 async function saveEditedPrayer({ exitEdit = false, silent = false } = {}) {
@@ -1062,9 +1304,13 @@ async function confirmAndDeletePrayer(id) {
   if (!prayer) return;
   if (!confirm(`Supprimer « ${prayer.title || 'cette prière'} » ?`)) return;
 
-  const hasBin = prayer.type === 'pdf' || prayer.type === 'image';
+  const driveFileId = prayer.driveFileId || '';
   await deletePrayer(id);
-  if (hasBin) deleteServerPdf(id);
+  if (driveFileId && localStorage.getItem('mpq_drive_sync_enabled') === '1') {
+    import('./drive-sync.js')
+      .then((m) => m.deleteDriveFile(driveFileId))
+      .catch(() => {});
+  }
 
   const allNovenas = await getAllNovenas();
   for (const n of allNovenas) {
@@ -1112,8 +1358,23 @@ function openPdfImportSheet() {
   $('pdf-file-input').value = '';
   $('pdf-title-input').value = '';
   $('pdf-folder-select').value = '';
-  $('pdf-file-meta').textContent = 'Le fichier est enregistré sur votre iPhone et sauvegardé sur le serveur dès que vous êtes connecté.';
+  $('pdf-file-meta').textContent = 'Conservé hors connexion sur cet appareil (et synchronisable sur votre Google Drive personnel jusqu’à 5 Go).';
   openSheet('sheet-pdf');
+}
+
+async function maybeUploadMediaToDrive(prayerId) {
+  if (!navigator.onLine || localStorage.getItem('mpq_drive_sync_enabled') !== '1') return;
+  try {
+    const fresh = await getPrayer(prayerId);
+    if (!fresh || fresh.driveFileId) return;
+    const mod = await import('./drive-sync.js');
+    if (mod.hasActiveDriveToken()) {
+      await mod.uploadPrayerMediaToDrive(fresh);
+      scheduleServerSync();
+    }
+  } catch {
+    // Le fichier reste intact en local sur l'appareil
+  }
 }
 
 async function handleSavePdf() {
@@ -1139,10 +1400,12 @@ async function handleSavePdf() {
     createdAt: now,
     updatedAt: now
   };
+  await requestPersistentStorage();
   await savePrayer(prayer);
   await reloadData({ sync: true });
+  maybeUploadMediaToDrive(prayer.id);
   closeAllSheets();
-  showToast('PDF ajouté au carnet');
+  showToast('PDF ajouté au carnet (prêt hors-ligne)');
   await openPrayer(prayer.id, 'list', false);
 }
 
@@ -1232,8 +1495,10 @@ async function handleSavePhoto() {
     createdAt: now,
     updatedAt: now
   };
+  await requestPersistentStorage();
   await savePrayer(prayer);
   await reloadData({ sync: true });
+  maybeUploadMediaToDrive(prayer.id);
   closeAllSheets();
   showToast('Photo ajoutée au carnet');
   await openPrayer(prayer.id, 'list', false);
@@ -1244,7 +1509,10 @@ async function handleSavePhoto() {
    ========================================================= */
 function openNovenaSheet({ existingNovena = null, prefillPrayerId = '' } = {}) {
   const select = $('novena-prayer-select');
-  select.innerHTML = '<option value="">— Aucune prière liée —</option>';
+  const defOpt = document.createElement('option');
+  defOpt.value = '';
+  defOpt.textContent = '— Aucune prière liée —';
+  select.replaceChildren(defOpt);
   for (const p of state.prayers) {
     const opt = document.createElement('option');
     opt.value = p.id;
@@ -1346,11 +1614,12 @@ async function openNovena(id) {
 }
 
 async function refreshPushUi() {
-  const supported = isPushSupported();
+  const pushMod = await loadPush();
+  const supported = pushMod.isPushSupported();
   let sub = null;
   if (supported) {
     try {
-      sub = await getPushSubscription();
+      sub = await pushMod.getPushSubscription();
     } catch {
       sub = null;
     }
@@ -1390,22 +1659,28 @@ async function refreshPushUi() {
 }
 
 async function handlePushToggle() {
-  if (!isPushSupported()) {
+  const pushMod = await loadPush();
+  if (!pushMod.isPushSupported()) {
     showToast("Ajoutez d'abord l'app sur l'écran d'accueil Safari (iOS 16.4+).");
     return;
   }
   try {
-    const existing = await getPushSubscription();
+    const existing = await pushMod.getPushSubscription();
     if (existing) {
-      await unsubscribeFromPush();
+      await pushMod.unsubscribeFromPush();
       showToast('Notifications Push désactivées');
     } else {
-      await subscribeToPush();
+      await pushMod.subscribeToPush();
       await syncWithServer({ onStatus: setSyncStatus });
       showToast('Notifications Push iPhone activées ✓');
     }
   } catch (err) {
-    if (err?.message === 'PERMISSION_DENIED') {
+    if (err?.message === 'AUTH_REQUIRED') {
+      showToast('Connectez-vous pour activer les notifications Push de votre compte.');
+      openAccountModal();
+    } else if (err?.message === 'API_NOT_CONFIGURED') {
+      showToast('Reliez d’abord votre serveur Cloudflare dans Compte.');
+    } else if (err?.message === 'PERMISSION_DENIED') {
       showToast('Autorisation refusée dans les réglages iPhone.');
     } else {
       showToast('Activation Push impossible (vérifiez la connexion).');
@@ -1416,10 +1691,15 @@ async function handlePushToggle() {
 
 async function handlePushTest() {
   try {
-    const res = await sendTestPush();
+    const pushMod = await loadPush();
+    const res = await pushMod.sendTestPush();
     showToast(res.sent > 0 ? 'Notification envoyée sur votre iPhone !' : 'Aucun appareil abonné.');
-  } catch {
-    showToast("Échec de l'envoi test.");
+  } catch (err) {
+    if (err?.message === 'AUTH_REQUIRED') {
+      showToast('Connectez-vous d’abord à votre compte.');
+    } else {
+      showToast("Échec de l'envoi test.");
+    }
   }
 }
 
@@ -1491,15 +1771,18 @@ async function renderCurrentNovena() {
   }
 
   $('btn-novena-configure-reminder').onclick = () => openNovenaSheet({ existingNovena: n });
-  $('btn-novena-download-ics').onclick = () => {
-    downloadNovenaIcs(n, linkedPrayer?.title || '', window.location.href.split('#')[0]);
+  $('btn-novena-download-ics').onclick = async () => {
+    const icsMod = await loadIcs();
+    icsMod.downloadNovenaIcs(n, linkedPrayer?.title || '', window.location.href.split('#')[0]);
     showToast('Calendrier .ics généré pour iPhone');
   };
-  $('btn-novena-send-sms').onclick = () => {
-    window.location.href = buildSmsLink(rem.phone, n, linkedPrayer?.title || '', curDay);
+  $('btn-novena-send-sms').onclick = async () => {
+    const icsMod = await loadIcs();
+    window.location.href = icsMod.buildSmsLink(rem.phone, n, linkedPrayer?.title || '', curDay);
   };
-  $('btn-novena-send-email').onclick = () => {
-    window.location.href = buildMailtoLink(rem.email, n, linkedPrayer?.title || '', curDay);
+  $('btn-novena-send-email').onclick = async () => {
+    const icsMod = await loadIcs();
+    window.location.href = icsMod.buildMailtoLink(rem.email, n, linkedPrayer?.title || '', curDay);
   };
 
   await refreshPushUi();
@@ -1657,9 +1940,12 @@ function openQuickIntentionsSheet() {
 
 function renderQuickIntentionsSheet() {
   const listEl = $('quick-intentions-list');
-  listEl.innerHTML = '';
+  listEl.replaceChildren();
   if (state.intentions.length === 0) {
-    listEl.innerHTML = '<p class="field-help" style="padding:12px 0;">Aucune intention personnelle enregistrée.</p>';
+    const p = document.createElement('p');
+    p.className = 'field-help';
+    p.textContent = 'Aucune intention personnelle enregistrée.';
+    listEl.appendChild(p);
     return;
   }
   for (const item of state.intentions) {
@@ -1732,10 +2018,15 @@ async function exportIntentionsFile() {
    VUE « MYSTÈRES DU CHAPELET » & CHAPELET INTERACTIF
    ========================================================= */
 function saveRosaryCounter() {
-  localStorage.setItem(ROSARY_COUNTER_KEY, JSON.stringify(state.rosaryCounter));
+  const now = Date.now();
+  const stamped = { ...state.rosaryCounter, updatedAt: now };
+  localStorage.setItem(ROSARY_COUNTER_KEY, JSON.stringify(stamped));
+  localStorage.setItem(ROSARY_UPDATED_KEY, String(now));
+  scheduleServerSync();
 }
 
-function renderRosaryInteractive() {
+async function renderRosaryInteractive() {
+  const { ROSARY_GROUPS, getTodayRosaryGroup } = await loadRosary();
   const rc = state.rosaryCounter;
   const group = ROSARY_GROUPS.find((g) => g.key === rc.groupKey) || getTodayRosaryGroup();
   const mystery = group.mysteries[rc.decadeIndex] || group.mysteries[0];
@@ -1745,7 +2036,7 @@ function renderRosaryInteractive() {
   $('rosary-counter-fruit').textContent = `Fruit : ${mystery.fruit} (${group.title})`;
 
   const row = $('rosary-beads-row');
-  row.innerHTML = '';
+  row.replaceChildren();
   for (let i = 0; i <= 10; i += 1) {
     const bead = document.createElement('button');
     bead.type = 'button';
@@ -1794,17 +2085,18 @@ function stepRosaryBead(delta) {
   renderRosaryInteractive();
 }
 
-function openRosaryView(filterKey = 'all') {
+async function openRosaryView(filterKey = 'all') {
   state.rosaryFilter = filterKey;
   if (filterKey !== 'all') {
     state.rosaryCounter.groupKey = filterKey;
     saveRosaryCounter();
   }
   showView('rosary');
-  renderRosaryView();
+  await renderRosaryView();
 }
 
-function renderRosaryView() {
+async function renderRosaryView() {
+  const { ROSARY_GROUPS, ROSARY_PRAYERS, getTodayRosaryGroup } = await loadRosary();
   const todayGroup = getTodayRosaryGroup();
   $('rosary-today-banner').textContent = `Aujourd'hui (${todayGroup.daysLabel}) : ${todayGroup.title}`;
 
@@ -1814,14 +2106,14 @@ function renderRosaryView() {
     btn.classList.toggle('is-today-pill', k === todayGroup.key);
   });
 
-  renderRosaryInteractive();
+  await renderRosaryInteractive();
 
   const groupsToShow = state.rosaryFilter === 'all'
     ? ROSARY_GROUPS
     : ROSARY_GROUPS.filter((g) => g.key === state.rosaryFilter);
 
   const container = $('rosary-groups-container');
-  container.innerHTML = '';
+  container.replaceChildren();
 
   for (const group of groupsToShow) {
     const card = document.createElement('article');
@@ -1892,7 +2184,7 @@ function renderRosaryView() {
     container.appendChild(card);
   }
 
-  // Prières du chapelet dans l'accordéon
+  // Prières du chapelet dans l'accordéon (rendu DOM pur, zéro innerHTML)
   const prayersBody = $('rosary-prayers-body');
   if (prayersBody && prayersBody.childElementCount === 0) {
     for (const pr of ROSARY_PRAYERS) {
@@ -1901,7 +2193,11 @@ function renderRosaryView() {
       const h4 = document.createElement('h4');
       h4.textContent = pr.title;
       const p = document.createElement('p');
-      p.innerHTML = escapeText(pr.text).replace(/\n/g, '<br>');
+      const lines = String(pr.text || '').split('\n');
+      lines.forEach((line, idx) => {
+        if (idx > 0) p.appendChild(document.createElement('br'));
+        p.appendChild(document.createTextNode(line));
+      });
       block.appendChild(h4);
       block.appendChild(p);
       prayersBody.appendChild(block);
@@ -1977,9 +2273,14 @@ async function flushAndSyncOnLeave() {
    ========================================================= */
 function bindEvents() {
   window.addEventListener('online', async () => {
+    flushFeedbackQueue().catch(() => {});
+    if (!isSignedIn()) {
+      setSyncStatus('local');
+      return;
+    }
     setSyncStatus('syncing');
     const res = await syncWithServer({ onStatus: setSyncStatus });
-    if (res?.ok) await refreshFromDbOnly();
+    if (res?.ok && !res.skipped) await refreshFromDbOnly();
   });
   window.addEventListener('offline', () => setSyncStatus('offline'));
 
@@ -1994,26 +2295,24 @@ function bindEvents() {
       flushAndSyncOnLeave();
     } else if (document.visibilityState === 'visible' && navigator.onLine) {
       applyLiturgicalSeason();
-      syncWithServer({ onStatus: setSyncStatus }).then((r) => {
-        if (r?.ok) refreshFromDbOnly();
-      });
+      flushFeedbackQueue().catch(() => {});
+      if (isSignedIn()) {
+        syncWithServer({ pullOnly: true, onStatus: setSyncStatus }).then((r) => {
+          if (r?.ok && !r.skipped) refreshFromDbOnly();
+        });
+      }
     }
   });
   window.addEventListener('pagehide', () => flushAndSyncOnLeave());
   window.addEventListener('beforeunload', () => flushAndSyncOnLeave());
 
-  $('sync-status-btn').addEventListener('click', async () => {
-    if (!navigator.onLine) {
-      showToast('Hors-ligne : vos données sont enregistrées sur votre iPhone.');
-      return;
-    }
-    const res = await syncWithServer({ onStatus: setSyncStatus });
-    if (res?.ok) {
-      await refreshFromDbOnly();
-      showToast("Sauvegardé sur l'iPhone et le serveur");
-    } else {
-      showToast("Serveur indisponible : enregistré sur l'iPhone");
-    }
+  $('sync-status-btn').addEventListener('click', openAccountModal);
+
+  $('btn-open-feedback')?.addEventListener('click', openFeedbackModal);
+  $('btn-share-app')?.addEventListener('click', shareApplication);
+  $('btn-info-share-app')?.addEventListener('click', shareApplication);
+  $('btn-trigger-offline-precache')?.addEventListener('click', () => {
+    triggerOfflineCorpusPrecache({ notify: true });
   });
 
   $('btn-toggle-theme').addEventListener('click', cycleTheme);
@@ -2091,7 +2390,7 @@ function bindEvents() {
   });
   $('btn-rosary-wake-lock').addEventListener('click', toggleWakeLock);
   $('btn-rosary-today').addEventListener('click', () => {
-    const today = getTodayRosaryGroup();
+    const today = getTodayRosarySummary();
     state.rosaryFilter = today.key;
     state.rosaryCounter = { groupKey: today.key, decadeIndex: 0, beadIndex: 0 };
     saveRosaryCounter();
@@ -2281,10 +2580,77 @@ function bindEvents() {
   $('btn-save-novena').addEventListener('click', handleSaveNovena);
 }
 
+function updateOfflineCorpusUi(status) {
+  const homeNote = $('home-offline-corpus-note');
+  const infoText = $('info-offline-corpus-status');
+  const texts = status?.textsCount || 66;
+  const guides = status?.guidesCount || 10;
+
+  if (status?.ready) {
+    if (homeNote) {
+      homeNote.textContent = `Mode hors connexion prêt (${texts} textes + ${guides} guides)`;
+      homeNote.classList.remove('hidden');
+    }
+    if (infoText) {
+      infoText.textContent = `Prêt pour le mode avion ✓ — L’intégralité de l’application, le lecteur PDF, les ${texts} textes (CEC & saint Thomas) et les ${guides} guides sont en cache local.`;
+    }
+  } else if (status && typeof status.cached === 'number') {
+    if (infoText) {
+      infoText.textContent = `Mise en cache hors connexion : ${status.cached} / ${status.total || 70} ressources prêtes…`;
+    }
+  }
+}
+
+async function triggerOfflineCorpusPrecache({ notify = false } = {}) {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const worker = reg.active || navigator.serviceWorker.controller;
+    if (worker) {
+      worker.postMessage({ type: 'PRECACHE_OFFLINE_CORPUS' });
+      if (notify) showToast('Vérification du cache hors connexion en cours…');
+    }
+  } catch {
+    // Ignoré
+  }
+}
+
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    await navigator.serviceWorker.register('./sw.js', { scope: './' });
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'OFFLINE_CORPUS_STATUS') {
+        updateOfflineCorpusUi(event.data);
+      }
+    });
+
+    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+    const worker = reg.active || navigator.serviceWorker.controller;
+    if (worker) {
+      worker.postMessage({ type: 'GET_OFFLINE_CORPUS_STATUS' });
+    }
+
+    // Précaching silencieux des 66 textes + 10 guides APRÈS chargement complet + temps mort (0 impact au boot)
+    const scheduleBackgroundPrecache = () => {
+      const start = () => {
+        setTimeout(() => {
+          if (navigator.onLine) {
+            triggerOfflineCorpusPrecache({ notify: false });
+          }
+        }, 2500);
+      };
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(start, { timeout: 5000 });
+      } else {
+        start();
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      scheduleBackgroundPrecache();
+    } else {
+      window.addEventListener('load', scheduleBackgroundPrecache, { once: true });
+    }
   } catch (err) {
     console.warn('Service worker registration failed:', err);
   }
@@ -2295,16 +2661,24 @@ async function boot() {
   applyLiturgicalSeason();
   applyPrayerFontSize();
   updateWakeLockButtons();
-  setSyncStatus(navigator.onLine ? 'idle' : 'offline');
   bindEvents();
   await initDbAndSeed();
+  await initAuth();
+
+  onAuthChange(() => {
+    setSyncStatus(!navigator.onLine ? 'offline' : (isSignedIn() ? 'idle' : 'local'));
+  });
+  setSyncStatus(!navigator.onLine ? 'offline' : (isSignedIn() ? 'idle' : 'local'));
+
   await refreshFromDbOnly();
   await registerServiceWorker();
-  await refreshPushUi();
 
   if (navigator.onLine) {
-    const res = await syncWithServer({ onStatus: setSyncStatus });
-    if (res?.ok) await refreshFromDbOnly();
+    flushFeedbackQueue().catch(() => {});
+    if (isSignedIn()) {
+      const res = await syncWithServer({ pullOnly: true, onStatus: setSyncStatus });
+      if (res?.ok && !res.skipped) await refreshFromDbOnly();
+    }
   }
 }
 

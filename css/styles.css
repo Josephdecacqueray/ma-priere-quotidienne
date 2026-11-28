@@ -4,8 +4,11 @@
    ========================================================= */
 @font-face {
   font-family: 'Shelley Volante Script';
+  /* Décommentez les 2 lignes suivantes dès que vous déposez le fichier dans ./fonts/ :
   src: url('../fonts/ShelleyVolanteScript.otf') format('opentype'),
        url('../fonts/ShelleyVolanteScript.ttf') format('truetype');
+  */
+  src: local('Shelley Volante Script');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -696,7 +699,7 @@ html[data-theme="dark"] .lp-count-pill {
    ========================================================= */
 .list-content {
   flex: 1;
-  padding: 14px 16px calc(102px + var(--safe-bottom));
+  padding: 14px 16px calc(118px + var(--safe-bottom));
 }
 
 .filter-pills-scroll {
@@ -3511,4 +3514,362 @@ html[data-theme="dark"] .lp-distractions-box {
   .prayer-sheet {
     padding: 26px 28px 32px;
   }
+}
+
+/* =========================================================
+   v8 : PIED DE PAGE DISCRET, COMPTE, DRIVE 5 Go & CONTACT PRIVÉ
+   Apple Liquid Glass iOS 26/27 — Light & Dark
+   ========================================================= */
+.home-discrete-footer {
+  margin-top: 22px;
+  padding: 14px 14px 12px;
+  border-radius: 20px;
+  background: var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  box-shadow: 0 0 0 0.5px var(--hairline-color), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+html[data-theme="dark"] .home-discrete-footer {
+  box-shadow: 0 0 0 0.5px var(--hairline-color), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.home-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  width: 100%;
+}
+
+.home-footer-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 7px 13px;
+  background: var(--glass-bg);
+  box-shadow: var(--glass-btn-shadow);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.home-footer-btn:hover {
+  color: var(--text-primary);
+}
+
+.home-footer-btn:active {
+  transform: scale(0.97);
+}
+
+.home-footer-btn svg {
+  color: var(--accent-notes);
+  flex-shrink: 0;
+}
+
+.home-offline-note {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent-green);
+  text-align: center;
+}
+
+/* Compte & Sessions */
+.account-tabs {
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.account-tabs .segment-btn {
+  font-size: 12.5px;
+  padding: 8px 4px;
+  white-space: nowrap;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-pwa-note {
+  margin-top: 6px;
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+.account-notice-card {
+  border-radius: 18px;
+  padding: 13px 15px;
+  background: linear-gradient(155deg, rgba(184, 134, 27, 0.13), rgba(255, 255, 255, 0.42));
+  box-shadow: inset 3px 0 0 var(--accent-notes), 0 0 0 0.5px rgba(184, 134, 27, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+}
+
+html[data-theme="dark"] .account-notice-card {
+  background: linear-gradient(155deg, rgba(230, 180, 76, 0.16), rgba(24, 30, 44, 0.62));
+}
+
+.account-email-line {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.account-mono-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+  letter-spacing: 0.04em;
+}
+
+.account-error-msg {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--danger);
+  background: rgba(198, 40, 40, 0.10);
+  box-shadow: 0 0 0 0.5px rgba(198, 40, 40, 0.24);
+}
+
+html[data-theme="dark"] .account-error-msg {
+  background: rgba(240, 98, 98, 0.15);
+}
+
+.account-advanced-details {
+  border-radius: 18px;
+  padding: 12px 14px;
+  background: var(--glass-bg-subtle);
+  box-shadow: 0 0 0 0.5px var(--hairline-color);
+}
+
+.account-advanced-summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.account-advanced-body {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.recovery-key-card {
+  border-radius: 20px;
+  padding: 15px;
+  background: linear-gradient(155deg, rgba(30, 126, 52, 0.14), rgba(255, 255, 255, 0.66));
+  box-shadow: 0 0 0 1px rgba(30, 126, 52, 0.30), var(--glass-btn-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+html[data-theme="dark"] .recovery-key-card {
+  background: linear-gradient(155deg, rgba(74, 194, 107, 0.18), rgba(20, 28, 40, 0.78));
+}
+
+.recovery-key-title {
+  font-size: 14px;
+  color: var(--accent-green);
+}
+
+.recovery-key-code {
+  display: block;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: var(--input-bg);
+  box-shadow: 0 0 0 0.5px var(--hairline-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  word-break: break-all;
+  user-select: all;
+}
+
+.recovery-key-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.storage-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 8px 0 10px;
+}
+
+.storage-bar-wrap .progress-track {
+  flex: none;
+  width: 100%;
+  height: 7px;
+}
+
+.storage-bar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 15px;
+  background: var(--glass-bg-subtle);
+  box-shadow: 0 0 0 0.5px var(--hairline-color);
+}
+
+.session-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.session-title-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.session-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.session-revoke-btn {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+.btn-danger-outline {
+  color: var(--danger);
+}
+
+.pdf-status-msg {
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.pdf-drive-card {
+  margin: 18px auto;
+  max-width: 420px;
+  padding: 20px 18px;
+  border-radius: 22px;
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+/* Contact privé (Bug & Suggestion) */
+.feedback-category-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.feedback-char-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.feedback-char-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.feedback-context-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12.5px;
+  line-height: 1.42;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.feedback-context-label input {
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--accent-notes);
+}
+
+.feedback-status-msg {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-green);
+  background: rgba(30, 126, 52, 0.11);
+  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.24);
+}
+
+.feedback-status-msg.is-error {
+  color: var(--danger);
+  background: rgba(198, 40, 40, 0.10);
+  box-shadow: 0 0 0 0.5px rgba(198, 40, 40, 0.24);
+}
+
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.turnstile-slot {
+  display: flex;
+  justify-content: center;
+  min-height: 65px;
+}
+
+.status-pill.is-local .status-dot {
+  background: var(--accent-notes);
 }

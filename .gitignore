@@ -1,0 +1,20 @@
+# Secrets et variables locales (NE JAMAIS COMMITER)
+.dev.vars
+.env
+.env.*
+!.dev.vars.example
+worker/.dev.vars
+worker/.wrangler/
+worker/node_modules/
+server/node_modules/
+node_modules/
+
+# Exports de sauvegarde / migration contenant des données privées
+*sauvegarde*.json
+*backup*.json
+*migration-v7*.json
+*.pem
+*.key
+*.log
+.DS_Store
+Thumbs.db

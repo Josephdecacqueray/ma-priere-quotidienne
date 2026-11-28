@@ -33,35 +33,42 @@ export function toLetter(num) {
   return out;
 }
 
-export function escapeHtml(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 /**
- * Transforme le texte brut d'une prière en HTML structuré :
+ * Rendu DOM 100 % sûr (zéro innerHTML) du texte d'une prière :
  * - `# Titre` -> Titre niveau 1 (I., II., ...), souligné rouge, alinéa 1
  * - `## Sous-titre` -> Niveau 2 (1), 2), ...), souligné vert, alinéa 2
  * - `### Sous-sous-titre` -> Niveau 3 (a), b), ...), souligné vert, alinéa 3
  * - Paragraphes en Georgia justifiés, retours à la ligne internes conservés.
  */
-export function formatPrayerContent(rawText) {
+export function renderPrayerContentToNode(containerEl, rawText) {
+  const frag = document.createDocumentFragment();
   const lines = String(rawText ?? '').replace(/\r\n/g, '\n').split('\n');
   let h1Count = 0;
   let h2Count = 0;
   let h3Count = 0;
-  const blocks = [];
   let paraLines = [];
+  let blockCount = 0;
 
   const flushParagraph = () => {
     if (paraLines.length === 0) return;
-    const joined = paraLines.map((l) => escapeHtml(l)).join('<br>');
-    blocks.push(`<p>${joined}</p>`);
+    const p = document.createElement('p');
+    paraLines.forEach((line, idx) => {
+      if (idx > 0) p.appendChild(document.createElement('br'));
+      p.appendChild(document.createTextNode(line));
+    });
+    frag.appendChild(p);
+    blockCount += 1;
     paraLines = [];
+  };
+
+  const appendHeading = (tag, className, label) => {
+    const h = document.createElement(tag);
+    h.className = className;
+    const span = document.createElement('span');
+    span.textContent = label;
+    h.appendChild(span);
+    frag.appendChild(h);
+    blockCount += 1;
   };
 
   for (const rawLine of lines) {
@@ -78,7 +85,7 @@ export function formatPrayerContent(rawText) {
       const body = trimmed.slice(4).trim();
       const hasPrefix = /^[a-z]+\)\s/i.test(body);
       const label = hasPrefix ? body : `${toLetter(h3Count)}) ${body}`;
-      blocks.push(`<h4 class="prayer-h3"><span>${escapeHtml(label)}</span></h4>`);
+      appendHeading('h4', 'prayer-h3', label);
       continue;
     }
 
@@ -89,7 +96,7 @@ export function formatPrayerContent(rawText) {
       const body = trimmed.slice(3).trim();
       const hasPrefix = /^\d+\)\s/.test(body);
       const label = hasPrefix ? body : `${h2Count}) ${body}`;
-      blocks.push(`<h3 class="prayer-h2"><span>${escapeHtml(label)}</span></h3>`);
+      appendHeading('h3', 'prayer-h2', label);
       continue;
     }
 
@@ -101,7 +108,7 @@ export function formatPrayerContent(rawText) {
       const body = trimmed.slice(2).trim();
       const hasPrefix = /^[IVXLCDM]+\.\s/i.test(body);
       const label = hasPrefix ? body : `${toRoman(h1Count)}. ${body}`;
-      blocks.push(`<h2 class="prayer-h1"><span>${escapeHtml(label)}</span></h2>`);
+      appendHeading('h2', 'prayer-h1', label);
       continue;
     }
 
@@ -110,10 +117,14 @@ export function formatPrayerContent(rawText) {
 
   flushParagraph();
 
-  if (blocks.length === 0) {
-    return '<p class="empty-prayer-note">(Note vide)</p>';
+  if (blockCount === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-prayer-note';
+    empty.textContent = '(Note vide)';
+    frag.appendChild(empty);
   }
-  return blocks.join('\n');
+
+  containerEl.replaceChildren(frag);
 }
 
 export function stripFormattingForPreview(rawText) {

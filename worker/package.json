@@ -1,0 +1,15 @@
+{
+  "name": "ma-priere-worker",
+  "version": "8.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply ma_priere_db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply ma_priere_db --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^3.114.15"
+  }
+}

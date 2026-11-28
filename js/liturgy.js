@@ -129,3 +129,14 @@ export function getLiturgicalSeason(date = new Date()) {
     accentHex: '#1E7E34'
   };
 }
+
+/**
+ * Résumé léger du mystère du chapelet du jour (évite de charger rosary.js au boot).
+ */
+export function getTodayRosarySummary(date = new Date()) {
+  const dow = date.getDay();
+  if (dow === 1 || dow === 6) return { key: 'joyeux', title: 'Mystères joyeux', daysLabel: 'Lundi et Samedi' };
+  if (dow === 4) return { key: 'lumineux', title: 'Mystères lumineux', daysLabel: 'Jeudi' };
+  if (dow === 2 || dow === 5) return { key: 'douloureux', title: 'Mystères douloureux', daysLabel: 'Mardi et Vendredi' };
+  return { key: 'glorieux', title: 'Mystères glorieux', daysLabel: 'Mercredi et Dimanche' };
+}

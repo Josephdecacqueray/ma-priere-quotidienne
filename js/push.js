@@ -1,4 +1,5 @@
-import { SYNC_API_URL } from './sync.js';
+import { getApiBaseUrl, fetchServerConfig } from './config.js';
+import { isSignedIn, authFetch } from './auth.js';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -30,15 +31,20 @@ export async function subscribeToPush() {
   if (!isPushSupported()) {
     throw new Error('PUSH_UNSUPPORTED');
   }
+  if (!getApiBaseUrl()) {
+    throw new Error('API_NOT_CONFIGURED');
+  }
+  if (!isSignedIn()) {
+    throw new Error('AUTH_REQUIRED');
+  }
 
   const perm = await Notification.requestPermission();
   if (perm !== 'granted') {
     throw new Error('PERMISSION_DENIED');
   }
 
-  const keyResp = await fetch(`${SYNC_API_URL}/api/push/vapid-public-key`);
-  if (!keyResp.ok) throw new Error('VAPID_FETCH_FAILED');
-  const { publicKey } = await keyResp.json();
+  const cfg = await fetchServerConfig({ force: true });
+  const publicKey = cfg.vapidPublicKey;
   if (!publicKey) throw new Error('VAPID_MISSING');
 
   const reg = await navigator.serviceWorker.ready;
@@ -50,11 +56,19 @@ export async function subscribeToPush() {
     });
   }
 
-  const saveResp = await fetch(`${SYNC_API_URL}/api/push/subscribe`, {
+  let timezone = 'Europe/Paris';
+  try {
+    timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || timezone;
+  } catch {
+    // Ignoré
+  }
+
+  const saveResp = await authFetch('/api/push/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       subscription: sub.toJSON(),
+      timezone,
       tzOffsetMinutes: new Date().getTimezoneOffset()
     })
   });
@@ -66,21 +80,24 @@ export async function subscribeToPush() {
 export async function unsubscribeFromPush() {
   const sub = await getPushSubscription();
   if (!sub) return false;
-  try {
-    await fetch(`${SYNC_API_URL}/api/push/unsubscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: sub.endpoint })
-    });
-  } catch {
-    // Ignoré si hors-ligne
+  if (isSignedIn() && getApiBaseUrl() && navigator.onLine) {
+    try {
+      await authFetch('/api/push/unsubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: sub.endpoint })
+      });
+    } catch {
+      // Ignoré si hors-ligne
+    }
   }
   await sub.unsubscribe();
   return true;
 }
 
 export async function sendTestPush() {
-  const resp = await fetch(`${SYNC_API_URL}/api/push/test`, {
+  if (!isSignedIn()) throw new Error('AUTH_REQUIRED');
+  const resp = await authFetch('/api/push/test', {
     method: 'POST'
   });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
