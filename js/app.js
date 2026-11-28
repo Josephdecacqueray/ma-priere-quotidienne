@@ -65,8 +65,6 @@ function stripFormattingForPreview(rawText) {
 
 const FONT_SIZE_KEY = 'mpq_font_size_px';
 const THEME_MODE_KEY = 'mpq_theme_mode';
-const ROSARY_COUNTER_KEY = 'mpq_rosary_counter';
-const ROSARY_UPDATED_KEY = 'mpq_rosary_updated_at';
 const SETTINGS_UPDATED_KEY = 'mpq_settings_updated_at';
 const STANDARD_FOLDERS = ['Matin', 'Soir', 'Saints', 'Litanies', 'Messe', 'Psaumes'];
 const NEW_FOLDER_SENTINEL = '__new__';
@@ -95,23 +93,6 @@ function getTodayDailyQuote() {
   return DAILY_QUOTES[Math.abs(dayOfYear) % DAILY_QUOTES.length];
 }
 
-function loadRosaryCounter() {
-  const today = getTodayRosarySummary();
-  try {
-    const saved = JSON.parse(localStorage.getItem(ROSARY_COUNTER_KEY) || 'null');
-    if (saved && saved.groupKey) {
-      return {
-        groupKey: saved.groupKey,
-        decadeIndex: Math.max(0, Math.min(4, Number(saved.decadeIndex) || 0)),
-        beadIndex: Math.max(0, Math.min(10, Number(saved.beadIndex) || 0))
-      };
-    }
-  } catch {
-    // Ignoré
-  }
-  return { groupKey: today.key, decadeIndex: 0, beadIndex: 0 };
-}
-
 const state = {
   prayers: [],
   novenas: [],
@@ -130,7 +111,6 @@ const state = {
   imageScale: 1,
   pendingPhotoBlob: null,
   rosaryFilter: 'all',
-  rosaryCounter: loadRosaryCounter(),
   syncStatus: navigator.onLine ? 'idle' : 'offline'
 };
 
@@ -179,6 +159,18 @@ function showToast(msg) {
 /* =========================================================
    THÈME (JOUR / NUIT / AUTO) & COULEUR LITURGIQUE
    ========================================================= */
+function syncMetaThemeColor() {
+  const resolved = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const metaTheme = $('meta-theme-color');
+  if (!metaTheme) return;
+  const onHomeHero = !$('view-list')?.classList.contains('hidden') && state.activeTab === 'home';
+  if (onHomeHero) {
+    metaTheme.setAttribute('content', '#050A04');
+  } else {
+    metaTheme.setAttribute('content', resolved === 'dark' ? '#07090D' : '#F3EDE1');
+  }
+}
+
 function applyTheme() {
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const resolved = state.themeMode === 'dark' || (state.themeMode === 'auto' && prefersDark)
@@ -186,8 +178,7 @@ function applyTheme() {
     : 'light';
 
   document.documentElement.setAttribute('data-theme', resolved);
-  const metaTheme = $('meta-theme-color');
-  if (metaTheme) metaTheme.setAttribute('content', resolved === 'dark' ? '#0B101B' : '#F6F5F1');
+  syncMetaThemeColor();
 
   const iconSvg = $('theme-icon-svg');
   if (iconSvg) {
@@ -395,7 +386,7 @@ async function shareApplication() {
   const url = window.location.href.split('#')[0];
   const shareData = {
     title: 'Ma prière quotidienne',
-    text: 'Carnet de prières hors-ligne, chapelet interactif, neuvaines, Catéchisme & saint Thomas d’Aquin.',
+    text: 'Carnet de prières hors-ligne, Missel 1962, mystères du chapelet, neuvaines, Catéchisme & saint Thomas d’Aquin.',
     url
   };
   if (isMobileShareContext() && navigator.share) {
@@ -612,6 +603,7 @@ function showView(name) {
   const isRootView = name === 'list' || name === 'rosary';
   const activeNav = name === 'rosary' ? 'rosary' : (state.activeTab === 'rosary' ? 'home' : state.activeTab);
   syncBottomTabBar(activeNav, isRootView);
+  syncMetaThemeColor();
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -1078,6 +1070,10 @@ function renderList() {
 
   const tab = state.activeTab === 'carnet' || state.activeTab === 'novenas' ? state.activeTab : 'home';
 
+  const isHomeHero = tab === 'home';
+  $('main-list-header')?.classList.toggle('is-home-hero', isHomeHero);
+  $('home-sanctuary-hero')?.classList.toggle('hidden', !isHomeHero);
+
   const brandTitle = $('main-brand-title');
   if (brandTitle) {
     brandTitle.textContent = tab === 'carnet'
@@ -1086,6 +1082,7 @@ function renderList() {
         ? 'Mes neuvaines'
         : 'Ma prière quotidienne';
   }
+  syncMetaThemeColor();
 
   $('carnet-search-wrap')?.classList.toggle('hidden', tab !== 'carnet');
   $('btn-header-search')?.classList.toggle('hidden', tab === 'carnet');
@@ -2473,93 +2470,10 @@ async function exportIntentionsFile() {
 }
 
 /* =========================================================
-   VUE « MYSTÈRES DU CHAPELET » & CHAPELET INTERACTIF
+   VUE « MYSTÈRES DU CHAPELET »
    ========================================================= */
-function saveRosaryCounter() {
-  const now = Date.now();
-  const stamped = { ...state.rosaryCounter, updatedAt: now };
-  localStorage.setItem(ROSARY_COUNTER_KEY, JSON.stringify(stamped));
-  localStorage.setItem(ROSARY_UPDATED_KEY, String(now));
-  scheduleServerSync();
-}
-
-async function renderRosaryInteractive() {
-  const { ROSARY_GROUPS, getTodayRosaryGroup } = await loadRosary();
-  const rc = state.rosaryCounter;
-  const group = ROSARY_GROUPS.find((g) => g.key === rc.groupKey) || getTodayRosaryGroup();
-  const mystery = group.mysteries[rc.decadeIndex] || group.mysteries[0];
-
-  $('rosary-decade-badge').textContent = `Dizaine ${rc.decadeIndex + 1} / 5`;
-  $('rosary-counter-mystery').textContent = `${mystery.number}) ${mystery.title}`;
-  $('rosary-counter-fruit').textContent = `Fruit : ${mystery.fruit} (${group.title})`;
-
-  const row = $('rosary-beads-row');
-  row.replaceChildren();
-  for (let i = 0; i <= 10; i += 1) {
-    const bead = document.createElement('button');
-    bead.type = 'button';
-    bead.className = 'rosary-bead';
-    if (i === 0) bead.classList.add('is-our-father');
-    if (i <= rc.beadIndex) bead.classList.add('is-done');
-    if (i === rc.beadIndex) bead.classList.add('is-current');
-    bead.setAttribute('aria-label', i === 0 ? 'Notre Père' : `Je vous salue Marie ${i} sur 10`);
-    bead.addEventListener('click', () => {
-      rc.beadIndex = i;
-      saveRosaryCounter();
-      renderRosaryInteractive();
-    });
-    row.appendChild(bead);
-  }
-
-  $('rosary-bead-status').textContent = rc.beadIndex === 0
-    ? 'Notre Père (début de la dizaine)'
-    : `Je vous salue Marie : ${rc.beadIndex} / 10`;
-
-  const prayerEl = $('rosary-bead-prayer');
-  if (prayerEl) {
-    if (rc.beadIndex === 0) {
-      prayerEl.textContent = 'Notre Père, qui es aux cieux, que ton nom soit sanctifié…';
-    } else if (rc.beadIndex === 10) {
-      prayerEl.textContent = 'Je vous salue Marie, pleine de grâce… (puis Gloire au Père)';
-    } else {
-      prayerEl.textContent = 'Je vous salue Marie, pleine de grâce, le Seigneur est avec vous…';
-    }
-  }
-}
-
-function stepRosaryBead(delta) {
-  const rc = state.rosaryCounter;
-  if (delta > 0) {
-    if (rc.beadIndex < 10) {
-      rc.beadIndex += 1;
-    } else if (rc.decadeIndex < 4) {
-      rc.decadeIndex += 1;
-      rc.beadIndex = 0;
-      showToast(`Dizaine ${rc.decadeIndex + 1} / 5`);
-    } else {
-      rc.decadeIndex = 0;
-      rc.beadIndex = 0;
-      showToast('Chapelet terminé ! Gloire à Dieu.');
-    }
-  } else {
-    if (rc.beadIndex > 0) {
-      rc.beadIndex -= 1;
-    } else if (rc.decadeIndex > 0) {
-      rc.decadeIndex -= 1;
-      rc.beadIndex = 10;
-    }
-  }
-  navigator.vibrate?.(10);
-  saveRosaryCounter();
-  renderRosaryInteractive();
-}
-
 async function openRosaryView(filterKey = 'all') {
   state.rosaryFilter = filterKey;
-  if (filterKey !== 'all') {
-    state.rosaryCounter.groupKey = filterKey;
-    saveRosaryCounter();
-  }
   showView('rosary');
   await renderRosaryView();
 }
@@ -2574,8 +2488,6 @@ async function renderRosaryView() {
     btn.classList.toggle('active', k === state.rosaryFilter);
     btn.classList.toggle('is-today-pill', k === todayGroup.key);
   });
-
-  await renderRosaryInteractive();
 
   const groupsToShow = state.rosaryFilter === 'all'
     ? ROSARY_GROUPS
@@ -2876,7 +2788,7 @@ function bindEvents() {
     }
   });
 
-  // Mystères du chapelet & Chapelet interactif
+  // Mystères du chapelet
   $('btn-open-la-priere').addEventListener('click', () => openLaPriereView());
   $('btn-rosary-back').addEventListener('click', () => {
     switchMainTab('home');
@@ -2885,31 +2797,14 @@ function bindEvents() {
   $('btn-rosary-today').addEventListener('click', () => {
     const today = getTodayRosarySummary();
     state.rosaryFilter = today.key;
-    state.rosaryCounter = { groupKey: today.key, decadeIndex: 0, beadIndex: 0 };
-    saveRosaryCounter();
     renderRosaryView();
     showToast(`${today.title} (${today.daysLabel})`);
   });
   document.querySelectorAll('.rosary-pill').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const k = btn.dataset.rosaryFilter;
-      state.rosaryFilter = k;
-      if (k !== 'all') {
-        state.rosaryCounter = { groupKey: k, decadeIndex: 0, beadIndex: 0 };
-        saveRosaryCounter();
-      }
+      state.rosaryFilter = btn.dataset.rosaryFilter;
       renderRosaryView();
     });
-  });
-  $('rosary-tap-pad')?.addEventListener('click', () => stepRosaryBead(1));
-  $('btn-rosary-next-bead').addEventListener('click', () => stepRosaryBead(1));
-  $('btn-rosary-prev-bead').addEventListener('click', () => stepRosaryBead(-1));
-  $('btn-rosary-reset-bead').addEventListener('click', () => {
-    state.rosaryCounter.decadeIndex = 0;
-    state.rosaryCounter.beadIndex = 0;
-    saveRosaryCounter();
-    renderRosaryInteractive();
-    showToast('Chapelet remis à zéro');
   });
 
   // Action Sheet ajout

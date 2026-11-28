@@ -99,7 +99,7 @@ export const ROSARY_GROUPS = [
         title: "L'Agonie de Jésus à Gethsémani",
         ref: 'Lc 22, 39-46',
         fruit: 'La contrition des péchés',
-        meditation: "Dans la nuit du jardin des Oliviers, Jésus porte nos péchés et s'abandonne au Père : « Non pas ma volonté, mais la tienne. »"
+        meditation: "Dans la nuit du jardin des Oliviers, Jésus porte nos péchés et s'abandonne au Père : « Non pas ma volonté, mais la vôtre. »"
       },
       {
         number: 2,
@@ -195,15 +195,15 @@ Je crois en l'Esprit Saint, à la sainte Église catholique, à la communion des
   },
   {
     title: 'Notre Père',
-    text: `Notre Père, qui es aux cieux,
-que ton nom soit sanctifié,
-que ton règne vienne,
-que ta volonté soit faite sur la terre comme au ciel.
-Donne-nous aujourd'hui notre pain de ce jour.
-Pardonne-nous nos offenses,
-comme nous pardonnons aussi à ceux qui nous ont offensés.
-Et ne nous laisse pas entrer en tentation,
-mais délivre-nous du Mal. Amen.`
+    text: `Notre Père, qui êtes aux cieux,
+que votre nom soit sanctifié,
+que votre règne arrive,
+que votre volonté soit faite sur la terre comme au ciel.
+Donnez-nous aujourd'hui notre pain de ce jour.
+Pardonnez-nous nos offenses,
+comme nous pardonnons à ceux qui nous ont offensés.
+Et ne nous laissez pas succomber à la tentation,
+mais délivrez-nous du Mal. Amen.`
   },
   {
     title: 'Je vous salue Marie',

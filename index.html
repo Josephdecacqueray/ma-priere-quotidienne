@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.workers.dev https://www.googleapis.com https://accounts.google.com https://challenges.cloudflare.com http://127.0.0.1:* http://localhost:*; frame-src https://challenges.cloudflare.com https://accounts.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Ma prière quotidienne</title>
-  <meta name="description" content="Carnet de prières hors connexion (notes, PDF, photos), chapelet interactif, intentions et neuvaines pour mobile et ordinateur.">
+  <meta name="description" content="Carnet de prières hors connexion (notes, PDF, photos), Missel 1962, mystères du chapelet, intentions et neuvaines pour mobile et ordinateur.">
 
   <!-- iOS / PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Ma prière">
-  <meta id="meta-theme-color" name="theme-color" content="#F6F5F1">
+  <meta id="meta-theme-color" name="theme-color" content="#050A04">
+  <link rel="preload" as="image" href="./img/vierge-en-priere.webp" fetchpriority="high">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=2">
   <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png?v=2">
   <link rel="manifest" href="./manifest.webmanifest">
@@ -26,7 +27,7 @@
          VUE 1 : ACCUEIL, CARNET & NEUVAINES (LIQUID GLASS)
          ========================================================= -->
     <section id="view-list" class="view view-active" aria-label="Espace principal">
-      <header class="ios-header ios-header-large">
+      <header id="main-list-header" class="ios-header ios-header-large is-home-hero">
         <div class="header-top-row">
           <button id="sync-status-btn" class="status-pill" type="button" title="Compte et synchronisation">
             <span class="status-dot" aria-hidden="true"></span>
@@ -67,6 +68,26 @@
           <button id="btn-clear-search" class="search-clear hidden" type="button" aria-label="Effacer la recherche">✕</button>
         </div>
       </header>
+
+      <!-- Ouverture sanctuaire : La Vierge en prière (Sassoferrato) -->
+      <section id="home-sanctuary-hero" class="sanctuary-hero" aria-label="La Vierge en prière">
+        <div class="sanctuary-hero-frame">
+          <img
+            src="./img/vierge-en-priere.webp"
+            alt="La Vierge en prière — Sassoferrato"
+            class="sanctuary-hero-img"
+            width="822"
+            height="1024"
+            decoding="async"
+            fetchpriority="high"
+          >
+          <div class="sanctuary-hero-veil" aria-hidden="true"></div>
+          <div class="sanctuary-hero-caption">
+            <h1 class="sanctuary-hero-title">Ma prière quotidienne</h1>
+            <div class="sanctuary-hero-rule" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
 
       <main class="list-content">
         <!-- ONGLET 1 : ACCUEIL AÉRÉ -->
@@ -230,7 +251,7 @@
           <div id="novenas-list" class="notes-group"></div>
           <div id="novenas-empty" class="empty-state hidden">
             <p class="empty-title">Aucune neuvaine en cours</p>
-            <p class="empty-sub">Créez un module de neuvaine pour suivre vos jours et activer un rappel quotidien (notifications Push, Calendrier, SMS ou e-mail).</p>
+            <p class="empty-sub">Créez un module de neuvaine pour suivre vos jours et activer un rappel quotidien (notifications Push ou Calendrier).</p>
             <button id="btn-empty-new-novena" class="btn-primary-soft" type="button">+ Créer une neuvaine</button>
           </div>
         </div>
@@ -526,7 +547,7 @@
     </section>
 
     <!-- =========================================================
-         VUE 5 : MYSTÈRES DU CHAPELET & CHAPELET INTERACTIF
+         VUE 5 : MYSTÈRES DU CHAPELET
          ========================================================= -->
     <section id="view-rosary" class="view hidden" aria-label="Mystères du chapelet">
       <header class="ios-nav-bar">
@@ -550,32 +571,6 @@
           <h1 class="prayer-cover-title">Mystères du chapelet</h1>
           <p id="rosary-today-banner" class="rosary-today-subtitle"></p>
         </div>
-
-        <!-- Compteur interactif de chapelet -->
-        <section id="rosary-interactive-card" class="ios-card rosary-interactive-card" aria-label="Compteur interactif du chapelet">
-          <div class="card-section-header">
-            <h2 class="section-heading-script">Chapelet interactif</h2>
-            <span id="rosary-decade-badge" class="mini-pill active">Dizaine 1 / 5</span>
-          </div>
-
-          <div class="rosary-counter-meta">
-            <strong id="rosary-counter-mystery" class="rosary-counter-mystery">1) L'Annonciation</strong>
-            <span id="rosary-counter-fruit" class="rosary-counter-fruit">Fruit : L'humilité</span>
-          </div>
-
-          <div id="rosary-beads-row" class="rosary-beads-row" role="group" aria-label="Grains de la dizaine"></div>
-          <button id="rosary-tap-pad" class="rosary-tap-pad" type="button" aria-label="Avancer au grain suivant">
-            <span id="rosary-bead-status" class="rosary-bead-status">Notre Père (début de la dizaine)</span>
-            <span id="rosary-bead-prayer" class="rosary-bead-prayer"></span>
-            <span class="rosary-tap-hint">Touchez ici pour passer au grain suivant</span>
-          </button>
-
-          <div class="rosary-counter-controls">
-            <button id="btn-rosary-prev-bead" class="btn-outline-ios rosary-ctrl-sm" type="button">Préc.</button>
-            <button id="btn-rosary-next-bead" class="btn-primary-ios rosary-ctrl-main" type="button">Grain suivant</button>
-            <button id="btn-rosary-reset-bead" class="btn-outline-ios rosary-ctrl-sm" type="button">RAZ</button>
-          </div>
-        </section>
 
         <div class="rosary-filter-scroll" role="tablist" aria-label="Filtrer les mystères">
           <button class="pill-btn rosary-pill active" type="button" data-rosary-filter="all">Tous</button>

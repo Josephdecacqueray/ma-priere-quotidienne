@@ -1,13 +1,13 @@
 {
   "name": "Ma prière quotidienne",
   "short_name": "Ma prière",
-  "description": "Carnet de prières hors connexion (notes, PDF, photos), chapelet interactif, intentions et neuvaines.",
+  "description": "Carnet de prières hors connexion (notes, PDF, photos), Missel 1962, mystères du chapelet, intentions et neuvaines.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F6F5F1",
-  "theme_color": "#F6F5F1",
+  "background_color": "#050A04",
+  "theme_color": "#050A04",
   "lang": "fr",
   "icons": [
     {

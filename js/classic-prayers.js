@@ -70,24 +70,24 @@ et qui vivez et régnez dans les siècles des siècles. Amen.`
     folder: 'Matin',
     subtitle: 'Hymne traditionnelle à l’Esprit Saint',
     content: `# Invocation à l’Esprit Saint
-Viens, Esprit Créateur, visite l’âme de tes fidèles,
-emplis de la grâce d’en haut les cœurs que tu as créés.
+Venez, Esprit Créateur, visitez l’âme de vos fidèles,
+emplissez de la grâce d’en haut les cœurs que vous avez créés.
 
-Toi qu’on nomme le Conseiller, don du Dieu très-haut,
+Vous qu’on nomme le Consolateur, don du Dieu Très-Haut,
 source vive, feu, charité, invisible consécration.
 
-Tu es l’Esprit aux sept dons, le doigt de la main du Père,
+Vous êtes l’Esprit aux sept dons, le doigt de la main du Père,
 l’Esprit de vérité promis par le Père,
-c’est toi qui inspires nos paroles.
+c’est vous qui inspirez nos paroles.
 
-Allume en nous ta lumière, emplis d’amour nos cœurs,
-affermis toujours de ta force la faiblesse de notre corps.
+Allumez en nous votre lumière, emplissez d’amour nos cœurs,
+affermissez toujours de votre force la faiblesse de notre corps.
 
-Repousse l’adversaire au loin, donne-nous ta paix sans retard,
-pour que, sous ta conduite et ton conseil, nous évitions tout mal.
+Repoussez l’adversaire au loin, donnez-nous votre paix sans retard,
+pour que, sous votre conduite et votre conseil, nous évitions tout mal.
 
-Fais-nous connaître le Père, révèle-nous le Fils,
-et toi, leur commun Esprit, fais-nous toujours croire en toi.
+Faites-nous connaître le Père, révélez-nous le Fils,
+et vous, leur commun Esprit, faites-nous toujours croire en vous.
 
 Gloire soit à Dieu le Père, au Fils ressuscité des morts,
 à l’Esprit Saint Consolateur, maintenant et dans tous les siècles. Amen.`

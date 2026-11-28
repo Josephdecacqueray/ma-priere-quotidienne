@@ -27,59 +27,67 @@
   --font-body: Georgia, 'Times New Roman', serif;
   --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 
-  --bg-app: #F6F5F1;
-  --bg-grad-top: #F9F8F4;
-  --bg-grad-bottom: #EFECE4;
-  --text-primary: #1C1915;
-  --text-secondary: #5C554C;
-  --text-muted: #8B8378;
+  /* =========================================================
+     DA COLORIMÉTRIQUE « LA VIERGE EN PRIÈRE » (SASSOFERRATO)
+     Ivoire du voile (#EFE5D2) · Bleu Lapis-Lazuli (#2E3E82)
+     Carmin vénitien (#A44530) · Clair-obscur d'ébène (#050A04)
+     ========================================================= */
+  --bg-app: #F3EDE1;
+  --bg-grad-top: #F7F2E8;
+  --bg-grad-bottom: #E9E0CE;
+  --text-primary: #18161A;
+  --text-secondary: #534C45;
+  --text-muted: #82786D;
 
-  --accent-notes: #B8861B;
-  --accent-red: #B22222;
-  --accent-green: #1E7E34;
-  --danger: #C62828;
-  --liturgy-rgb: 30, 126, 52;
-  --liturgy-accent: #1E7E34;
+  --accent-notes: #2E3E82;
+  --accent-red: #A44530;
+  --accent-green: #2F684A;
+  --accent-warm: #997866;
+  --danger: #A93226;
+  --liturgy-rgb: 46, 62, 130;
+  --liturgy-accent: #2E3E82;
 
-  /* Apple Liquid Glass iOS 26/27 — Clair */
-  --glass-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0.40) 55%, rgba(255, 255, 255, 0.58) 100%);
-  --glass-bg-strong: linear-gradient(165deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 254, 250, 0.74) 100%);
-  --glass-bg-subtle: linear-gradient(160deg, rgba(255, 255, 255, 0.56) 0%, rgba(255, 255, 255, 0.28) 100%);
-  --nav-bar-bg: linear-gradient(180deg, rgba(249, 248, 244, 0.86) 0%, rgba(246, 244, 238, 0.58) 100%);
-  --sheet-bg: linear-gradient(170deg, rgba(253, 251, 246, 0.94) 0%, rgba(246, 242, 233, 0.88) 100%);
-  --input-bg: rgba(255, 255, 255, 0.78);
-  --swipe-open-bg: rgba(252, 250, 244, 0.96);
-  --hairline-color: rgba(34, 28, 20, 0.08);
-  --glass-blur: blur(28px) saturate(210%) brightness(1.03);
-  --glass-blur-soft: blur(18px) saturate(185%);
+  /* Apple Liquid Glass — Voile d'Ivoire & Outremer */
+  --glass-bg: linear-gradient(160deg, rgba(253, 250, 244, 0.82) 0%, rgba(246, 240, 229, 0.56) 55%, rgba(251, 247, 239, 0.72) 100%);
+  --glass-bg-strong: linear-gradient(165deg, rgba(253, 250, 244, 0.94) 0%, rgba(244, 237, 224, 0.84) 100%);
+  --glass-bg-subtle: linear-gradient(160deg, rgba(252, 248, 240, 0.64) 0%, rgba(243, 236, 222, 0.38) 100%);
+  --nav-bar-bg: linear-gradient(180deg, rgba(247, 242, 232, 0.90) 0%, rgba(241, 234, 220, 0.68) 100%);
+  --sheet-bg: linear-gradient(170deg, rgba(252, 249, 242, 0.96) 0%, rgba(243, 236, 223, 0.92) 100%);
+  --input-bg: rgba(255, 252, 246, 0.84);
+  --swipe-open-bg: rgba(251, 247, 239, 0.96);
+  --hairline-color: rgba(32, 29, 40, 0.09);
+  --glass-blur: blur(28px) saturate(195%) brightness(1.02);
+  --glass-blur-soft: blur(18px) saturate(175%);
 
   --glass-shadow:
-    0 0 0 0.5px rgba(34, 28, 20, 0.08),
-    0 10px 30px rgba(34, 28, 20, 0.07),
-    0 2px 6px rgba(34, 28, 20, 0.04),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.98),
-    inset 1px 0 0 rgba(255, 255, 255, 0.55),
-    inset 0 -0.5px 1px rgba(34, 28, 20, 0.05);
+    0 0 0 0.5px rgba(32, 29, 44, 0.09),
+    0 10px 30px rgba(24, 26, 44, 0.08),
+    0 2px 6px rgba(24, 22, 26, 0.04),
+    inset 0 1.5px 0 rgba(255, 253, 248, 0.96),
+    inset 1px 0 0 rgba(255, 252, 246, 0.55),
+    inset 0 -0.5px 1px rgba(32, 29, 44, 0.06);
 
   --glass-btn-shadow:
-    0 0 0 0.5px rgba(34, 28, 20, 0.08),
-    0 4px 14px rgba(34, 28, 20, 0.06),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.98),
-    inset 0 -0.5px 1px rgba(34, 28, 20, 0.05);
+    0 0 0 0.5px rgba(32, 29, 44, 0.09),
+    0 4px 14px rgba(24, 26, 44, 0.07),
+    inset 0 1.5px 0 rgba(255, 253, 248, 0.96),
+    inset 0 -0.5px 1px rgba(32, 29, 44, 0.05);
 
-  --glass-gold-bg: linear-gradient(160deg, rgba(214, 162, 46, 0.84) 0%, rgba(178, 124, 18, 0.76) 100%);
+  /* Verre Bleu Lapis-Lazuli Marial (manteau de la Vierge) */
+  --glass-gold-bg: linear-gradient(160deg, rgba(61, 76, 142, 0.93) 0%, rgba(36, 48, 102, 0.90) 100%);
   --glass-gold-shadow:
-    0 0 0 0.5px rgba(154, 106, 12, 0.25),
-    0 8px 22px rgba(178, 124, 18, 0.22),
-    inset 0 1.5px 0 rgba(255, 250, 232, 0.84),
-    inset 0 -0.5px 1px rgba(100, 65, 5, 0.16);
+    0 0 0 0.5px rgba(27, 36, 80, 0.34),
+    0 8px 22px rgba(36, 48, 102, 0.28),
+    inset 0 1.5px 0 rgba(212, 222, 255, 0.42),
+    inset 0 -0.5px 1px rgba(14, 20, 48, 0.26);
 
-  --glass-green-bg: linear-gradient(160deg, rgba(36, 142, 62, 0.84) 0%, rgba(24, 108, 44, 0.76) 100%);
+  /* Verre Vert Olive Sacré (harmonisé à l'outremer & l'ivoire) */
+  --glass-green-bg: linear-gradient(160deg, rgba(56, 120, 86, 0.90) 0%, rgba(38, 88, 62, 0.86) 100%);
   --glass-green-shadow:
-    0 0 0 0.5px rgba(20, 92, 38, 0.25),
-    0 8px 20px rgba(30, 126, 52, 0.20),
-    inset 0 1.5px 0 rgba(230, 255, 235, 0.75),
-    inset 0 -0.5px 1px rgba(12, 68, 25, 0.16);
+    0 0 0 0.5px rgba(28, 72, 48, 0.28),
+    0 8px 20px rgba(47, 104, 74, 0.22),
+    inset 0 1.5px 0 rgba(226, 248, 234, 0.55),
+    inset 0 -0.5px 1px rgba(16, 48, 32, 0.18);
 
   --spring-ease: cubic-bezier(0.22, 1.4, 0.36, 1);
   --prayer-font-size: 15.5px;
@@ -88,53 +96,54 @@
 }
 
 /* =========================================================
-   MODE NUIT « PRIÈRE DU SOIR » (LIQUID GLASS SOMBRE)
+   MODE NUIT « CLAIR-OBSCUR DE SASSOFERRATO »
    ========================================================= */
 html[data-theme="dark"] {
-  --bg-app: #0B101B;
-  --bg-grad-top: #0E1422;
-  --bg-grad-bottom: #070A12;
-  --text-primary: #F3EFE6;
-  --text-secondary: #BFB7AA;
-  --text-muted: #8E877C;
+  --bg-app: #07090D;
+  --bg-grad-top: #0A0D15;
+  --bg-grad-bottom: #050708;
+  --text-primary: #F2ECE0;
+  --text-secondary: #BFB6A7;
+  --text-muted: #8E8579;
 
-  --accent-notes: #E6B44C;
-  --accent-red: #E25B5B;
-  --accent-green: #4AC26B;
-  --danger: #F06262;
+  --accent-notes: #849BE8;
+  --accent-red: #DF7B65;
+  --accent-green: #64B486;
+  --accent-warm: #C4A48E;
+  --danger: #E57468;
 
-  --glass-bg: linear-gradient(160deg, rgba(34, 42, 60, 0.68) 0%, rgba(20, 26, 38, 0.52) 55%, rgba(28, 35, 52, 0.62) 100%);
-  --glass-bg-strong: linear-gradient(165deg, rgba(30, 37, 54, 0.84) 0%, rgba(18, 23, 34, 0.76) 100%);
-  --glass-bg-subtle: linear-gradient(160deg, rgba(36, 44, 62, 0.52) 0%, rgba(20, 26, 38, 0.36) 100%);
-  --nav-bar-bg: linear-gradient(180deg, rgba(14, 20, 34, 0.88) 0%, rgba(14, 20, 34, 0.64) 100%);
-  --sheet-bg: linear-gradient(170deg, rgba(24, 30, 44, 0.94) 0%, rgba(14, 19, 30, 0.90) 100%);
-  --input-bg: rgba(16, 22, 34, 0.78);
-  --swipe-open-bg: rgba(22, 28, 42, 0.96);
-  --hairline-color: rgba(255, 255, 255, 0.10);
-  --glass-blur: blur(28px) saturate(180%);
+  --glass-bg: linear-gradient(160deg, rgba(26, 31, 49, 0.72) 0%, rgba(14, 17, 28, 0.58) 55%, rgba(21, 26, 42, 0.66) 100%);
+  --glass-bg-strong: linear-gradient(165deg, rgba(24, 29, 46, 0.88) 0%, rgba(13, 16, 26, 0.82) 100%);
+  --glass-bg-subtle: linear-gradient(160deg, rgba(28, 34, 54, 0.54) 0%, rgba(14, 17, 28, 0.40) 100%);
+  --nav-bar-bg: linear-gradient(180deg, rgba(9, 12, 20, 0.90) 0%, rgba(9, 12, 20, 0.68) 100%);
+  --sheet-bg: linear-gradient(170deg, rgba(20, 24, 38, 0.96) 0%, rgba(11, 14, 22, 0.93) 100%);
+  --input-bg: rgba(13, 17, 28, 0.82);
+  --swipe-open-bg: rgba(18, 22, 36, 0.96);
+  --hairline-color: rgba(239, 229, 210, 0.11);
+  --glass-blur: blur(28px) saturate(175%);
 
   --glass-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.14),
-    0 12px 32px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -0.5px 1px rgba(0, 0, 0, 0.35);
+    0 0 0 0.5px rgba(239, 229, 210, 0.13),
+    0 12px 32px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(239, 229, 210, 0.14),
+    inset 0 -0.5px 1px rgba(0, 0, 0, 0.42);
 
   --glass-btn-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.14),
-    0 4px 14px rgba(0, 0, 0, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 0 0 0.5px rgba(239, 229, 210, 0.13),
+    0 4px 14px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(239, 229, 210, 0.14);
 
-  --glass-gold-bg: linear-gradient(160deg, rgba(220, 166, 48, 0.86) 0%, rgba(178, 124, 20, 0.78) 100%);
+  --glass-gold-bg: linear-gradient(160deg, rgba(78, 97, 178, 0.92) 0%, rgba(46, 61, 128, 0.88) 100%);
   --glass-gold-shadow:
-    0 0 0 0.5px rgba(255, 224, 145, 0.28),
-    0 8px 24px rgba(182, 128, 20, 0.28),
-    inset 0 1px 0 rgba(255, 245, 210, 0.55);
+    0 0 0 0.5px rgba(178, 196, 255, 0.28),
+    0 8px 24px rgba(40, 54, 120, 0.42),
+    inset 0 1px 0 rgba(226, 234, 255, 0.38);
 
-  --glass-green-bg: linear-gradient(160deg, rgba(48, 162, 78, 0.86) 0%, rgba(30, 120, 54, 0.78) 100%);
+  --glass-green-bg: linear-gradient(160deg, rgba(64, 138, 98, 0.88) 0%, rgba(40, 96, 66, 0.84) 100%);
   --glass-green-shadow:
-    0 0 0 0.5px rgba(140, 240, 165, 0.26),
-    0 8px 20px rgba(30, 126, 52, 0.26),
-    inset 0 1px 0 rgba(215, 255, 225, 0.45);
+    0 0 0 0.5px rgba(154, 228, 184, 0.24),
+    0 8px 20px rgba(32, 82, 54, 0.34),
+    inset 0 1px 0 rgba(215, 248, 228, 0.38);
 }
 
 *, *::before, *::after {
@@ -153,7 +162,7 @@ html, body {
   overscroll-behavior-y: contain;
 }
 
-/* Toile lumineuse avec halo de la couleur liturgique */
+/* Toile lumineuse découlant des pigments de La Vierge en prière */
 body::before {
   content: '';
   position: fixed;
@@ -161,18 +170,18 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 14% 8%, rgba(var(--liturgy-rgb), 0.18) 0%, transparent 46%),
-    radial-gradient(circle at 86% 14%, rgba(135, 168, 228, 0.20) 0%, transparent 46%),
-    radial-gradient(circle at 78% 82%, rgba(214, 168, 112, 0.16) 0%, transparent 48%),
-    radial-gradient(circle at 18% 84%, rgba(var(--liturgy-rgb), 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 12% 10%, rgba(61, 72, 129, 0.14) 0%, transparent 48%),
+    radial-gradient(circle at 88% 16%, rgba(var(--liturgy-rgb), 0.12) 0%, transparent 46%),
+    radial-gradient(circle at 76% 84%, rgba(164, 69, 48, 0.09) 0%, transparent 48%),
+    radial-gradient(circle at 18% 82%, rgba(153, 120, 102, 0.12) 0%, transparent 46%),
     linear-gradient(180deg, var(--bg-grad-top) 0%, var(--bg-grad-bottom) 100%);
 }
 
 html[data-theme="dark"] body::before {
   background:
-    radial-gradient(circle at 16% 10%, rgba(var(--liturgy-rgb), 0.24) 0%, transparent 48%),
-    radial-gradient(circle at 86% 16%, rgba(88, 130, 210, 0.20) 0%, transparent 48%),
-    radial-gradient(circle at 75% 84%, rgba(196, 145, 31, 0.14) 0%, transparent 50%),
+    radial-gradient(circle at 16% 10%, rgba(61, 72, 129, 0.28) 0%, transparent 50%),
+    radial-gradient(circle at 86% 18%, rgba(var(--liturgy-rgb), 0.18) 0%, transparent 46%),
+    radial-gradient(circle at 76% 86%, rgba(164, 69, 48, 0.14) 0%, transparent 50%),
     linear-gradient(180deg, var(--bg-grad-top) 0%, var(--bg-grad-bottom) 100%);
 }
 
@@ -262,7 +271,7 @@ button:active:not(:disabled) {
   height: 7.5px;
   border-radius: 50%;
   background: var(--accent-green);
-  box-shadow: 0 0 6px rgba(30, 126, 52, 0.45);
+  box-shadow: 0 0 6px rgba(47, 104, 74, 0.45);
 }
 
 .status-pill.is-offline .status-dot {
@@ -466,7 +475,7 @@ button:active:not(:disabled) {
 }
 
 .today-chip-btn.is-novena {
-  background: rgba(30, 126, 52, 0.12);
+  background: rgba(47, 104, 74, 0.12);
   color: var(--accent-green);
 }
 
@@ -481,7 +490,7 @@ button:active:not(:disabled) {
 .pinned-quick-chip {
   border: none;
   border-radius: 999px;
-  background: rgba(184, 134, 27, 0.12);
+  background: rgba(46, 62, 130, 0.12);
   color: var(--accent-notes);
   font-size: 12px;
   font-weight: 600;
@@ -600,26 +609,26 @@ button:active:not(:disabled) {
 }
 
 .shortcut-icon-red {
-  background: linear-gradient(155deg, rgba(178, 34, 34, 0.15), rgba(255, 255, 255, 0.25));
+  background: linear-gradient(155deg, rgba(164, 69, 48, 0.15), rgba(255, 255, 255, 0.25));
   color: var(--accent-red);
-  box-shadow: 0 0 0 0.5px rgba(178, 34, 34, 0.24);
+  box-shadow: 0 0 0 0.5px rgba(164, 69, 48, 0.24);
 }
 
 .shortcut-icon-gold {
-  background: linear-gradient(155deg, rgba(184, 134, 27, 0.18), rgba(255, 255, 255, 0.25));
+  background: linear-gradient(155deg, rgba(46, 62, 130, 0.18), rgba(255, 255, 255, 0.25));
   color: var(--accent-notes);
-  box-shadow: 0 0 0 0.5px rgba(184, 134, 27, 0.26);
+  box-shadow: 0 0 0 0.5px rgba(46, 62, 130, 0.26);
 }
 
 .shortcut-icon-green {
-  background: linear-gradient(155deg, rgba(30, 126, 52, 0.16), rgba(255, 255, 255, 0.25));
+  background: linear-gradient(155deg, rgba(47, 104, 74, 0.16), rgba(255, 255, 255, 0.25));
   color: var(--accent-green);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.26);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.26);
 }
 
 html[data-theme="dark"] .shortcut-icon-green {
-  background: linear-gradient(155deg, rgba(74, 194, 107, 0.22), rgba(255, 255, 255, 0.06));
-  box-shadow: 0 0 0 0.5px rgba(74, 194, 107, 0.34);
+  background: linear-gradient(155deg, rgba(100, 180, 134, 0.22), rgba(255, 255, 255, 0.06));
+  box-shadow: 0 0 0 0.5px rgba(100, 180, 134, 0.34);
 }
 
 .intentions-home-text {
@@ -656,8 +665,8 @@ html[data-theme="dark"] .shortcut-icon-green {
   font-size: 12px;
   font-weight: 700;
   color: var(--accent-red);
-  background: rgba(178, 34, 34, 0.11);
-  box-shadow: 0 0 0 0.5px rgba(178, 34, 34, 0.22);
+  background: rgba(164, 69, 48, 0.11);
+  box-shadow: 0 0 0 0.5px rgba(164, 69, 48, 0.22);
   padding: 3px 10px;
   border-radius: 999px;
 }
@@ -666,8 +675,8 @@ html[data-theme="dark"] .shortcut-icon-green {
   font-size: 12px;
   font-weight: 700;
   color: var(--accent-notes);
-  background: rgba(184, 134, 27, 0.13);
-  box-shadow: 0 0 0 0.5px rgba(184, 134, 27, 0.24);
+  background: rgba(46, 62, 130, 0.13);
+  box-shadow: 0 0 0 0.5px rgba(46, 62, 130, 0.24);
   padding: 3px 10px;
   border-radius: 999px;
 }
@@ -676,15 +685,15 @@ html[data-theme="dark"] .shortcut-icon-green {
   font-size: 12px;
   font-weight: 700;
   color: var(--accent-green);
-  background: rgba(30, 126, 52, 0.12);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.24);
+  background: rgba(47, 104, 74, 0.12);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.24);
   padding: 3px 10px;
   border-radius: 999px;
 }
 
 html[data-theme="dark"] .lp-count-pill {
-  background: rgba(74, 194, 107, 0.18);
-  box-shadow: 0 0 0 0.5px rgba(74, 194, 107, 0.32);
+  background: rgba(100, 180, 134, 0.18);
+  box-shadow: 0 0 0 0.5px rgba(100, 180, 134, 0.32);
 }
 
 .intentions-home-right .chevron {
@@ -875,8 +884,8 @@ html[data-theme="dark"] .lp-count-pill {
   font-size: 11px;
   font-weight: 700;
   color: var(--accent-notes);
-  background: rgba(184, 134, 27, 0.14);
-  box-shadow: 0 0 0 0.5px rgba(184, 134, 27, 0.24);
+  background: rgba(46, 62, 130, 0.14);
+  box-shadow: 0 0 0 0.5px rgba(46, 62, 130, 0.24);
   padding: 2px 7px;
   border-radius: 999px;
 }
@@ -886,8 +895,8 @@ html[data-theme="dark"] .lp-count-pill {
   font-weight: 700;
   letter-spacing: 0.03em;
   color: var(--accent-red);
-  background: rgba(178, 34, 34, 0.10);
-  box-shadow: 0 0 0 0.5px rgba(178, 34, 34, 0.2);
+  background: rgba(164, 69, 48, 0.10);
+  box-shadow: 0 0 0 0.5px rgba(164, 69, 48, 0.2);
   padding: 2px 8px;
   border-radius: 999px;
 }
@@ -906,8 +915,8 @@ html[data-theme="dark"] .lp-count-pill {
   font-size: 11px;
   font-weight: 600;
   color: var(--accent-green);
-  background: rgba(30, 126, 52, 0.11);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.22);
+  background: rgba(47, 104, 74, 0.11);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.22);
   padding: 2px 8px;
   border-radius: 999px;
 }
@@ -1168,7 +1177,7 @@ html[data-theme="dark"] .lp-count-pill {
 
 .nav-group-icon.is-pinned {
   color: var(--accent-notes);
-  background: rgba(184, 134, 27, 0.16);
+  background: rgba(46, 62, 130, 0.16);
 }
 
 .nav-group-icon.danger {
@@ -1221,10 +1230,10 @@ body.focus-mode .prayer-scroll-area {
 
 /* Contexte neuvaine dans vue prière */
 .novena-context-bar {
-  background: linear-gradient(145deg, rgba(30, 126, 52, 0.12), rgba(255, 255, 255, 0.16));
+  background: linear-gradient(145deg, rgba(47, 104, 74, 0.12), rgba(255, 255, 255, 0.16));
   backdrop-filter: var(--glass-blur-soft);
   -webkit-backdrop-filter: var(--glass-blur-soft);
-  box-shadow: inset 0 -1px 0 rgba(30, 126, 52, 0.16);
+  box-shadow: inset 0 -1px 0 rgba(47, 104, 74, 0.16);
   padding: 10px 14px;
   display: flex;
   align-items: center;
@@ -1259,7 +1268,7 @@ body.focus-mode .prayer-scroll-area {
 .btn-validate-day.is-done {
   background: var(--glass-bg);
   color: var(--accent-green);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.3), var(--glass-btn-shadow);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.3), var(--glass-btn-shadow);
 }
 
 /* =========================================================
@@ -1742,12 +1751,12 @@ body.focus-mode .prayer-scroll-area {
 }
 
 .day-cell.is-today {
-  box-shadow: 0 0 0 1.5px rgba(184, 134, 27, 0.72), var(--glass-btn-shadow);
+  box-shadow: 0 0 0 1.5px rgba(46, 62, 130, 0.72), var(--glass-btn-shadow);
 }
 
 .day-cell.is-checked {
-  background: linear-gradient(155deg, rgba(38, 148, 66, 0.22), rgba(30, 126, 52, 0.14));
-  box-shadow: 0 0 0 1px rgba(30, 126, 52, 0.45), var(--glass-btn-shadow);
+  background: linear-gradient(155deg, rgba(56, 120, 86, 0.22), rgba(47, 104, 74, 0.14));
+  box-shadow: 0 0 0 1px rgba(47, 104, 74, 0.45), var(--glass-btn-shadow);
   color: var(--accent-green);
 }
 
@@ -1772,8 +1781,8 @@ body.focus-mode .prayer-scroll-area {
 }
 
 .mini-pill.active {
-  background: rgba(30, 126, 52, 0.14);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.28);
+  background: rgba(47, 104, 74, 0.14);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.28);
   color: var(--accent-green);
 }
 
@@ -1908,7 +1917,7 @@ body.focus-mode .prayer-scroll-area {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1.5px solid rgba(184, 134, 27, 0.7);
+  border: 1.5px solid rgba(46, 62, 130, 0.7);
   background: var(--glass-bg);
   color: transparent;
   display: inline-flex;
@@ -2389,7 +2398,7 @@ input[type="time"].ios-input {
 }
 
 /* =========================================================
-   VUE « MYSTÈRES DU CHAPELET » & CHAPELET INTERACTIF
+   VUE « MYSTÈRES DU CHAPELET »
    ========================================================= */
 .rosary-scroll-area {
   display: flex;
@@ -2410,86 +2419,6 @@ input[type="time"].ios-input {
   font-family: var(--font-body);
   font-size: 14px;
   color: var(--text-secondary);
-}
-
-.rosary-interactive-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.rosary-counter-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.rosary-counter-mystery {
-  font-family: var(--font-body);
-  font-size: 16.5px;
-  font-weight: 700;
-  line-height: 1.34;
-  color: var(--text-primary);
-}
-
-.rosary-counter-fruit {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.rosary-beads-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  padding: 6px 2px;
-}
-
-.rosary-bead {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: none;
-  background: var(--glass-bg-subtle);
-  box-shadow: var(--glass-btn-shadow);
-  cursor: pointer;
-  padding: 0;
-}
-
-.rosary-bead.is-our-father {
-  width: 30px;
-  height: 30px;
-  border: 1.5px solid rgba(184, 134, 27, 0.55);
-}
-
-.rosary-bead.is-done {
-  background: var(--glass-gold-bg);
-  box-shadow: var(--glass-gold-shadow);
-}
-
-.rosary-bead.is-current {
-  box-shadow: 0 0 0 2px var(--accent-green), var(--glass-gold-shadow);
-}
-
-.rosary-bead-status {
-  margin: 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-align: center;
-}
-
-.rosary-counter-controls {
-  display: grid;
-  grid-template-columns: 70px 1fr 70px;
-  gap: 8px;
-}
-
-.rosary-ctrl-sm {
-  padding: 8px 6px;
-  font-size: 13px;
 }
 
 .rosary-filter-scroll {
@@ -2590,8 +2519,8 @@ input[type="time"].ios-input {
   font-size: 11.5px;
   font-weight: 600;
   color: var(--accent-green);
-  background: rgba(30, 126, 52, 0.11);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.24);
+  background: rgba(47, 104, 74, 0.11);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.24);
   padding: 3px 9px;
   border-radius: 999px;
   margin-top: 8px;
@@ -2747,20 +2676,20 @@ input[type="time"].ios-input {
   justify-content: space-between;
   gap: 12px;
   background:
-    linear-gradient(150deg, rgba(214, 162, 46, 0.22) 0%, rgba(255, 252, 244, 0.78) 48%, rgba(255, 255, 255, 0.60) 100%);
+    linear-gradient(150deg, rgba(61, 76, 142, 0.22) 0%, rgba(255, 252, 244, 0.78) 48%, rgba(255, 255, 255, 0.60) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow:
-    0 0 0 1px rgba(184, 134, 27, 0.28),
-    0 12px 30px rgba(184, 134, 27, 0.12),
+    0 0 0 1px rgba(46, 62, 130, 0.28),
+    0 12px 30px rgba(46, 62, 130, 0.12),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.96);
 }
 
 html[data-theme="dark"] .lp-methods-hero-btn {
   background:
-    linear-gradient(150deg, rgba(220, 166, 48, 0.26) 0%, rgba(34, 42, 60, 0.74) 55%, rgba(22, 28, 42, 0.68) 100%);
+    linear-gradient(150deg, rgba(112, 136, 218, 0.26) 0%, rgba(34, 42, 60, 0.74) 55%, rgba(22, 28, 42, 0.68) 100%);
   box-shadow:
-    0 0 0 1px rgba(230, 180, 76, 0.34),
+    0 0 0 1px rgba(132, 155, 232, 0.34),
     0 14px 32px rgba(0, 0, 0, 0.40),
     inset 0 1px 0 rgba(255, 244, 210, 0.22);
 }
@@ -2895,7 +2824,7 @@ html[data-theme="dark"] .lp-methods-hero-btn {
 .lp-text-btn:hover,
 .lp-reference-btn:hover {
   box-shadow:
-    0 0 0 0.5px rgba(184, 134, 27, 0.30),
+    0 0 0 0.5px rgba(46, 62, 130, 0.30),
     0 12px 32px rgba(34, 28, 20, 0.10),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.98);
 }
@@ -2905,7 +2834,7 @@ html[data-theme="dark"] .lp-guide-card-btn:hover,
 html[data-theme="dark"] .lp-text-btn:hover,
 html[data-theme="dark"] .lp-reference-btn:hover {
   box-shadow:
-    0 0 0 0.5px rgba(230, 180, 76, 0.36),
+    0 0 0 0.5px rgba(132, 155, 232, 0.36),
     0 14px 34px rgba(0, 0, 0, 0.50),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
@@ -3001,24 +2930,24 @@ html[data-theme="dark"] .lp-reference-btn:hover {
 
 .lp-src-cec {
   color: var(--accent-red);
-  background: rgba(178, 34, 34, 0.10);
-  box-shadow: 0 0 0 0.5px rgba(178, 34, 34, 0.22);
+  background: rgba(164, 69, 48, 0.10);
+  box-shadow: 0 0 0 0.5px rgba(164, 69, 48, 0.22);
 }
 
 html[data-theme="dark"] .lp-src-cec {
-  background: rgba(226, 91, 91, 0.16);
-  box-shadow: 0 0 0 0.5px rgba(226, 91, 91, 0.30);
+  background: rgba(223, 123, 101, 0.16);
+  box-shadow: 0 0 0 0.5px rgba(223, 123, 101, 0.30);
 }
 
 .lp-src-thomas {
   color: var(--accent-green);
-  background: rgba(30, 126, 52, 0.11);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.22);
+  background: rgba(47, 104, 74, 0.11);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.22);
 }
 
 html[data-theme="dark"] .lp-src-thomas {
-  background: rgba(74, 194, 107, 0.16);
-  box-shadow: 0 0 0 0.5px rgba(74, 194, 107, 0.30);
+  background: rgba(100, 180, 134, 0.16);
+  box-shadow: 0 0 0 0.5px rgba(100, 180, 134, 0.30);
 }
 
 .lp-duration-pill {
@@ -3027,8 +2956,8 @@ html[data-theme="dark"] .lp-src-thomas {
   font-size: 11.5px;
   font-weight: 700;
   color: var(--accent-notes);
-  background: rgba(184, 134, 27, 0.14);
-  box-shadow: 0 0 0 0.5px rgba(184, 134, 27, 0.26);
+  background: rgba(46, 62, 130, 0.14);
+  box-shadow: 0 0 0 0.5px rgba(46, 62, 130, 0.26);
   padding: 3px 10px;
   border-radius: 999px;
 }
@@ -3110,10 +3039,10 @@ html[data-theme="dark"] .lp-src-thomas {
   border: none;
   border-radius: 16px;
   padding: 11px 14px;
-  background: linear-gradient(155deg, rgba(184, 134, 27, 0.16), rgba(255, 255, 255, 0.45));
+  background: linear-gradient(155deg, rgba(46, 62, 130, 0.16), rgba(255, 255, 255, 0.45));
   backdrop-filter: var(--glass-blur-soft);
   -webkit-backdrop-filter: var(--glass-blur-soft);
-  box-shadow: 0 0 0 0.5px rgba(184, 134, 27, 0.30), var(--glass-btn-shadow);
+  box-shadow: 0 0 0 0.5px rgba(46, 62, 130, 0.30), var(--glass-btn-shadow);
   color: var(--text-primary);
   font-size: 13.5px;
   font-weight: 600;
@@ -3125,7 +3054,7 @@ html[data-theme="dark"] .lp-src-thomas {
 }
 
 html[data-theme="dark"] .lp-return-guide-bar {
-  background: linear-gradient(155deg, rgba(220, 166, 48, 0.22), rgba(28, 35, 52, 0.64));
+  background: linear-gradient(155deg, rgba(112, 136, 218, 0.22), rgba(28, 35, 52, 0.64));
 }
 
 .lp-return-guide-bar svg {
@@ -3202,8 +3131,8 @@ html[data-theme="dark"] .lp-return-guide-bar {
   font-size: 11.5px;
   font-weight: 700;
   color: var(--accent-red);
-  background: rgba(178, 34, 34, 0.09);
-  box-shadow: 0 0 0 0.5px rgba(178, 34, 34, 0.20);
+  background: rgba(164, 69, 48, 0.09);
+  box-shadow: 0 0 0 0.5px rgba(164, 69, 48, 0.20);
   padding: 1px 7px;
   border-radius: 999px;
   margin-right: 4px;
@@ -3211,7 +3140,7 @@ html[data-theme="dark"] .lp-return-guide-bar {
 }
 
 html[data-theme="dark"] .lp-cec-num {
-  background: rgba(226, 91, 91, 0.16);
+  background: rgba(223, 123, 101, 0.16);
 }
 
 .lp-scholastic-section {
@@ -3223,20 +3152,20 @@ html[data-theme="dark"] .lp-cec-num {
   color: var(--accent-green);
   margin: 1.4em 0 0.65em;
   padding-bottom: 5px;
-  border-bottom: 1px solid rgba(30, 126, 52, 0.24);
+  border-bottom: 1px solid rgba(47, 104, 74, 0.24);
   text-align: left;
 }
 
 .lp-conclusion-box {
-  background: linear-gradient(155deg, rgba(184, 134, 27, 0.10), rgba(255, 255, 255, 0.35));
-  box-shadow: inset 3px 0 0 var(--accent-notes), 0 0 0 0.5px rgba(184, 134, 27, 0.22);
+  background: linear-gradient(155deg, rgba(46, 62, 130, 0.10), rgba(255, 255, 255, 0.35));
+  box-shadow: inset 3px 0 0 var(--accent-notes), 0 0 0 0.5px rgba(46, 62, 130, 0.22);
   border-radius: 14px;
   padding: 12px 14px;
   margin: 0 0 1.1em;
 }
 
 html[data-theme="dark"] .lp-conclusion-box {
-  background: linear-gradient(155deg, rgba(230, 180, 76, 0.14), rgba(24, 30, 44, 0.55));
+  background: linear-gradient(155deg, rgba(132, 155, 232, 0.14), rgba(24, 30, 44, 0.55));
 }
 
 .lp-conclusion-label {
@@ -3396,8 +3325,8 @@ html[data-theme="dark"] .lp-conclusion-box {
   font-size: 11.5px;
   font-weight: 700;
   color: var(--accent-green);
-  background: rgba(30, 126, 52, 0.11);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.22);
+  background: rgba(47, 104, 74, 0.11);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.22);
   padding: 3px 9px;
   border-radius: 999px;
   white-space: nowrap;
@@ -3412,7 +3341,7 @@ html[data-theme="dark"] .lp-conclusion-box {
   margin: 8px 0 0;
   padding: 8px 11px;
   border-radius: 12px;
-  background: rgba(184, 134, 27, 0.08);
+  background: rgba(46, 62, 130, 0.08);
   font-family: var(--font-body);
   font-style: italic;
   font-size: 13.5px;
@@ -3421,18 +3350,18 @@ html[data-theme="dark"] .lp-conclusion-box {
 }
 
 html[data-theme="dark"] .lp-step-tip {
-  background: rgba(230, 180, 76, 0.12);
+  background: rgba(132, 155, 232, 0.12);
 }
 
 .lp-distractions-box {
-  background: linear-gradient(155deg, rgba(30, 126, 52, 0.09), rgba(255, 255, 255, 0.30));
-  box-shadow: inset 3px 0 0 var(--accent-green), 0 0 0 0.5px rgba(30, 126, 52, 0.22);
+  background: linear-gradient(155deg, rgba(47, 104, 74, 0.09), rgba(255, 255, 255, 0.30));
+  box-shadow: inset 3px 0 0 var(--accent-green), 0 0 0 0.5px rgba(47, 104, 74, 0.22);
   border-radius: 18px;
   padding: 14px 16px;
 }
 
 html[data-theme="dark"] .lp-distractions-box {
-  background: linear-gradient(155deg, rgba(74, 194, 107, 0.14), rgba(24, 30, 44, 0.55));
+  background: linear-gradient(155deg, rgba(100, 180, 134, 0.14), rgba(24, 30, 44, 0.55));
 }
 
 /* Bloc obligatoire : Sources et références cliquables */
@@ -3606,8 +3535,8 @@ html[data-theme="dark"] .home-discrete-footer {
 .account-notice-card {
   border-radius: 18px;
   padding: 13px 15px;
-  background: linear-gradient(155deg, rgba(184, 134, 27, 0.13), rgba(255, 255, 255, 0.42));
-  box-shadow: inset 3px 0 0 var(--accent-notes), 0 0 0 0.5px rgba(184, 134, 27, 0.25);
+  background: linear-gradient(155deg, rgba(46, 62, 130, 0.13), rgba(255, 255, 255, 0.42));
+  box-shadow: inset 3px 0 0 var(--accent-notes), 0 0 0 0.5px rgba(46, 62, 130, 0.25);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -3615,7 +3544,7 @@ html[data-theme="dark"] .home-discrete-footer {
 }
 
 html[data-theme="dark"] .account-notice-card {
-  background: linear-gradient(155deg, rgba(230, 180, 76, 0.16), rgba(24, 30, 44, 0.62));
+  background: linear-gradient(155deg, rgba(132, 155, 232, 0.16), rgba(24, 30, 44, 0.62));
 }
 
 .account-email-line {
@@ -3671,15 +3600,15 @@ html[data-theme="dark"] .account-error-msg {
 .recovery-key-card {
   border-radius: 20px;
   padding: 15px;
-  background: linear-gradient(155deg, rgba(30, 126, 52, 0.14), rgba(255, 255, 255, 0.66));
-  box-shadow: 0 0 0 1px rgba(30, 126, 52, 0.30), var(--glass-btn-shadow);
+  background: linear-gradient(155deg, rgba(47, 104, 74, 0.14), rgba(255, 255, 255, 0.66));
+  box-shadow: 0 0 0 1px rgba(47, 104, 74, 0.30), var(--glass-btn-shadow);
   display: flex;
   flex-direction: column;
   gap: 9px;
 }
 
 html[data-theme="dark"] .recovery-key-card {
-  background: linear-gradient(155deg, rgba(74, 194, 107, 0.18), rgba(20, 28, 40, 0.78));
+  background: linear-gradient(155deg, rgba(100, 180, 134, 0.18), rgba(20, 28, 40, 0.78));
 }
 
 .recovery-key-title {
@@ -3838,8 +3767,8 @@ html[data-theme="dark"] .recovery-key-card {
   font-size: 13px;
   font-weight: 600;
   color: var(--accent-green);
-  background: rgba(30, 126, 52, 0.11);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.24);
+  background: rgba(47, 104, 74, 0.11);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.24);
 }
 
 .feedback-status-msg.is-error {
@@ -3948,7 +3877,7 @@ html[data-theme="dark"] .recovery-key-card {
   height: 16px;
   padding: 0 4px;
   border-radius: 999px;
-  background: rgba(184, 134, 27, 0.16);
+  background: rgba(46, 62, 130, 0.16);
   color: var(--accent-notes);
   font-size: 10px;
   font-weight: 700;
@@ -4210,7 +4139,7 @@ html[data-theme="dark"] .recovery-key-card {
 }
 
 .tour-orb-gold {
-  background: linear-gradient(145deg, rgba(184, 134, 27, 0.20), rgba(184, 134, 27, 0.08));
+  background: linear-gradient(145deg, rgba(46, 62, 130, 0.20), rgba(46, 62, 130, 0.08));
   color: var(--accent-notes);
 }
 
@@ -4220,7 +4149,7 @@ html[data-theme="dark"] .recovery-key-card {
 }
 
 .tour-orb-green {
-  background: linear-gradient(145deg, rgba(30, 126, 52, 0.18), rgba(30, 126, 52, 0.07));
+  background: linear-gradient(145deg, rgba(47, 104, 74, 0.18), rgba(47, 104, 74, 0.07));
   color: var(--accent-green);
 }
 
@@ -4352,7 +4281,7 @@ html[data-theme="dark"] .recovery-key-card {
           CHAPELET CONFORTABLE, RGPD & MISE À JOUR PWA
    ========================================================= */
 .shortcut-icon-gold {
-  background: linear-gradient(145deg, rgba(184, 134, 27, 0.22), rgba(184, 134, 27, 0.08));
+  background: linear-gradient(145deg, rgba(46, 62, 130, 0.22), rgba(46, 62, 130, 0.08));
   color: var(--accent-notes);
 }
 
@@ -4361,15 +4290,15 @@ html[data-theme="dark"] .recovery-key-card {
   font-weight: 700;
   letter-spacing: 0.03em;
   color: var(--accent-notes);
-  background: rgba(184, 134, 27, 0.14);
-  box-shadow: 0 0 0 0.5px rgba(184, 134, 27, 0.28);
+  background: rgba(46, 62, 130, 0.14);
+  box-shadow: 0 0 0 0.5px rgba(46, 62, 130, 0.28);
   padding: 3px 9px;
   border-radius: 999px;
 }
 
 .today-chip-btn.is-resume {
   color: var(--accent-green);
-  box-shadow: 0 0 0 0.5px rgba(30, 126, 52, 0.28), var(--glass-btn-shadow);
+  box-shadow: 0 0 0 0.5px rgba(47, 104, 74, 0.28), var(--glass-btn-shadow);
 }
 
 /* Modales de confirmation / saisie Liquid Glass */
@@ -4553,39 +4482,170 @@ html[data-theme="dark"] .recovery-key-card {
   flex-shrink: 0;
 }
 
-/* Chapelet interactif : grande zone tactile confortable */
-.rosary-tap-pad {
+/* =========================================================
+   OUVERTURE SANCTUAIRE : LA VIERGE EN PRIÈRE (SASSOFERRATO)
+   ========================================================= */
+.ios-header-large.is-home-hero {
+  background: linear-gradient(180deg, rgba(5, 10, 4, 0.80) 0%, rgba(5, 10, 4, 0.30) 74%, transparent 100%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  padding-bottom: 6px;
+  margin-bottom: -56px;
+}
+
+.ios-header-large.is-home-hero .app-brand-title {
+  display: none;
+}
+
+.ios-header-large.is-home-hero .status-pill,
+.ios-header-large.is-home-hero .icon-btn {
+  background: rgba(13, 18, 34, 0.56);
+  backdrop-filter: blur(18px) saturate(165%);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  color: #F4EEE2;
+  box-shadow:
+    0 0 0 0.5px rgba(239, 229, 210, 0.24),
+    0 4px 14px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 250, 240, 0.16);
+}
+
+.ios-header-large.is-home-hero .status-dot {
+  background: #72C896;
+  box-shadow: 0 0 7px rgba(114, 200, 150, 0.55);
+}
+
+.ios-header-large.is-home-hero .status-pill.is-offline .status-dot {
+  background: #8FA5F2;
+  box-shadow: 0 0 7px rgba(143, 165, 242, 0.55);
+}
+
+.sanctuary-hero {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.sanctuary-hero-frame {
+  position: relative;
+  background: #080A06;
+  padding-top: calc(var(--safe-top) + 34px);
+  border-radius: 0 0 32px 32px;
+  overflow: hidden;
+  box-shadow:
+    0 18px 42px rgba(14, 20, 44, 0.22),
+    0 3px 10px rgba(5, 10, 4, 0.16),
+    inset 0 -1px 0 rgba(239, 229, 210, 0.18);
+}
+
+html[data-theme="dark"] .sanctuary-hero-frame {
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.62),
+    inset 0 -1px 0 rgba(132, 155, 232, 0.16);
+}
+
+@media (min-width: 740px) {
+  .sanctuary-hero-frame {
+    border-radius: 0 0 36px 36px;
+  }
+}
+
+.sanctuary-hero-img {
+  display: block;
   width: 100%;
-  border: none;
-  border-radius: 18px;
-  padding: 14px 14px 12px;
-  background: var(--glass-bg-subtle);
-  box-shadow: 0 0 0 0.5px var(--hairline-color), var(--glass-btn-shadow);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
+  height: clamp(325px, 46dvh, 410px);
+  margin: 0 auto;
+  object-fit: cover;
+  object-position: center 15%;
+}
+
+@media (min-width: 520px) {
+  .sanctuary-hero-img {
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: center top;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  }
+}
+
+.sanctuary-hero-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 10, 4, 0.42) 0%,
+    rgba(5, 10, 4, 0.0) 18%,
+    rgba(5, 10, 4, 0.0) 58%,
+    rgba(18, 25, 56, 0.62) 81%,
+    rgba(12, 17, 40, 0.94) 100%
+  );
+}
+
+.sanctuary-hero-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 18px 28px;
   text-align: center;
-  transition: transform 0.12s ease;
+  pointer-events: none;
 }
 
-.rosary-tap-pad:active {
-  transform: scale(0.985);
+.sanctuary-hero-title {
+  margin: 0;
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 8.6vw, 2.9rem);
+  line-height: 1.24;
+  color: #F6F0E4;
+  text-shadow: 0 2px 20px rgba(5, 10, 4, 0.85), 0 1px 4px rgba(5, 10, 4, 0.9);
 }
 
-.rosary-bead-prayer {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 13.5px;
-  line-height: 1.45;
-  color: var(--text-primary);
+.sanctuary-hero-rule {
+  width: 72px;
+  height: 2px;
+  margin: 4px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 0%, #A44530 18%, #D9866F 50%, #A44530 82%, transparent 100%);
 }
 
-.rosary-tap-hint {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent-notes);
+/* Le bloc Aujourd'hui remonte avec élégance sous le manteau d'outremer */
+#panel-home .today-card {
+  margin-top: -22px;
+  position: relative;
+  z-index: 3;
+}
+
+/* Médaillon portrait dans la visite guidée */
+.tour-portrait-cameo {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #050A04;
+  box-shadow:
+    0 0 0 2px rgba(46, 62, 130, 0.42),
+    0 0 0 5px rgba(239, 229, 210, 0.72),
+    0 10px 26px rgba(18, 24, 52, 0.24);
+  margin: 2px 0 4px;
+}
+
+html[data-theme="dark"] .tour-portrait-cameo {
+  box-shadow:
+    0 0 0 2px rgba(132, 155, 232, 0.48),
+    0 0 0 5px rgba(20, 24, 40, 0.85),
+    0 10px 26px rgba(0, 0, 0, 0.55);
+}
+
+.tour-portrait-cameo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 16%;
+  display: block;
 }
 
 /* Vue 7 : Lectures du jour (Missel 1962 · Forme extraordinaire) */
@@ -4717,9 +4777,9 @@ html[data-theme="dark"] .recovery-key-card {
   background: var(--accent-green);
 }
 
-.missal-color-white .missal-color-dot { background: #D4AF37; }
-.missal-color-red .missal-color-dot { background: #B22222; }
-.missal-color-green .missal-color-dot { background: #1E7E34; }
+.missal-color-white .missal-color-dot { background: #B89A64; }
+.missal-color-red .missal-color-dot { background: #A44530; }
+.missal-color-green .missal-color-dot { background: #2F684A; }
 .missal-color-violet .missal-color-dot { background: #6D4C9E; }
 .missal-color-black .missal-color-dot { background: #2A2A2A; }
 .missal-color-rose .missal-color-dot { background: #C25E7C; }
@@ -4853,7 +4913,7 @@ html[data-theme="dark"] .recovery-key-card {
   font-size: 11.5px;
   font-weight: 700;
   color: var(--accent-green);
-  background: rgba(30, 126, 52, 0.10);
+  background: rgba(47, 104, 74, 0.10);
   padding: 2px 9px;
   border-radius: 999px;
 }

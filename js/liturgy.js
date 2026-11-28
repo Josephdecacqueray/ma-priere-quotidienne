@@ -69,28 +69,28 @@ export function getLiturgicalSeason(date = new Date()) {
   const allSaints = dayNum(new Date(y, 10, 1));
   const immaculate = dayNum(new Date(y, 11, 8));
 
-  // Grandes solennités majeures
-  if (cur === christmas) return { key: 'christmas', name: 'Nativité du Seigneur', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
-  if (cur === epiphany) return { key: 'christmas', name: 'Épiphanie du Seigneur', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
-  if (cur === ashWednesday) return { key: 'lent', name: 'Mercredi des Cendres', colorLabel: 'Violet', rgb: '109, 76, 158', accentHex: '#6D4C9E' };
-  if (cur === palmSunday) return { key: 'holy_week', name: 'Dimanche des Rameaux', colorLabel: 'Rouge', rgb: '178, 34, 34', accentHex: '#B22222' };
-  if (cur === holyThursday) return { key: 'holy_week', name: 'Jeudi Saint', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
-  if (cur === goodFriday) return { key: 'holy_week', name: 'Vendredi Saint', colorLabel: 'Rouge', rgb: '178, 34, 34', accentHex: '#B22222' };
-  if (cur === holySaturday) return { key: 'holy_week', name: 'Samedi Saint', colorLabel: 'Violet', rgb: '109, 76, 158', accentHex: '#6D4C9E' };
-  if (cur === easter) return { key: 'easter', name: 'Dimanche de Pâques', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
-  if (cur === ascension) return { key: 'easter', name: 'Ascension du Seigneur', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
-  if (cur === pentecost) return { key: 'pentecost', name: 'Pentecôte', colorLabel: 'Rouge', rgb: '178, 34, 34', accentHex: '#B22222' };
-  if (cur === assumption) return { key: 'solemnity', name: 'Assomption de Marie', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
-  if (cur === allSaints) return { key: 'solemnity', name: 'Toussaint', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
-  if (cur === immaculate) return { key: 'solemnity', name: 'Immaculée Conception', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
+  // Grandes solennités majeures (palette picturale harmonisée à Sassoferrato)
+  if (cur === christmas) return { key: 'christmas', name: 'Nativité du Seigneur', colorLabel: 'Or & Blanc', rgb: '154, 120, 68', accentHex: '#9A7844' };
+  if (cur === epiphany) return { key: 'christmas', name: 'Épiphanie du Seigneur', colorLabel: 'Or & Blanc', rgb: '154, 120, 68', accentHex: '#9A7844' };
+  if (cur === ashWednesday) return { key: 'lent', name: 'Mercredi des Cendres', colorLabel: 'Violet', rgb: '103, 74, 138', accentHex: '#674A8A' };
+  if (cur === palmSunday) return { key: 'holy_week', name: 'Dimanche des Rameaux', colorLabel: 'Rouge', rgb: '164, 69, 48', accentHex: '#A44530' };
+  if (cur === holyThursday) return { key: 'holy_week', name: 'Jeudi Saint', colorLabel: 'Or & Blanc', rgb: '154, 120, 68', accentHex: '#9A7844' };
+  if (cur === goodFriday) return { key: 'holy_week', name: 'Vendredi Saint', colorLabel: 'Rouge', rgb: '164, 69, 48', accentHex: '#A44530' };
+  if (cur === holySaturday) return { key: 'holy_week', name: 'Samedi Saint', colorLabel: 'Violet', rgb: '103, 74, 138', accentHex: '#674A8A' };
+  if (cur === easter) return { key: 'easter', name: 'Dimanche de Pâques', colorLabel: 'Or & Blanc', rgb: '154, 120, 68', accentHex: '#9A7844' };
+  if (cur === ascension) return { key: 'easter', name: 'Ascension du Seigneur', colorLabel: 'Or & Blanc', rgb: '154, 120, 68', accentHex: '#9A7844' };
+  if (cur === pentecost) return { key: 'pentecost', name: 'Pentecôte', colorLabel: 'Rouge', rgb: '164, 69, 48', accentHex: '#A44530' };
+  if (cur === assumption) return { key: 'solemnity', name: 'Assomption de Marie', colorLabel: 'Bleu marial & Blanc', rgb: '46, 62, 130', accentHex: '#2E3E82' };
+  if (cur === allSaints) return { key: 'solemnity', name: 'Toussaint', colorLabel: 'Or & Blanc', rgb: '154, 120, 68', accentHex: '#9A7844' };
+  if (cur === immaculate) return { key: 'solemnity', name: 'Immaculée Conception', colorLabel: 'Bleu marial & Blanc', rgb: '46, 62, 130', accentHex: '#2E3E82' };
 
   if ((cur >= prevChristmas && cur <= baptism) || cur >= christmas) {
     return {
       key: 'christmas',
       name: 'Temps de Noël',
       colorLabel: 'Or & Blanc',
-      rgb: '200, 155, 43',
-      accentHex: '#B8861B'
+      rgb: '154, 120, 68',
+      accentHex: '#9A7844'
     };
   }
 
@@ -99,8 +99,8 @@ export function getLiturgicalSeason(date = new Date()) {
       key: 'advent',
       name: "Temps de l'Avent",
       colorLabel: 'Violet',
-      rgb: '109, 76, 158',
-      accentHex: '#6D4C9E'
+      rgb: '103, 74, 138',
+      accentHex: '#674A8A'
     };
   }
 
@@ -109,8 +109,8 @@ export function getLiturgicalSeason(date = new Date()) {
       key: 'lent',
       name: 'Carême',
       colorLabel: 'Violet',
-      rgb: '109, 76, 158',
-      accentHex: '#6D4C9E'
+      rgb: '103, 74, 138',
+      accentHex: '#674A8A'
     };
   }
 
@@ -119,8 +119,8 @@ export function getLiturgicalSeason(date = new Date()) {
       key: 'holy_week',
       name: 'Semaine Sainte',
       colorLabel: 'Rouge',
-      rgb: '178, 34, 34',
-      accentHex: '#B22222'
+      rgb: '164, 69, 48',
+      accentHex: '#A44530'
     };
   }
 
@@ -129,8 +129,8 @@ export function getLiturgicalSeason(date = new Date()) {
       key: 'pentecost',
       name: 'Pentecôte',
       colorLabel: 'Rouge',
-      rgb: '178, 34, 34',
-      accentHex: '#B22222'
+      rgb: '164, 69, 48',
+      accentHex: '#A44530'
     };
   }
 
@@ -139,8 +139,8 @@ export function getLiturgicalSeason(date = new Date()) {
       key: 'easter',
       name: 'Temps Pascal',
       colorLabel: 'Or & Blanc',
-      rgb: '200, 155, 43',
-      accentHex: '#B8861B'
+      rgb: '154, 120, 68',
+      accentHex: '#9A7844'
     };
   }
 
@@ -148,8 +148,8 @@ export function getLiturgicalSeason(date = new Date()) {
     key: 'ordinary',
     name: 'Temps ordinaire',
     colorLabel: 'Vert',
-    rgb: '30, 126, 52',
-    accentHex: '#1E7E34'
+    rgb: '47, 104, 74',
+    accentHex: '#2F684A'
   };
 }
 

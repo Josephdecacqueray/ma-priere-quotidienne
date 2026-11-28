@@ -10,12 +10,9 @@ const STEPS = [
   {
     kicker: 'Bienvenue',
     title: 'Votre carnet de prière, libre et hors connexion',
-    body: 'Votre carnet, vos intentions et vos neuvaines démarrent entièrement vierges. Touchez le bouton doré « + » pour écrire une prière, importer un PDF, prendre une photo ou piocher dans la bibliothèque classique.',
+    body: 'Votre carnet, vos intentions et vos neuvaines démarrent entièrement vierges. Touchez le bouton « + » pour écrire une prière, importer un PDF, prendre une photo ou piocher dans la bibliothèque classique.',
     tip: 'Tout fonctionne même en mode avion, sur téléphone comme sur ordinateur.',
-    iconShapes: [
-      ['path', { d: 'M3 10.5L12 3l9 7.5' }],
-      ['path', { d: 'M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5' }]
-    ],
+    portrait: './img/vierge-en-priere.webp',
     accent: 'gold'
   },
   {
@@ -106,10 +103,21 @@ function renderStep(overlay, onClose) {
   topBar.appendChild(skipBtn);
   card.appendChild(topBar);
 
-  const iconWrap = el('div', `tour-icon-orb tour-orb-${step.accent}`);
-  iconWrap.setAttribute('aria-hidden', 'true');
-  iconWrap.appendChild(buildStepSvg(step.iconShapes));
-  card.appendChild(iconWrap);
+  if (step.portrait) {
+    const cameo = el('div', 'tour-portrait-cameo');
+    const img = document.createElement('img');
+    img.src = step.portrait;
+    img.alt = 'La Vierge en prière';
+    img.width = 76;
+    img.height = 76;
+    cameo.appendChild(img);
+    card.appendChild(cameo);
+  } else {
+    const iconWrap = el('div', `tour-icon-orb tour-orb-${step.accent}`);
+    iconWrap.setAttribute('aria-hidden', 'true');
+    iconWrap.appendChild(buildStepSvg(step.iconShapes));
+    card.appendChild(iconWrap);
+  }
 
   card.appendChild(el('span', 'tour-kicker', step.kicker));
   card.appendChild(el('h2', 'tour-title', step.title));

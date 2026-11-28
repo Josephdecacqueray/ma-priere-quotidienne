@@ -1,10 +1,11 @@
-const CACHE_NAME = 'ma-priere-v9-1';
+const CACHE_NAME = 'ma-priere-v10-0';
 
 // App Shell ultra-léger au démarrage (0 octet du corpus CEC/Thomas/Missel bloquant au boot)
 const PRECACHE_URLS = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './img/vierge-en-priere.webp',
   './css/styles.css',
   './js/app.js',
   './js/config.js',
