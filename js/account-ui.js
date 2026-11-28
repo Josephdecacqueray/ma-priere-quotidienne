@@ -152,34 +152,25 @@ async function mountTurnstileIfNeeded(slotEl) {
     const ts = await loadTurnstileScript();
     if (seq !== turnstileMountSeq || !slotEl.isConnected) return;
 
-    const doRender = () => {
-      if (seq !== turnstileMountSeq || !slotEl.isConnected) return;
-      slotEl.replaceChildren();
-      turnstileWidgetId = ts.render(slotEl, {
-        sitekey: cfg.turnstileSiteKey,
-        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
-        size: 'flexible',
-        language: 'fr',
-        callback: (tok) => {
-          turnstileToken = tok || '';
-        },
-        'expired-callback': () => {
-          turnstileToken = '';
-        },
-        'timeout-callback': () => {
-          turnstileToken = '';
-        },
-        'error-callback': () => {
-          turnstileToken = '';
-        }
-      });
-    };
-
-    if (typeof ts.ready === 'function') {
-      ts.ready(doRender);
-    } else {
-      doRender();
-    }
+    slotEl.replaceChildren();
+    turnstileWidgetId = ts.render(slotEl, {
+      sitekey: cfg.turnstileSiteKey,
+      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+      size: 'flexible',
+      language: 'fr',
+      callback: (tok) => {
+        turnstileToken = tok || '';
+      },
+      'expired-callback': () => {
+        turnstileToken = '';
+      },
+      'timeout-callback': () => {
+        turnstileToken = '';
+      },
+      'error-callback': () => {
+        turnstileToken = '';
+      }
+    });
   } catch {
     slotEl.replaceChildren(
       el('span', 'field-help', 'Module anti-robot bloqué par votre réseau ou bloqueur. Autorisez challenges.cloudflare.com puis réessayez.')

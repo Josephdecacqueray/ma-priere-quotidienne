@@ -3859,9 +3859,14 @@ html[data-theme="dark"] .recovery-key-card {
 }
 
 .turnstile-slot {
+  width: 100%;
   display: flex;
   justify-content: center;
   min-height: 65px;
+}
+
+.turnstile-slot > div {
+  width: 100%;
 }
 
 .status-pill.is-local .status-dot {

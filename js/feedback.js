@@ -106,22 +106,17 @@ async function mountTurnstile() {
   try {
     const ts = await loadTurnstileScript();
     if (seq !== turnstileMountSeq) return;
-    const doRender = () => {
-      if (seq !== turnstileMountSeq) return;
-      slot.replaceChildren();
-      turnstileWidgetId = ts.render(slot, {
-        sitekey: cfg.turnstileSiteKey,
-        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
-        size: 'flexible',
-        language: 'fr',
-        callback: (tok) => { turnstileToken = tok || ''; },
-        'expired-callback': () => { turnstileToken = ''; },
-        'timeout-callback': () => { turnstileToken = ''; },
-        'error-callback': () => { turnstileToken = ''; }
-      });
-    };
-    if (typeof ts.ready === 'function') ts.ready(doRender);
-    else doRender();
+    slot.replaceChildren();
+    turnstileWidgetId = ts.render(slot, {
+      sitekey: cfg.turnstileSiteKey,
+      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+      size: 'flexible',
+      language: 'fr',
+      callback: (tok) => { turnstileToken = tok || ''; },
+      'expired-callback': () => { turnstileToken = ''; },
+      'timeout-callback': () => { turnstileToken = ''; },
+      'error-callback': () => { turnstileToken = ''; }
+    });
   } catch {
     slot.replaceChildren();
   }
