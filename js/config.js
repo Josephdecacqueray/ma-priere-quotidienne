@@ -7,10 +7,8 @@
 
 export const APP_VERSION = '8.0.0';
 
-// Après avoir déployé `worker/` (npx wrangler deploy), renseignez l'URL de votre Worker ici
-// ou directement depuis « Compte & Synchronisation -> Serveur » dans l'application.
-// Exemple : 'https://ma-priere-api.<votre-sous-domaine>.workers.dev'
-export const DEFAULT_API_BASE_URL = '';
+// URL publique du Cloudflare Worker (aucun secret)
+export const DEFAULT_API_BASE_URL = 'https://ma-priere-api.ma-priere-quotidienne.workers.dev';
 
 // Client ID OAuth Web Google (optionnel, pour la synchronisation 5 Go PDF via drive.appdata)
 // Exemple : '1234567890-abcdef.apps.googleusercontent.com'

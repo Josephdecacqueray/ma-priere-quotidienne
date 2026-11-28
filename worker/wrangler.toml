@@ -10,8 +10,7 @@ crons = ["*/5 * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "ma_priere_db"
-# Remplacez par l'ID retourné par : npx wrangler d1 create ma_priere_db
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "e43b2fc1-5654-470d-b26b-84dc2373cc56"
 migrations_dir = "migrations"
 
 [vars]
@@ -24,7 +23,3 @@ MAX_PUSH_PER_CRON = "40"
 EMAIL_RELAY_PROVIDER = "resend"
 EMAIL_FROM = "Ma priere quotidienne <onboarding@resend.dev>"
 VAPID_SUBJECT = "mailto:noreply@ma-priere-quotidienne.app"
-# Clé publique VAPID (non secrète — à renseigner après génération de votre paire VAPID)
-VAPID_PUBLIC_KEY = ""
-# Clé publique de site Cloudflare Turnstile (non secrète)
-TURNSTILE_SITE_KEY = ""
