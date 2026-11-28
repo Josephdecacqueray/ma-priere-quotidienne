@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ma-priere-v6';
+const CACHE_NAME = 'ma-priere-v7';
 
 // Uniquement les fichiers présents dans le dépôt
 const PRECACHE_URLS = [

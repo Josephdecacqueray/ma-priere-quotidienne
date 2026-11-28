@@ -1,10 +1,34 @@
 let workerConfigured = false;
+let pdfLibPromise = null;
 
-function ensurePdfJs() {
-  const lib = window.pdfjsLib;
-  if (!lib) {
-    throw new Error("Le lecteur PDF n'est pas encore chargé.");
-  }
+function loadPdfJsScript() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (pdfLibPromise) return pdfLibPromise;
+
+  pdfLibPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = './vendor/pdf.min.js';
+    script.async = true;
+    script.onload = () => {
+      if (window.pdfjsLib) {
+        resolve(window.pdfjsLib);
+      } else {
+        pdfLibPromise = null;
+        reject(new Error('Le lecteur PDF ne s’est pas initialisé correctement.'));
+      }
+    };
+    script.onerror = () => {
+      pdfLibPromise = null;
+      reject(new Error('Impossible de charger le module PDF hors-ligne.'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return pdfLibPromise;
+}
+
+async function ensurePdfJs() {
+  const lib = await loadPdfJsScript();
   if (!workerConfigured) {
     lib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
     workerConfigured = true;
@@ -14,7 +38,7 @@ function ensurePdfJs() {
 
 export async function renderPdfIntoContainer(pdfBlob, containerEl, { scale = 1, onPageCount } = {}) {
   containerEl.innerHTML = '<p class="empty-sub" style="padding:20px;text-align:center;">Ouverture du document PDF…</p>';
-  const lib = ensurePdfJs();
+  const lib = await ensurePdfJs();
   const data = await pdfBlob.arrayBuffer();
   const loadingTask = lib.getDocument({ data });
   const pdf = await loadingTask.promise;

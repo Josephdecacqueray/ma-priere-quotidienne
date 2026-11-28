@@ -257,6 +257,33 @@ function applyPrayerFontSize() {
   localStorage.setItem(FONT_SIZE_KEY, String(state.fontSizePx));
 }
 
+function adjustPrayerFontSize(delta) {
+  state.fontSizePx = Math.max(13, Math.min(22, Number((state.fontSizePx + delta).toFixed(1))));
+  applyPrayerFontSize();
+}
+
+let laPriereModulePromise = null;
+async function openLaPriereView() {
+  showView('la-priere');
+  try {
+    if (!laPriereModulePromise) {
+      laPriereModulePromise = import('./la-priere.js');
+    }
+    const mod = await laPriereModulePromise;
+    await mod.openLaPriere({
+      onExit: () => {
+        showView('list');
+        renderList();
+      },
+      adjustFontSize: adjustPrayerFontSize,
+      showToast
+    });
+  } catch (err) {
+    console.error('Erreur ouverture section La prière:', err);
+    showToast("Impossible d'ouvrir la section La prière.");
+  }
+}
+
 /* =========================================================
    NAVIGATION ENTRE VUES & MODALES
    ========================================================= */
@@ -278,6 +305,7 @@ function showView(name) {
   $('view-novena').classList.toggle('hidden', name !== 'novena');
   $('view-intentions').classList.toggle('hidden', name !== 'intentions');
   $('view-rosary').classList.toggle('hidden', name !== 'rosary');
+  $('view-la-priere').classList.toggle('hidden', name !== 'la-priere');
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -2056,6 +2084,7 @@ function bindEvents() {
 
   // Mystères du chapelet & Chapelet interactif
   $('btn-open-rosary').addEventListener('click', () => openRosaryView('all'));
+  $('btn-open-la-priere').addEventListener('click', openLaPriereView);
   $('btn-rosary-back').addEventListener('click', () => {
     showView('list');
     renderList();

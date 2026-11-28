@@ -16,7 +16,6 @@
   <link rel="manifest" href="./manifest.webmanifest">
 
   <link rel="stylesheet" href="./css/styles.css">
-  <script src="./vendor/pdf.min.js" defer></script>
   <script type="module" src="./js/app.js"></script>
 </head>
 <body>
@@ -126,6 +125,29 @@
             </div>
             <div class="intentions-home-right">
               <span class="rosary-count-pill">20</span>
+              <span class="chevron" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </span>
+            </div>
+          </button>
+
+          <button id="btn-open-la-priere" class="shortcut-row-btn" type="button">
+            <div class="intentions-home-left">
+              <span class="shortcut-icon-pill shortcut-icon-green" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+              </span>
+              <div class="intentions-home-text">
+                <span class="intentions-home-title">La prière</span>
+                <span class="intentions-home-sub">CEC, saint Thomas &amp; guides</span>
+              </div>
+            </div>
+            <div class="intentions-home-right">
+              <span class="lp-count-pill">66</span>
               <span class="chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="9 18 15 12 9 6"></polyline>
@@ -538,6 +560,34 @@
           <div id="rosary-prayers-body" class="prayer-body rosary-guide-body"></div>
         </details>
       </div>
+    </section>
+
+    <!-- =========================================================
+         VUE 6 : SECTION « LA PRIÈRE » (CEC, SAINT THOMAS & GUIDES)
+         ========================================================= -->
+    <section id="view-la-priere" class="view hidden" aria-label="La prière : CEC, saint Thomas d’Aquin et guides pratiques">
+      <header class="ios-nav-bar">
+        <button id="btn-lp-back" class="nav-back-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span id="lp-back-label">Accueil</span>
+        </button>
+
+        <div class="nav-actions">
+          <div id="lp-nav-right-group" class="nav-glass-group">
+            <button id="btn-lp-guides-shortcut" class="nav-group-btn nav-accent" type="button">Méthodes</button>
+            <span id="lp-font-controls" class="lp-nav-font-controls hidden">
+              <button id="btn-lp-font-smaller" class="nav-group-btn" type="button" aria-label="Réduire la taille du texte">A-</button>
+              <button id="btn-lp-font-larger" class="nav-group-btn" type="button" aria-label="Agrandir la taille du texte">A+</button>
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <nav id="lp-breadcrumbs" class="lp-breadcrumbs hidden" aria-label="Fil d’Ariane"></nav>
+
+      <div id="lp-content" class="prayer-scroll-area lp-scroll-area"></div>
     </section>
 
     <!-- =========================================================
