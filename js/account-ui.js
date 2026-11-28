@@ -481,7 +481,7 @@ async function renderGuestView(body) {
   card.appendChild(form);
   body.appendChild(card);
 
-  if (activeMode !== 'login' && apiUrl) {
+  if (activeMode !== 'login' && !isForgotEmailStep2 && apiUrl) {
     mountTurnstileIfNeeded(tsSlot);
   }
 }

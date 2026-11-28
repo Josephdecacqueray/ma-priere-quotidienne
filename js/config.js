@@ -5,14 +5,13 @@
    - Aucune adresse e-mail personnelle, aucune clé privée ici
    ========================================================= */
 
-export const APP_VERSION = '9.0.0';
+export const APP_VERSION = '9.1.0';
 
 // URL publique du Cloudflare Worker (aucun secret)
 export const DEFAULT_API_BASE_URL = 'https://ma-priere-api.ma-priere-quotidienne.workers.dev';
 
-// Client ID OAuth Web Google (optionnel, pour la synchronisation 5 Go PDF via drive.appdata)
-// Exemple : '1234567890-abcdef.apps.googleusercontent.com'
-export const DEFAULT_GOOGLE_CLIENT_ID = '';
+// Client ID OAuth Web Google (public, scope strictement non sensible drive.appdata pour les PDF/photos)
+export const DEFAULT_GOOGLE_CLIENT_ID = '1074191293598-vmenhjkdjmnpjb57nad3gdfpkh22ere9.apps.googleusercontent.com';
 
 const API_URL_STORAGE_KEY = 'mpq_api_base_url';
 const GOOGLE_CLIENT_ID_STORAGE_KEY = 'mpq_google_client_id';
