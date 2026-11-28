@@ -144,7 +144,7 @@ function updateNavChrome(entry, idxData) {
   if (fontControls) fontControls.classList.toggle('hidden', !isReading);
   if (guidesShortcut) guidesShortcut.classList.toggle('hidden', !showGuidesShortcut);
   const rightGroup = $('lp-nav-right-group');
-  if (rightGroup) rightGroup.classList.toggle('hidden', !isReading && !showGuidesShortcut);
+  if (rightGroup) rightGroup.classList.remove('hidden');
 }
 
 function renderBreadcrumbs(entry, idxData, extraTitle) {
@@ -732,8 +732,11 @@ function bindEventsOnce() {
 }
 
 export async function openLaPriere(callbacks = {}) {
-  hostCallbacks = { ...hostCallbacks, ...callbacks };
+  const { initialTextId, ...rest } = callbacks;
+  hostCallbacks = { ...hostCallbacks, ...rest };
   bindEventsOnce();
-  navStack = [{ screen: 'home' }];
+  navStack = initialTextId
+    ? [{ screen: 'home' }, { screen: 'text', textId: initialTextId }]
+    : [{ screen: 'home' }];
   await renderCurrentScreen();
 }

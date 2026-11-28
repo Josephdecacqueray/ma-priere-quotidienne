@@ -68,6 +68,31 @@ const ROSARY_COUNTER_KEY = 'mpq_rosary_counter';
 const ROSARY_UPDATED_KEY = 'mpq_rosary_updated_at';
 const SETTINGS_UPDATED_KEY = 'mpq_settings_updated_at';
 const STANDARD_FOLDERS = ['Matin', 'Soir', 'Saints', 'Litanies', 'Messe', 'Psaumes'];
+const NEW_FOLDER_SENTINEL = '__new__';
+const TOUR_SEEN_KEY = 'mpq_tour_seen_v1';
+
+// 12 paroles brèves authentiques liées aux 66 textes vérifiés (CEC & saint Thomas)
+const DAILY_QUOTES = [
+  { text: '« La prière est l’élévation de l’âme vers Dieu, un don de grâce et d’alliance. »', ref: 'CEC §§ 2558–2565', textId: 'cec-2558-2565' },
+  { text: '« L’adoration est la première attitude de l’homme qui se reconnaît créature devant son Créateur. »', ref: 'CEC §§ 2623–2628', textId: 'cec-2623-2628' },
+  { text: '« Tout événement et tout besoin peut devenir offrande d’action de grâces. »', ref: 'CEC §§ 2637–2638', textId: 'cec-2637-2638' },
+  { text: '« La louange aime Dieu pour Lui-même, au-delà de ce qu’Il fait, parce qu’Il est. »', ref: 'CEC §§ 2639–2649', textId: 'cec-2639-2649' },
+  { text: '« La prière vocale associe le corps à la prière intérieure du cœur, à l’exemple du Christ. »', ref: 'CEC §§ 2697–2704', textId: 'cec-2697-2704' },
+  { text: '« L’oraison est un regard de foi fixé sur Jésus et un silence d’amour. »', ref: 'CEC §§ 2709–2724', textId: 'cec-2709-2724' },
+  { text: '« Face aux distractions, revenir humblement à son cœur manifeste notre préférence pour le Seigneur. »', ref: 'CEC §§ 2729–2733', textId: 'cec-2729-2733' },
+  { text: '« La prière du Seigneur est vraiment le résumé de tout l’Évangile. »', ref: 'CEC §§ 2759–2776', textId: 'cec-2759-2776' },
+  { text: '« La dévotion est la promptitude de la volonté à se livrer joyeusement au service de Dieu. »', ref: 'Saint Thomas · ST IIa-IIae, q. 82, a. 1', textId: 'thomas-st-iia-iiae-q82-a01' },
+  { text: '« Nous ne prions pas pour changer le dessein de Dieu, mais pour recevoir ce qu’Il veut nous donner par la prière. »', ref: 'Saint Thomas · ST IIa-IIae, q. 83, a. 2', textId: 'thomas-st-iia-iiae-q83-a02' },
+  { text: '« La prière doit durer autant qu’elle nourrit la ferveur intérieure, sans laisser place à la lassitude. »', ref: 'Saint Thomas · ST IIa-IIae, q. 83, a. 14', textId: 'thomas-st-iia-iiae-q83-a14' },
+  { text: '« En priant avec confiance, notre cœur s’élargit et entre dans une familiarité vivante avec le Père. »', ref: 'Saint Thomas · Compendium, II, c. 1–4', textId: 'thomas-compendium-ii-c01-04' }
+];
+
+function getTodayDailyQuote() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now - start) / 86400000);
+  return DAILY_QUOTES[Math.abs(dayOfYear) % DAILY_QUOTES.length];
+}
 
 function loadRosaryCounter() {
   const today = getTodayRosarySummary();
@@ -344,6 +369,12 @@ async function openFeedbackModal() {
   }
 }
 
+function isMobileShareContext() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /iPhone|iPad|iPod|Android/i.test(ua) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+}
+
 async function shareApplication() {
   const url = window.location.href.split('#')[0];
   const shareData = {
@@ -351,12 +382,12 @@ async function shareApplication() {
     text: 'Carnet de prières hors-ligne, chapelet interactif, neuvaines, Catéchisme & saint Thomas d’Aquin.',
     url
   };
-  if (navigator.share) {
+  if (isMobileShareContext() && navigator.share) {
     try {
       await navigator.share(shareData);
       return;
-    } catch {
-      // Annulé ou indisponible -> fallback presse-papiers
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
     }
   }
   try {
@@ -380,7 +411,7 @@ function adjustPrayerFontSize(delta) {
 }
 
 let laPriereModulePromise = null;
-async function openLaPriereView() {
+async function openLaPriereView(initialTextId = '') {
   showView('la-priere');
   try {
     if (!laPriereModulePromise) {
@@ -388,6 +419,7 @@ async function openLaPriereView() {
     }
     const mod = await laPriereModulePromise;
     await mod.openLaPriere({
+      initialTextId: typeof initialTextId === 'string' ? initialTextId : '',
       onExit: () => {
         showView('list');
         renderList();
@@ -398,6 +430,33 @@ async function openLaPriereView() {
   } catch (err) {
     console.error('Erreur ouverture section La prière:', err);
     showToast("Impossible d'ouvrir la section La prière.");
+  }
+}
+
+let timerModulePromise = null;
+async function openPrayerTimer() {
+  try {
+    if (!timerModulePromise) {
+      timerModulePromise = import('./timer.js');
+    }
+    const mod = await timerModulePromise;
+    mod.openPrayerTimerSheet({ showToast });
+  } catch (err) {
+    console.error('Erreur ouverture minuteur:', err);
+    showToast('Impossible d’ouvrir le minuteur.');
+  }
+}
+
+let tourModulePromise = null;
+async function openGuidedTourModal() {
+  try {
+    if (!tourModulePromise) {
+      tourModulePromise = import('./tour.js');
+    }
+    const mod = await tourModulePromise;
+    mod.openGuidedTour();
+  } catch (err) {
+    console.error('Erreur ouverture visite guidée:', err);
   }
 }
 
@@ -564,14 +623,14 @@ async function reloadData({ sync = true } = {}) {
 function populateFolderSelects() {
   const used = new Set(STANDARD_FOLDERS);
   for (const p of state.prayers) {
-    if (p.folder) used.add(p.folder);
+    if (p.folder && p.folder !== NEW_FOLDER_SENTINEL) used.add(p.folder);
   }
   const folders = Array.from(used);
 
   for (const id of ['edit-prayer-folder', 'pdf-folder-select', 'photo-folder-select']) {
     const sel = $(id);
     if (!sel) continue;
-    const prev = sel.value;
+    const prev = sel.value === NEW_FOLDER_SENTINEL ? (sel.dataset.prevValue || '') : sel.value;
     const defOpt = document.createElement('option');
     defOpt.value = '';
     defOpt.textContent = 'Aucun dossier';
@@ -582,11 +641,22 @@ function populateFolderSelects() {
       opt.textContent = f;
       sel.appendChild(opt);
     }
+    if (prev && !used.has(prev)) {
+      const customOpt = document.createElement('option');
+      customOpt.value = prev;
+      customOpt.textContent = prev;
+      sel.appendChild(customOpt);
+    }
+    const newOpt = document.createElement('option');
+    newOpt.value = NEW_FOLDER_SENTINEL;
+    newOpt.textContent = '+ Nouveau dossier…';
+    sel.appendChild(newOpt);
     sel.value = prev;
+    sel.dataset.prevValue = prev;
   }
 
   // Filtres dynamiques pour les dossiers qui contiennent au moins 1 prière
-  const usedInPrayers = Array.from(new Set(state.prayers.map((p) => p.folder).filter(Boolean)));
+  const usedInPrayers = Array.from(new Set(state.prayers.map((p) => p.folder).filter((f) => f && f !== NEW_FOLDER_SENTINEL)));
   const container = $('folder-filter-pills');
   if (container) {
     container.replaceChildren();
@@ -605,6 +675,38 @@ function populateFolderSelects() {
       container.appendChild(btn);
     }
   }
+}
+
+function handleFolderSelectChange(sel, onChanged) {
+  if (!sel) return;
+  if (sel.value !== NEW_FOLDER_SENTINEL) {
+    sel.dataset.prevValue = sel.value;
+    onChanged?.();
+    return;
+  }
+  const raw = prompt('Nom du nouveau dossier (ex. Marie, Carême, Travail) :');
+  const clean = String(raw || '').trim().slice(0, 32);
+  if (!clean || clean === NEW_FOLDER_SENTINEL) {
+    sel.value = sel.dataset.prevValue || '';
+    return;
+  }
+  for (const id of ['edit-prayer-folder', 'pdf-folder-select', 'photo-folder-select']) {
+    const target = $(id);
+    if (!target) continue;
+    const exists = Array.from(target.options).some((o) => o.value === clean);
+    if (!exists) {
+      const opt = document.createElement('option');
+      opt.value = clean;
+      opt.textContent = clean;
+      const sentinelOpt = target.querySelector(`option[value="${NEW_FOLDER_SENTINEL}"]`);
+      if (sentinelOpt) target.insertBefore(opt, sentinelOpt);
+      else target.appendChild(opt);
+    }
+  }
+  sel.value = clean;
+  sel.dataset.prevValue = clean;
+  showToast(`Dossier « ${clean} » ajouté`);
+  onChanged?.();
 }
 
 function syncFilterPillsActive() {
@@ -659,6 +761,12 @@ function renderTodayCard() {
     pinnedWrap.classList.add('hidden');
     pinnedWrap.innerHTML = '';
   }
+
+  const quote = getTodayDailyQuote();
+  const qText = $('today-quote-text');
+  const qRef = $('today-quote-ref');
+  if (qText) qText.textContent = quote.text;
+  if (qRef) qRef.textContent = `${quote.ref} ›`;
 }
 
 function renderGlobalSearchResults() {
@@ -1006,12 +1114,15 @@ function buildPrayerRowElement(p) {
 
 function renderHomeRecentPrayers() {
   const sec = $('home-recent-section');
+  const emptyCard = $('home-welcome-empty');
   const listEl = $('home-recent-list');
   const countLabel = $('home-carnet-count-label');
   if (!sec || !listEl) return;
 
   const recent = state.prayers.slice(0, 3);
-  sec.classList.toggle('hidden', recent.length === 0);
+  const isEmpty = recent.length === 0;
+  sec.classList.toggle('hidden', isEmpty);
+  emptyCard?.classList.toggle('hidden', !isEmpty);
   if (countLabel) {
     countLabel.textContent = `Carnet (${state.prayers.length})`;
   }
@@ -1371,7 +1482,8 @@ async function saveEditedPrayer({ exitEdit = false, silent = false } = {}) {
   const prayer = await getPrayer(state.currentPrayerId);
   if (!prayer || prayer.type !== 'text') return;
   const nextTitle = $('edit-prayer-title').value.trim() || 'Prière sans titre';
-  const nextFolder = $('edit-prayer-folder').value || '';
+  const rawFolder = $('edit-prayer-folder').value || '';
+  const nextFolder = rawFolder === NEW_FOLDER_SENTINEL ? '' : rawFolder;
   const nextContent = $('edit-prayer-content').value;
   if (prayer.title === nextTitle && (prayer.folder || '') === nextFolder && prayer.content === nextContent && !exitEdit) {
     return;
@@ -1493,7 +1605,8 @@ async function handleSavePdf() {
     return;
   }
   const title = $('pdf-title-input').value.trim() || file.name.replace(/\.pdf$/i, '') || 'Prière PDF';
-  const folder = $('pdf-folder-select').value || '';
+  const rawFolder = $('pdf-folder-select').value || '';
+  const folder = rawFolder === NEW_FOLDER_SENTINEL ? '' : rawFolder;
   const now = Date.now();
   const prayer = {
     id: generateId('pdf'),
@@ -1588,7 +1701,8 @@ async function handleSavePhoto() {
     return;
   }
   const title = $('photo-title-input').value.trim() || 'Prière en photo';
-  const folder = $('photo-folder-select').value || '';
+  const rawFolder = $('photo-folder-select').value || '';
+  const folder = rawFolder === NEW_FOLDER_SENTINEL ? '' : rawFolder;
   const now = Date.now();
   const prayer = {
     id: generateId('photo'),
@@ -2104,12 +2218,13 @@ async function exportIntentionsFile() {
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
   const file = new File([blob], 'mes-intentions.txt', { type: 'text/plain' });
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  if (isMobileShareContext() && navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({ title: 'Mes intentions', files: [file] });
+      showToast('Fichier mes-intentions.txt exporté ✓');
       return;
-    } catch {
-      // Fallback
+    } catch (shareErr) {
+      if (shareErr?.name === 'AbortError') return;
     }
   }
   const url = URL.createObjectURL(blob);
@@ -2325,12 +2440,15 @@ async function handleExportBackup() {
     const fileName = `ma-priere-sauvegarde-${todayIso()}.json`;
     const file = new File([blob], fileName, { type: 'application/json' });
 
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (isMobileShareContext() && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ title: 'Sauvegarde Ma prière quotidienne', files: [file] });
+        await refreshBackupWitness();
+        showToast('Sauvegarde exportée ✓');
         return;
-      } catch {
-        // Fallback
+      } catch (shareErr) {
+        if (shareErr?.name === 'AbortError') return;
+        // Fallback téléchargement classique
       }
     }
     const url = URL.createObjectURL(blob);
@@ -2421,6 +2539,18 @@ function bindEvents() {
   $('btn-open-feedback')?.addEventListener('click', openFeedbackModal);
   $('btn-share-app')?.addEventListener('click', shareApplication);
   $('btn-info-share-app')?.addEventListener('click', shareApplication);
+  $('btn-replay-tour')?.addEventListener('click', () => {
+    closeAllSheets();
+    openGuidedTourModal();
+  });
+  $('btn-welcome-add-prayer')?.addEventListener('click', () => openSheet('sheet-add'));
+  $('btn-welcome-open-lapriere')?.addEventListener('click', () => openLaPriereView());
+  $('today-quote-btn')?.addEventListener('click', () => {
+    openLaPriereView(getTodayDailyQuote().textId);
+  });
+  $('btn-prayer-timer')?.addEventListener('click', openPrayerTimer);
+  $('btn-lp-timer')?.addEventListener('click', openPrayerTimer);
+  $('floating-timer-pill')?.addEventListener('click', openPrayerTimer);
   $('btn-trigger-offline-precache')?.addEventListener('click', () => {
     triggerOfflineCorpusPrecache({ notify: true });
   });
@@ -2500,7 +2630,7 @@ function bindEvents() {
   });
 
   // Mystères du chapelet & Chapelet interactif
-  $('btn-open-la-priere').addEventListener('click', openLaPriereView);
+  $('btn-open-la-priere').addEventListener('click', () => openLaPriereView());
   $('btn-rosary-back').addEventListener('click', () => {
     switchMainTab('home');
   });
@@ -2611,7 +2741,11 @@ function bindEvents() {
   });
 
   $('edit-prayer-title').addEventListener('input', scheduleAutoSaveEdit);
-  $('edit-prayer-folder').addEventListener('change', scheduleAutoSaveEdit);
+  $('edit-prayer-folder').addEventListener('change', (e) => {
+    handleFolderSelectChange(e.currentTarget, scheduleAutoSaveEdit);
+  });
+  $('pdf-folder-select')?.addEventListener('change', (e) => handleFolderSelectChange(e.currentTarget));
+  $('photo-folder-select')?.addEventListener('change', (e) => handleFolderSelectChange(e.currentTarget));
   $('edit-prayer-content').addEventListener('input', scheduleAutoSaveEdit);
 
   $('btn-prayer-delete').addEventListener('click', () => {
@@ -2623,14 +2757,8 @@ function bindEvents() {
   });
 
   // Taille police lecture
-  $('btn-font-smaller').addEventListener('click', () => {
-    state.fontSizePx = Math.max(13, state.fontSizePx - 1);
-    applyPrayerFontSize();
-  });
-  $('btn-font-larger').addEventListener('click', () => {
-    state.fontSizePx = Math.min(20, state.fontSizePx + 1);
-    applyPrayerFontSize();
-  });
+  $('btn-font-smaller').addEventListener('click', () => adjustPrayerFontSize(-1));
+  $('btn-font-larger').addEventListener('click', () => adjustPrayerFontSize(1));
 
   // Outils mise en page rapide
   document.querySelectorAll('.fmt-btn').forEach((btn) => {
@@ -2788,6 +2916,19 @@ async function boot() {
 
   await refreshFromDbOnly();
   await registerServiceWorker();
+
+  // Visite guidée sereine lors de la toute première visite (0 impact sur le boot)
+  try {
+    if (localStorage.getItem(TOUR_SEEN_KEY) !== '1') {
+      setTimeout(() => {
+        if (localStorage.getItem(TOUR_SEEN_KEY) !== '1') {
+          openGuidedTourModal();
+        }
+      }, 450);
+    }
+  } catch {
+    // Ignoré
+  }
 
   if (navigator.onLine) {
     flushFeedbackQueue().catch(() => {});

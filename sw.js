@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ma-priere-v8-1';
+const CACHE_NAME = 'ma-priere-v8-2';
 
 // App Shell ultra-léger au démarrage (0 octet du corpus CEC/Thomas bloquant au boot)
 const PRECACHE_URLS = [
@@ -21,6 +21,8 @@ const PRECACHE_URLS = [
   './js/drive-sync.js',
   './js/feedback.js',
   './js/la-priere.js',
+  './js/tour.js',
+  './js/timer.js',
   './fonts/GreatVibes-Regular.ttf',
   './icons/favicon-64.png',
   './icons/icon-180.png',

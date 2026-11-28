@@ -4054,3 +4054,290 @@ html[data-theme="dark"] .recovery-key-card {
     max-width: 748px;
   }
 }
+
+/* =========================================================
+   v8.2 : PAROLE DU JOUR, ACCUEIL VIERGE, VISITE GUIDÉE & MINUTEUR
+   ========================================================= */
+.today-quote-btn {
+  width: 100%;
+  margin-top: 2px;
+  padding: 10px 4px 2px;
+  border: none;
+  border-top: 0.5px solid var(--hairline-color);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: opacity 0.16s ease;
+}
+
+.today-quote-btn:hover {
+  opacity: 0.86;
+}
+
+.today-quote-text {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13.5px;
+  line-height: 1.46;
+  color: var(--text-primary);
+}
+
+.today-quote-ref {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent-notes);
+}
+
+/* Accueil serein lorsque le carnet est vierge */
+.home-welcome-empty-card {
+  margin-top: 16px;
+  padding: 20px 18px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-welcome-title {
+  margin: 0;
+  font-size: 1.85rem;
+}
+
+.home-welcome-sub {
+  margin: 0;
+  max-width: 44ch;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.home-welcome-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+@media (min-width: 520px) {
+  .home-welcome-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+  .home-welcome-actions button {
+    width: auto;
+    min-width: 190px;
+  }
+}
+
+/* Visite guidée Liquid Glass & Minuteur d’oraison */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(16, 14, 10, 0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.tour-card {
+  width: 100%;
+  max-width: 430px;
+  border-radius: 28px;
+  padding: 20px 20px 22px;
+  background: var(--sheet-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.28), var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.tour-top-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tour-step-counter {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tour-skip-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: var(--glass-bg-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: var(--glass-btn-shadow);
+  cursor: pointer;
+}
+
+.tour-icon-orb {
+  width: 60px;
+  height: 60px;
+  margin-top: 4px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--glass-btn-shadow);
+}
+
+.tour-orb-gold {
+  background: linear-gradient(145deg, rgba(184, 134, 27, 0.20), rgba(184, 134, 27, 0.08));
+  color: var(--accent-notes);
+}
+
+.tour-orb-red {
+  background: linear-gradient(145deg, rgba(198, 40, 40, 0.18), rgba(198, 40, 40, 0.07));
+  color: var(--accent-red);
+}
+
+.tour-orb-green {
+  background: linear-gradient(145deg, rgba(30, 126, 52, 0.18), rgba(30, 126, 52, 0.07));
+  color: var(--accent-green);
+}
+
+.tour-kicker {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-notes);
+}
+
+.tour-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.32;
+  color: var(--text-primary);
+}
+
+.tour-body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  line-height: 1.52;
+  color: var(--text-secondary);
+}
+
+.tour-tip {
+  margin: 2px 0 0;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--glass-bg-subtle);
+  box-shadow: 0 0 0 0.5px var(--hairline-color);
+  font-size: 12.5px;
+  line-height: 1.42;
+  color: var(--text-secondary);
+}
+
+.tour-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 6px 0 2px;
+}
+
+.tour-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(139, 131, 120, 0.35);
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.tour-dot.active {
+  width: 22px;
+  background: var(--accent-notes);
+}
+
+.tour-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 6px;
+}
+
+.tour-actions button {
+  flex: 1;
+}
+
+/* Minuteur d’oraison */
+.timer-card {
+  gap: 12px;
+}
+
+.timer-inline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.timer-clock-display {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  padding: 10px 24px;
+  border-radius: 20px;
+  background: var(--glass-bg-subtle);
+  box-shadow: var(--glass-btn-shadow);
+}
+
+.timer-presets-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+}
+
+.timer-note {
+  max-width: 34ch;
+  text-align: center;
+}
+
+.floating-timer-pill {
+  position: fixed;
+  left: 16px;
+  bottom: calc(82px + var(--safe-bottom));
+  z-index: 38;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: var(--glass-gold-bg);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--glass-gold-shadow);
+  cursor: pointer;
+}

@@ -82,6 +82,10 @@
             </div>
             <div id="today-summary-links" class="today-summary-links"></div>
             <div id="today-pinned-chips" class="today-pinned-chips hidden"></div>
+            <button id="today-quote-btn" class="today-quote-btn" type="button" aria-label="Lire la parole du jour dans La prière">
+              <span id="today-quote-text" class="today-quote-text"></span>
+              <span id="today-quote-ref" class="today-quote-ref"></span>
+            </button>
           </section>
 
           <!-- Raccourcis essentiels (Chapelet & Neuvaines sont directement en bas) -->
@@ -141,6 +145,16 @@
               </button>
             </div>
             <div id="home-recent-list" class="notes-group"></div>
+          </section>
+
+          <!-- Accueil serein lorsque le carnet est vierge (nouvel utilisateur) -->
+          <section id="home-welcome-empty" class="ios-card home-welcome-empty-card hidden" aria-label="Commencer votre carnet">
+            <h2 class="section-heading-script home-welcome-title">Votre carnet est prêt</h2>
+            <p class="home-welcome-sub">Cet espace démarre entièrement vierge pour accueillir vos prières (notes, PDF, photos), vos intentions et vos neuvaines.</p>
+            <div class="home-welcome-actions">
+              <button id="btn-welcome-add-prayer" class="btn-primary-ios" type="button">+ Ajouter ma première prière</button>
+              <button id="btn-welcome-open-lapriere" class="btn-outline-ios" type="button">Découvrir La prière</button>
+            </div>
           </section>
 
           <!-- Pied de page discret Liquid Glass : Contact privé, Partage & Témoin sauvegarde -->
@@ -263,6 +277,14 @@
               <span id="prayer-folder-badge" class="folder-tag hidden"></span>
             </div>
             <div class="font-size-controls" aria-label="Options de lecture">
+              <button id="btn-prayer-timer" class="wake-lock-btn timer-inline-btn" type="button" aria-label="Minuteur d’oraison silencieuse" title="Minuteur d’oraison">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="13" r="8"></circle>
+                  <polyline points="12 9 12 13 15 15"></polyline>
+                  <line x1="9" y1="2" x2="15" y2="2"></line>
+                </svg>
+                <span>Minuteur</span>
+              </button>
               <button id="btn-wake-lock" class="wake-lock-btn" type="button" title="Empêcher la mise en veille de l’écran">Veille off</button>
               <button id="btn-font-smaller" type="button" aria-label="Réduire la taille du texte">A-</button>
               <button id="btn-font-larger" type="button" aria-label="Agrandir la taille du texte">A+</button>
@@ -576,6 +598,13 @@
 
         <div class="nav-actions">
           <div id="lp-nav-right-group" class="nav-glass-group">
+            <button id="btn-lp-timer" class="nav-group-icon" type="button" aria-label="Minuteur d’oraison silencieuse" title="Minuteur d’oraison">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="13" r="8"></circle>
+                <polyline points="12 9 12 13 15 15"></polyline>
+                <line x1="9" y1="2" x2="15" y2="2"></line>
+              </svg>
+            </button>
             <button id="btn-lp-guides-shortcut" class="nav-group-btn nav-accent" type="button">Méthodes</button>
             <span id="lp-font-controls" class="lp-nav-font-controls hidden">
               <button id="btn-lp-font-smaller" class="nav-group-btn" type="button" aria-label="Réduire la taille du texte">A-</button>
@@ -823,6 +852,7 @@
           </ol>
           <div class="info-btn-stack">
             <button id="btn-info-share-app" class="btn-secondary-ios" type="button">Partager l’application</button>
+            <button id="btn-replay-tour" class="btn-outline-ios" type="button">Revoir la visite guidée</button>
           </div>
         </div>
 
@@ -968,6 +998,9 @@
         </svg>
       </button>
     </nav>
+
+    <!-- Pilule flottante du minuteur d’oraison en cours -->
+    <button id="floating-timer-pill" class="floating-timer-pill hidden" type="button" aria-label="Ouvrir le minuteur d’oraison en cours"></button>
 
     <!-- Toast discret -->
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>

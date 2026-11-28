@@ -13,8 +13,10 @@ let initialized = false;
 let openedAtMs = 0;
 let selectedCategory = 'bug';
 let turnstileToken = '';
+let turnstileRequired = false;
 let turnstileWidgetId = null;
 let turnstileScriptPromise = null;
+let turnstileMountSeq = 0;
 let hostCallbacks = {
   showToast: () => {},
   closeSheet: () => {}
@@ -22,19 +24,61 @@ let hostCallbacks = {
 
 const $ = (id) => document.getElementById(id);
 
+function cleanupTurnstile() {
+  if (window.turnstile && turnstileWidgetId !== null) {
+    try { window.turnstile.remove(turnstileWidgetId); } catch { /* ignoré */ }
+  }
+  turnstileWidgetId = null;
+  turnstileToken = '';
+  turnstileRequired = false;
+}
+
 function loadTurnstileScript() {
-  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (window.turnstile && typeof window.turnstile.render === 'function') {
+    return Promise.resolve(window.turnstile);
+  }
   if (turnstileScriptPromise) return turnstileScriptPromise;
   turnstileScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-mpq-turnstile="1"]');
+    if (existing) {
+      let tries = 0;
+      const waitReady = () => {
+        if (window.turnstile && typeof window.turnstile.render === 'function') {
+          resolve(window.turnstile);
+        } else if (++tries > 120) {
+          turnstileScriptPromise = null;
+          reject(new Error('Turnstile indisponible'));
+        } else {
+          setTimeout(waitReady, 80);
+        }
+      };
+      waitReady();
+      return;
+    }
+    const cbName = '__mpqTurnstileReady';
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      try { delete window[cbName]; } catch { /* ignoré */ }
+      if (ok && window.turnstile) resolve(window.turnstile);
+      else {
+        turnstileScriptPromise = null;
+        reject(new Error('Turnstile indisponible'));
+      }
+    };
+    window[cbName] = () => finish(true);
     const s = document.createElement('script');
-    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.src = `https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=${cbName}`;
     s.async = true;
     s.defer = true;
-    s.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error('Turnstile indisponible')));
-    s.onerror = () => {
-      turnstileScriptPromise = null;
-      reject(new Error('Turnstile indisponible'));
+    s.dataset.mpqTurnstile = '1';
+    s.onload = () => {
+      setTimeout(() => {
+        if (!settled && window.turnstile) finish(true);
+      }, 150);
     };
+    s.onerror = () => finish(false);
     document.head.appendChild(s);
   });
   return turnstileScriptPromise;
@@ -43,26 +87,43 @@ function loadTurnstileScript() {
 async function mountTurnstile() {
   const slot = $('feedback-turnstile-slot');
   if (!slot) return;
-  turnstileToken = '';
+  cleanupTurnstile();
+  const seq = ++turnstileMountSeq;
   slot.replaceChildren();
   slot.classList.add('hidden');
-  turnstileWidgetId = null;
 
   if (!navigator.onLine || !getApiBaseUrl()) return;
   const cfg = await fetchServerConfig();
-  if (!cfg.turnstileSiteKey) return;
+  if (seq !== turnstileMountSeq || !cfg.turnstileSiteKey) return;
+
+  turnstileRequired = true;
+  slot.classList.remove('hidden');
+  const waitSpan = document.createElement('span');
+  waitSpan.className = 'field-help';
+  waitSpan.textContent = 'Vérification anti-spam en cours…';
+  slot.replaceChildren(waitSpan);
 
   try {
     const ts = await loadTurnstileScript();
-    slot.classList.remove('hidden');
-    turnstileWidgetId = ts.render(slot, {
-      sitekey: cfg.turnstileSiteKey,
-      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
-      callback: (tok) => { turnstileToken = tok; },
-      'expired-callback': () => { turnstileToken = ''; }
-    });
+    if (seq !== turnstileMountSeq) return;
+    const doRender = () => {
+      if (seq !== turnstileMountSeq) return;
+      slot.replaceChildren();
+      turnstileWidgetId = ts.render(slot, {
+        sitekey: cfg.turnstileSiteKey,
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+        size: 'flexible',
+        language: 'fr',
+        callback: (tok) => { turnstileToken = tok || ''; },
+        'expired-callback': () => { turnstileToken = ''; },
+        'timeout-callback': () => { turnstileToken = ''; },
+        'error-callback': () => { turnstileToken = ''; }
+      });
+    };
+    if (typeof ts.ready === 'function') ts.ready(doRender);
+    else doRender();
   } catch {
-    // Silencieux hors-ligne
+    slot.replaceChildren();
   }
 }
 
@@ -185,6 +246,11 @@ function bindOnce() {
           : 'Message enregistré localement. Il sera transmis dès que le serveur Cloudflare sera relié.';
         showFeedbackStatus(msg, false);
         hostCallbacks.showToast('Message mis en file d’envoi ✓');
+        return;
+      }
+
+      if (navigator.onLine && base && turnstileRequired && !turnstileToken) {
+        showFeedbackStatus('Patientez une seconde ou validez la vérification anti-spam ci-dessus, puis réessayez.', true);
         return;
       }
 

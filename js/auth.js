@@ -7,11 +7,12 @@
      ou une révocation serveur explicite (401 TOKEN_REVOKED) ferme la session.
    ========================================================= */
 
-import { getMeta, setMeta } from './db.js';
+import { getMeta, setMeta, clearUserStoresLocal } from './db.js';
 import { getApiBaseUrl } from './config.js';
 
 const AUTH_META_KEY = 'auth_session_v8';
 const AUTH_LS_MIRROR_KEY = 'mpq_auth_session_v8';
+const LAST_OWNER_KEY = 'last_owner_user_id';
 const ACCESS_REFRESH_MARGIN_MS = 3 * 60 * 1000; // Rafraîchit 3 min avant expiration
 
 let currentSession = null;
@@ -266,6 +267,19 @@ export async function authFetch(path, options = {}) {
   return resp;
 }
 
+async function isolateIfDifferentAccount(nextUserId) {
+  if (!nextUserId) return;
+  try {
+    const prevOwner = await getMeta(LAST_OWNER_KEY);
+    if (prevOwner && prevOwner !== nextUserId) {
+      await clearUserStoresLocal();
+    }
+    await setMeta(LAST_OWNER_KEY, nextUserId);
+  } catch {
+    // Ignoré
+  }
+}
+
 export async function registerAccount({ email, password, turnstileToken = '', ownerCode = '' }) {
   const base = getApiBaseUrl();
   if (!base) throw new Error('Serveur Cloudflare non encore configuré.');
@@ -285,6 +299,7 @@ export async function registerAccount({ email, password, turnstileToken = '', ow
 
   const data = await resp.json();
   const next = buildSessionFromAuthPayload(data);
+  await isolateIfDifferentAccount(next?.user?.id);
   await persistSession(next);
   return { user: next.user, recoveryKey: data.recoveryKey };
 }
@@ -307,6 +322,7 @@ export async function loginAccount({ email, password, turnstileToken = '' }) {
 
   const data = await resp.json();
   const next = buildSessionFromAuthPayload(data);
+  await isolateIfDifferentAccount(next?.user?.id);
   await persistSession(next);
   return { user: next.user };
 }
@@ -330,6 +346,7 @@ export async function recoverAccount({ email, recoveryKey, newPassword, turnstil
 
   const data = await resp.json();
   const next = buildSessionFromAuthPayload(data);
+  await isolateIfDifferentAccount(next?.user?.id);
   await persistSession(next);
   return { user: next.user, recoveryKey: data.recoveryKey };
 }

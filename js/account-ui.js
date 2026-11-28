@@ -29,8 +29,10 @@ import {
 let activeMode = 'login'; // 'login' | 'register' | 'forgot'
 let pendingRecoveryKey = '';
 let turnstileToken = '';
+let turnstileRequired = false;
 let turnstileWidgetId = null;
 let turnstileScriptPromise = null;
+let turnstileMountSeq = 0;
 let hostCallbacks = {
   onSynced: async () => {},
   onStatusChange: () => {},
@@ -69,41 +71,119 @@ function formatDateTime(ts) {
   }
 }
 
+function cleanupTurnstileWidget() {
+  if (window.turnstile && turnstileWidgetId !== null) {
+    try {
+      window.turnstile.remove(turnstileWidgetId);
+    } catch {
+      // Ignoré
+    }
+  }
+  turnstileWidgetId = null;
+  turnstileToken = '';
+  turnstileRequired = false;
+}
+
 function loadTurnstileScript() {
-  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (window.turnstile && typeof window.turnstile.render === 'function') {
+    return Promise.resolve(window.turnstile);
+  }
   if (turnstileScriptPromise) return turnstileScriptPromise;
   turnstileScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-mpq-turnstile="1"]');
+    if (existing) {
+      let tries = 0;
+      const waitReady = () => {
+        if (window.turnstile && typeof window.turnstile.render === 'function') {
+          resolve(window.turnstile);
+        } else if (++tries > 120) {
+          turnstileScriptPromise = null;
+          reject(new Error('Turnstile indisponible'));
+        } else {
+          setTimeout(waitReady, 80);
+        }
+      };
+      waitReady();
+      return;
+    }
+    const cbName = '__mpqTurnstileReady';
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      try { delete window[cbName]; } catch { /* ignoré */ }
+      if (ok && window.turnstile) resolve(window.turnstile);
+      else {
+        turnstileScriptPromise = null;
+        reject(new Error('Turnstile indisponible'));
+      }
+    };
+    window[cbName] = () => finish(true);
     const s = document.createElement('script');
-    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.src = `https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=${cbName}`;
     s.async = true;
     s.defer = true;
-    s.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error('Turnstile indisponible')));
-    s.onerror = () => {
-      turnstileScriptPromise = null;
-      reject(new Error('Turnstile indisponible'));
+    s.dataset.mpqTurnstile = '1';
+    s.onload = () => {
+      setTimeout(() => {
+        if (!settled && window.turnstile) finish(true);
+      }, 150);
     };
+    s.onerror = () => finish(false);
     document.head.appendChild(s);
   });
   return turnstileScriptPromise;
 }
 
 async function mountTurnstileIfNeeded(slotEl) {
-  turnstileToken = '';
-  turnstileWidgetId = null;
+  cleanupTurnstileWidget();
+  const seq = ++turnstileMountSeq;
   if (!slotEl || !navigator.onLine) return;
   const cfg = await fetchServerConfig();
+  if (seq !== turnstileMountSeq || !slotEl.isConnected) return;
   if (!cfg.turnstileSiteKey) return;
+
+  turnstileRequired = true;
+  slotEl.classList.remove('hidden');
+  const waitHint = el('span', 'field-help', 'Vérification de sécurité en cours…');
+  slotEl.replaceChildren(waitHint);
+
   try {
     const ts = await loadTurnstileScript();
-    slotEl.classList.remove('hidden');
-    turnstileWidgetId = ts.render(slotEl, {
-      sitekey: cfg.turnstileSiteKey,
-      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
-      callback: (tok) => { turnstileToken = tok; },
-      'expired-callback': () => { turnstileToken = ''; }
-    });
+    if (seq !== turnstileMountSeq || !slotEl.isConnected) return;
+
+    const doRender = () => {
+      if (seq !== turnstileMountSeq || !slotEl.isConnected) return;
+      slotEl.replaceChildren();
+      turnstileWidgetId = ts.render(slotEl, {
+        sitekey: cfg.turnstileSiteKey,
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+        size: 'flexible',
+        language: 'fr',
+        callback: (tok) => {
+          turnstileToken = tok || '';
+        },
+        'expired-callback': () => {
+          turnstileToken = '';
+        },
+        'timeout-callback': () => {
+          turnstileToken = '';
+        },
+        'error-callback': () => {
+          turnstileToken = '';
+        }
+      });
+    };
+
+    if (typeof ts.ready === 'function') {
+      ts.ready(doRender);
+    } else {
+      doRender();
+    }
   } catch {
-    // Mode dégradé silencieux
+    slotEl.replaceChildren(
+      el('span', 'field-help', 'Module anti-robot bloqué par votre réseau ou bloqueur. Autorisez challenges.cloudflare.com puis réessayez.')
+    );
   }
 }
 
@@ -276,6 +356,12 @@ async function renderGuestView(body) {
       return;
     }
 
+    if (turnstileRequired && !turnstileToken) {
+      errBox.textContent = 'Patientez une seconde ou validez la case de vérification anti-robot ci-dessus, puis réessayez.';
+      errBox.classList.remove('hidden');
+      return;
+    }
+
     submitBtn.disabled = true;
     const origText = submitBtn.textContent;
     submitBtn.textContent = 'Connexion en cours…';
@@ -308,14 +394,18 @@ async function renderGuestView(body) {
         hostCallbacks.showToast('Mot de passe réinitialisé ✓');
       }
 
+      cleanupTurnstileWidget();
       await requestPersistentStorage();
       await hostCallbacks.onSynced();
       await renderAccountSheet();
     } catch (err) {
       errBox.textContent = err?.message || 'Erreur d’authentification.';
       errBox.classList.remove('hidden');
-      if (window.turnstile && turnstileWidgetId !== null) {
+      if (err?.code === 'TURNSTILE_REQUIRED' && !turnstileRequired) {
+        await mountTurnstileIfNeeded(tsSlot);
+      } else if (window.turnstile && turnstileWidgetId !== null) {
         try { window.turnstile.reset(turnstileWidgetId); } catch { /* ignoré */ }
+        turnstileToken = '';
       }
       submitBtn.disabled = false;
       submitBtn.textContent = origText;
@@ -615,6 +705,7 @@ async function renderSignedInView(body, authState) {
 export async function renderAccountSheet() {
   const body = $('account-sheet-body');
   if (!body) return;
+  cleanupTurnstileWidget();
   body.replaceChildren();
 
   const authState = getAuthState();

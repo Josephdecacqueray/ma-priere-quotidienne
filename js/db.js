@@ -86,16 +86,25 @@ export async function setMeta(key, value) {
 }
 
 export async function initDbAndSeed() {
+  // Chaque nouvel utilisateur démarre avec un carnet, des intentions et des neuvaines vierges.
   await openDb();
-  const seeded = await getMeta('seeded_v1');
-  if (!seeded) {
-    await txPromise('prayers', 'readwrite', (s) => s.put({
-      ...SAINT_JOSEPH_PRAYER,
-      createdAt: 1,
-      updatedAt: 1
-    }));
-    await setMeta('seeded_v1', true);
-  }
+}
+
+export async function clearUserStoresLocal() {
+  const db = await openDb();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(['prayers', 'novenas', 'intentions', 'meta'], 'readwrite');
+    tx.objectStore('prayers').clear();
+    tx.objectStore('novenas').clear();
+    tx.objectStore('intentions').clear();
+    const mStore = tx.objectStore('meta');
+    mStore.delete('deletedIds');
+    mStore.delete('lastSyncedFingerprint');
+    mStore.delete('syncDirty');
+    mStore.delete('lastSyncAt');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
 
 export async function computeBlobSha256(blob) {

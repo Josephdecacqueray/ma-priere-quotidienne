@@ -5,7 +5,7 @@
    - Aucune adresse e-mail personnelle, aucune clé privée ici
    ========================================================= */
 
-export const APP_VERSION = '8.0.0';
+export const APP_VERSION = '8.2.0';
 
 // URL publique du Cloudflare Worker (aucun secret)
 export const DEFAULT_API_BASE_URL = 'https://ma-priere-api.ma-priere-quotidienne.workers.dev';
