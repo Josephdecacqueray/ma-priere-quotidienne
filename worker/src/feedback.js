@@ -83,7 +83,11 @@ export async function forwardFeedbackEmail(env, record, fetchImpl = fetch) {
     if (provider === 'web3forms') {
       const resp = await fetchImpl('https://api.web3forms.com/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'User-Agent': 'Ma-Priere-Quotidienne/8.0'
+        },
         body: JSON.stringify({
           access_key: relayKey,
           subject,
@@ -91,7 +95,9 @@ export async function forwardFeedbackEmail(env, record, fetchImpl = fetch) {
           message: bodyText
         })
       });
-      return { forwarded: resp.ok, status: resp.ok ? 'sent' : 'relay_error' };
+      const data = await resp.json().catch(() => ({}));
+      const ok = resp.ok && data?.success !== false;
+      return { forwarded: ok, status: ok ? 'sent' : 'relay_error' };
     }
 
     if (provider === 'webhook' && env.EMAIL_RELAY_WEBHOOK_URL) {
