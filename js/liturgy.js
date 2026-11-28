@@ -58,8 +58,31 @@ export function getLiturgicalSeason(date = new Date()) {
   const easterDate = getEasterDate(y);
   const ashWednesday = dayNum(addDays(easterDate, -46));
   const palmSunday = dayNum(addDays(easterDate, -7));
+  const holyThursday = dayNum(addDays(easterDate, -3));
+  const goodFriday = dayNum(addDays(easterDate, -2));
+  const holySaturday = dayNum(addDays(easterDate, -1));
   const easter = dayNum(easterDate);
+  const ascension = dayNum(addDays(easterDate, 39));
   const pentecost = dayNum(addDays(easterDate, 49));
+  const epiphany = dayNum(new Date(y, 0, 6));
+  const assumption = dayNum(new Date(y, 7, 15));
+  const allSaints = dayNum(new Date(y, 10, 1));
+  const immaculate = dayNum(new Date(y, 11, 8));
+
+  // Grandes solennités majeures
+  if (cur === christmas) return { key: 'christmas', name: 'Nativité du Seigneur', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
+  if (cur === epiphany) return { key: 'christmas', name: 'Épiphanie du Seigneur', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
+  if (cur === ashWednesday) return { key: 'lent', name: 'Mercredi des Cendres', colorLabel: 'Violet', rgb: '109, 76, 158', accentHex: '#6D4C9E' };
+  if (cur === palmSunday) return { key: 'holy_week', name: 'Dimanche des Rameaux', colorLabel: 'Rouge', rgb: '178, 34, 34', accentHex: '#B22222' };
+  if (cur === holyThursday) return { key: 'holy_week', name: 'Jeudi Saint', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
+  if (cur === goodFriday) return { key: 'holy_week', name: 'Vendredi Saint', colorLabel: 'Rouge', rgb: '178, 34, 34', accentHex: '#B22222' };
+  if (cur === holySaturday) return { key: 'holy_week', name: 'Samedi Saint', colorLabel: 'Violet', rgb: '109, 76, 158', accentHex: '#6D4C9E' };
+  if (cur === easter) return { key: 'easter', name: 'Dimanche de Pâques', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
+  if (cur === ascension) return { key: 'easter', name: 'Ascension du Seigneur', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
+  if (cur === pentecost) return { key: 'pentecost', name: 'Pentecôte', colorLabel: 'Rouge', rgb: '178, 34, 34', accentHex: '#B22222' };
+  if (cur === assumption) return { key: 'solemnity', name: 'Assomption de Marie', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
+  if (cur === allSaints) return { key: 'solemnity', name: 'Toussaint', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
+  if (cur === immaculate) return { key: 'solemnity', name: 'Immaculée Conception', colorLabel: 'Or & Blanc', rgb: '200, 155, 43', accentHex: '#B8861B' };
 
   if ((cur >= prevChristmas && cur <= baptism) || cur >= christmas) {
     return {

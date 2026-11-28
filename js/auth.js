@@ -369,6 +369,47 @@ export async function changePassword({ currentPassword, newPassword }) {
   return { ok: true };
 }
 
+export async function deleteAccount({ password }) {
+  const resp = await authFetch('/api/auth/account', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password })
+  });
+  if (!resp.ok) throw await parseErrorResponse(resp);
+  await clearUserStoresLocal();
+  await setMeta(LAST_OWNER_KEY, '');
+  await persistSession(null);
+  return { ok: true };
+}
+
+export async function requestEmailResetCode({ email, turnstileToken = '' }) {
+  const base = getApiBaseUrl();
+  if (!base) throw new Error('Serveur Cloudflare indisponible.');
+  const resp = await fetch(`${base}/api/auth/forgot-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, turnstileToken })
+  });
+  if (!resp.ok) throw await parseErrorResponse(resp);
+  return resp.json();
+}
+
+export async function confirmEmailResetCode({ email, code, newPassword }) {
+  const base = getApiBaseUrl();
+  if (!base) throw new Error('Serveur Cloudflare indisponible.');
+  const resp = await fetch(`${base}/api/auth/reset-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code, newPassword, deviceLabel: detectDeviceLabel() })
+  });
+  if (!resp.ok) throw await parseErrorResponse(resp);
+  const data = await resp.json();
+  const next = buildSessionFromAuthPayload(data);
+  await isolateIfDifferentAccount(next?.user?.id);
+  await persistSession(next);
+  return { user: next.user, recoveryKey: data.recoveryKey };
+}
+
 export async function listSessions() {
   const resp = await authFetch('/api/auth/sessions', { method: 'GET' });
   if (!resp.ok) throw await parseErrorResponse(resp);

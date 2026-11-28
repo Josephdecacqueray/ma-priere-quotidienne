@@ -684,6 +684,18 @@ async function renderGuideDetail(container, idxData, entry) {
 /* =========================================================
    DISPATCHER & POINT D'ENTRÉE PUBLIC
    ========================================================= */
+const LAST_READING_KEY = 'mpq_last_reading_v1';
+
+function saveLastReading(item) {
+  try {
+    if (item && item.type && item.id && item.title) {
+      localStorage.setItem(LAST_READING_KEY, JSON.stringify({ ...item, ts: Date.now() }));
+    }
+  } catch {
+    // Ignoré
+  }
+}
+
 async function renderCurrentScreen({ restoreScroll = false } = {}) {
   const container = $('lp-content');
   const entry = currentEntry();
@@ -698,10 +710,14 @@ async function renderCurrentScreen({ restoreScroll = false } = {}) {
     } else if (entry.screen === 'theme') {
       renderLevel2Theme(container, idxData, entry);
     } else if (entry.screen === 'text') {
+      const meta = idxData?.texts?.find((x) => x.id === entry.textId);
+      if (meta) saveLastReading({ type: 'text', id: meta.id, title: meta.ref || meta.title, subtitle: meta.title });
       await renderTextReader(container, idxData, entry);
     } else if (entry.screen === 'guides') {
       await renderGuidesCatalog(container, idxData);
     } else if (entry.screen === 'guide') {
+      const g = idxData?.guides?.find((x) => x.id === entry.guideId);
+      if (g) saveLastReading({ type: 'guide', id: g.id, title: g.title, subtitle: g.durationBadge || 'Guide' });
       await renderGuideDetail(container, idxData, entry);
     }
 
@@ -732,11 +748,15 @@ function bindEventsOnce() {
 }
 
 export async function openLaPriere(callbacks = {}) {
-  const { initialTextId, ...rest } = callbacks;
+  const { initialTextId, initialGuideId, ...rest } = callbacks;
   hostCallbacks = { ...hostCallbacks, ...rest };
   bindEventsOnce();
-  navStack = initialTextId
-    ? [{ screen: 'home' }, { screen: 'text', textId: initialTextId }]
-    : [{ screen: 'home' }];
+  if (initialTextId) {
+    navStack = [{ screen: 'home' }, { screen: 'text', textId: initialTextId }];
+  } else if (initialGuideId) {
+    navStack = [{ screen: 'home' }, { screen: 'guides' }, { screen: 'guide', guideId: initialGuideId }];
+  } else {
+    navStack = [{ screen: 'home' }];
+  }
   await renderCurrentScreen();
 }

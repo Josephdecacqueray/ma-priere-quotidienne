@@ -10,8 +10,8 @@ const STEPS = [
   {
     kicker: 'Bienvenue',
     title: 'Votre carnet de prière, libre et hors connexion',
-    body: 'Ma prière quotidienne démarre entièrement vierge pour accueillir vos prières, vos intentions et vos neuvaines. Tout fonctionne même en mode avion, sur téléphone comme sur ordinateur.',
-    tip: 'Vous pouvez l’utiliser immédiatement sans compte, ou créer un compte gratuit à tout moment.',
+    body: 'Votre carnet, vos intentions et vos neuvaines démarrent entièrement vierges. Touchez le bouton doré « + » pour écrire une prière, importer un PDF, prendre une photo ou piocher dans la bibliothèque classique.',
+    tip: 'Tout fonctionne même en mode avion, sur téléphone comme sur ordinateur.',
     iconShapes: [
       ['path', { d: 'M3 10.5L12 3l9 7.5' }],
       ['path', { d: 'M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5' }]
@@ -19,47 +19,26 @@ const STEPS = [
     accent: 'gold'
   },
   {
-    kicker: 'Carnet & bouton +',
-    title: 'Notes, PDF et photos de vos prières',
-    body: 'Touchez le bouton doré « + » en bas à droite pour écrire une prière (avec titres automatiques I., 1), a)), importer un PDF ou photographier une carte. L’onglet Carnet vous permet de tout filtrer et rechercher par mot-clé.',
-    tip: 'Astuce : glissez une prière vers la gauche dans la liste pour l’épingler en haut.',
+    kicker: 'Messe, Chapelet & Formation',
+    title: 'Missel 1962, Chapelet, Catéchisme & saint Thomas',
+    body: 'Retrouvez chaque jour les lectures complètes du calendrier extraordinaire (de l’Introït à la Postcommunion, en français et latin), les 20 mystères du Chapelet et 66 textes + 10 guides sur la prière.',
+    tip: 'La loupe en haut recherche à la fois dans votre carnet, vos intentions, le chapelet et les textes du CEC.',
     iconShapes: [
-      ['path', { d: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20' }],
-      ['path', { d: 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z' }]
-    ],
-    accent: 'gold'
-  },
-  {
-    kicker: 'Neuvaines & Intentions',
-    title: 'Suivez vos neuvaines et confiez vos intentions',
-    body: 'Dans l’onglet Neuvaines, créez un parcours (3, 7, 9, 30 ou 54 jours) lié à une prière avec rappel quotidien. Votre carnet « Mes intentions » reste aussi accessible d’un geste en pleine lecture.',
-    tip: 'Le mode Recueillement et le minuteur d’oraison vous aident à prier sans distraction.',
-    iconShapes: [
-      ['path', { d: 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z' }]
-    ],
-    accent: 'red'
-  },
-  {
-    kicker: 'Chapelet & La prière',
-    title: '20 mystères, Catéchisme et saint Thomas d’Aquin',
-    body: 'L’onglet Chapelet propose les 20 mystères (dont les lumineux) avec un compteur grain par grain. La section « La prière » rassemble 66 textes du Catéchisme et de saint Thomas + 10 guides pratiques.',
-    tip: 'Tous ces textes se préparent automatiquement pour rester lisibles en mode avion.',
-    iconShapes: [
-      ['path', { d: 'M12 3v18' }],
-      ['path', { d: 'M7 8h10' }]
+      ['path', { d: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z' }],
+      ['path', { d: 'M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z' }]
     ],
     accent: 'green'
   },
   {
-    kicker: 'Compte & Sauvegarde',
-    title: 'Retrouvez votre carnet sur tous vos appareils',
-    body: 'Touchez la pilule en haut à gauche pour créer un compte gratuit en 10 secondes (une adresse e-mail et un mot de passe suffisent). Votre session reste ouverte 180 jours sans reconnexion.',
+    kicker: 'Compte & Sérénité',
+    title: 'Retrouvez vos prières sur tous vos appareils',
+    body: 'Utilisez l’application immédiatement sans compte, ou créez un compte gratuit en 10 secondes (pilule en haut à gauche) : votre session reste ouverte 180 jours sans reconnexion.',
     tip: 'Vous pouvez revoir cette visite à tout moment depuis le bouton (i) en haut à droite.',
     iconShapes: [
       ['path', { d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' }],
       ['circle', { cx: '12', cy: '7', r: '4' }]
     ],
-    accent: 'gold'
+    accent: 'red'
   }
 ];
 

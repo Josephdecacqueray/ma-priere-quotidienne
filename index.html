@@ -62,7 +62,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="search-input" type="search" class="search-input" placeholder="Rechercher par mot-clé (prière, dossier, intention, mystère)…" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher par mot-clé">
+          <input id="search-input" type="search" class="search-input" placeholder="Rechercher (prière, intention, chapelet, CEC, St Thomas)…" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher par mot-clé">
           <span id="search-results-count" class="search-results-count hidden"></span>
           <button id="btn-clear-search" class="search-clear hidden" type="button" aria-label="Effacer la recherche">✕</button>
         </div>
@@ -88,8 +88,33 @@
             </button>
           </section>
 
-          <!-- Raccourcis essentiels (Chapelet & Neuvaines sont directement en bas) -->
+          <!-- Raccourcis essentiels (Lectures 1962, Mes intentions, La prière) -->
           <div id="home-shortcuts-group" class="home-shortcuts-group">
+            <button id="btn-open-missal" class="shortcut-row-btn" type="button">
+              <div class="intentions-home-left">
+                <span class="shortcut-icon-pill shortcut-icon-gold" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    <path d="M12 6v7"></path>
+                    <path d="M9.5 8.5h5"></path>
+                  </svg>
+                </span>
+                <div class="intentions-home-text">
+                  <span class="intentions-home-title">Lectures du jour</span>
+                  <span id="missal-home-sub" class="intentions-home-sub">Missel 1962 · Introït à Postcommunion</span>
+                </div>
+              </div>
+              <div class="intentions-home-right">
+                <span class="missal-badge-pill">1962</span>
+                <span class="chevron" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </span>
+              </div>
+            </button>
+
             <button id="btn-open-intentions" class="shortcut-row-btn" type="button">
               <div class="intentions-home-left">
                 <span class="shortcut-icon-pill shortcut-icon-red" aria-hidden="true">
@@ -153,7 +178,7 @@
             <p class="home-welcome-sub">Cet espace démarre entièrement vierge pour accueillir vos prières (notes, PDF, photos), vos intentions et vos neuvaines.</p>
             <div class="home-welcome-actions">
               <button id="btn-welcome-add-prayer" class="btn-primary-ios" type="button">+ Ajouter ma première prière</button>
-              <button id="btn-welcome-open-lapriere" class="btn-outline-ios" type="button">Découvrir La prière</button>
+              <button id="btn-welcome-classics" class="btn-outline-ios" type="button">Bibliothèque de prières classiques</button>
             </div>
           </section>
 
@@ -176,7 +201,6 @@
               </button>
             </div>
             <p id="home-backup-witness" class="home-backup-witness"></p>
-            <p id="home-offline-corpus-note" class="home-offline-note hidden"></p>
           </div>
         </div>
 
@@ -285,7 +309,7 @@
                 </svg>
                 <span>Minuteur</span>
               </button>
-              <button id="btn-wake-lock" class="wake-lock-btn" type="button" title="Empêcher la mise en veille de l’écran">Veille off</button>
+              <button id="btn-wake-lock" class="wake-lock-btn" type="button" title="Empêcher la mise en veille de l’écran">Écran allumé</button>
               <button id="btn-font-smaller" type="button" aria-label="Réduire la taille du texte">A-</button>
               <button id="btn-font-larger" type="button" aria-label="Agrandir la taille du texte">A+</button>
             </div>
@@ -429,7 +453,7 @@
           <p id="novena-reminder-summary" class="reminder-summary-text"></p>
 
           <div class="reminder-actions-stack">
-            <button id="btn-novena-configure-reminder" class="btn-secondary-ios" type="button">Configurer l'heure, la durée et le canal</button>
+            <button id="btn-novena-configure-reminder" class="btn-secondary-ios" type="button">Configurer l’heure et la durée</button>
 
             <button id="btn-novena-push-toggle" class="btn-primary-ios" type="button">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -450,22 +474,6 @@
               </svg>
               <span>Ajouter au Calendrier (.ics)</span>
             </button>
-
-            <div class="reminder-quick-row">
-              <button id="btn-novena-send-sms" class="btn-outline-ios" type="button">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>Ouvrir SMS</span>
-              </button>
-              <button id="btn-novena-send-email" class="btn-outline-ios" type="button">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-                <span>Ouvrir E-mail</span>
-              </button>
-            </div>
           </div>
           <p id="novena-push-note" class="ios-footnote">
             Les notifications Push envoient un rappel directement sur l’écran verrouillé de votre appareil (lorsque l’application est installée sur l’écran d’accueil). Le fichier <strong>.ics</strong> reste disponible en secours 100 % hors connexion.
@@ -487,7 +495,7 @@
         </button>
 
         <div class="nav-actions">
-          <button id="btn-intentions-export" class="nav-text-btn" type="button">Exporter (.txt)</button>
+          <button id="btn-intentions-export" class="nav-text-btn" type="button">Copier la liste</button>
         </div>
       </header>
 
@@ -531,7 +539,7 @@
 
         <div class="nav-actions">
           <div class="nav-glass-group">
-            <button id="btn-rosary-wake-lock" class="nav-group-btn" type="button" title="Empêcher l'écran de s'éteindre">Veille off</button>
+            <button id="btn-rosary-wake-lock" class="nav-group-btn" type="button" title="Empêcher l'écran de s'éteindre">Écran allumé</button>
             <button id="btn-rosary-today" class="nav-group-btn nav-accent" type="button">Mystère du jour</button>
           </div>
         </div>
@@ -556,7 +564,11 @@
           </div>
 
           <div id="rosary-beads-row" class="rosary-beads-row" role="group" aria-label="Grains de la dizaine"></div>
-          <p id="rosary-bead-status" class="rosary-bead-status">Notre Père (début de la dizaine)</p>
+          <button id="rosary-tap-pad" class="rosary-tap-pad" type="button" aria-label="Avancer au grain suivant">
+            <span id="rosary-bead-status" class="rosary-bead-status">Notre Père (début de la dizaine)</span>
+            <span id="rosary-bead-prayer" class="rosary-bead-prayer"></span>
+            <span class="rosary-tap-hint">Touchez ici pour passer au grain suivant</span>
+          </button>
 
           <div class="rosary-counter-controls">
             <button id="btn-rosary-prev-bead" class="btn-outline-ios rosary-ctrl-sm" type="button">Préc.</button>
@@ -620,6 +632,50 @@
     </section>
 
     <!-- =========================================================
+         VUE 7 : LECTURES DU JOUR (MISSEL 1962 · FORME EXTRAORDINAIRE)
+         ========================================================= -->
+    <section id="view-missal" class="view hidden" aria-label="Lectures du jour du calendrier extraordinaire (Missel 1962)">
+      <header class="ios-nav-bar">
+        <button id="btn-missal-back" class="nav-back-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Accueil</span>
+        </button>
+
+        <div class="nav-actions">
+          <div class="nav-glass-group">
+            <button id="btn-missal-timer" class="nav-group-icon" type="button" aria-label="Minuteur d’oraison silencieuse" title="Minuteur d’oraison">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="13" r="8"></circle>
+                <polyline points="12 9 12 13 15 15"></polyline>
+                <line x1="9" y1="2" x2="15" y2="2"></line>
+              </svg>
+            </button>
+            <button id="btn-missal-font-smaller" class="nav-group-btn" type="button" aria-label="Réduire la taille du texte">A-</button>
+            <button id="btn-missal-font-larger" class="nav-group-btn" type="button" aria-label="Agrandir la taille du texte">A+</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="missal-controls-bar">
+        <div class="missal-date-nav">
+          <button id="btn-missal-prev-day" class="missal-day-btn" type="button" aria-label="Jour précédent">‹</button>
+          <input id="missal-date-picker" class="missal-date-input" type="date" min="2025-01-01" max="2035-12-31" aria-label="Choisir une date">
+          <button id="btn-missal-today" class="missal-today-btn" type="button">Auj.</button>
+          <button id="btn-missal-next-day" class="missal-day-btn" type="button" aria-label="Jour suivant">›</button>
+        </div>
+        <div class="missal-lang-switch" role="group" aria-label="Langue du Missel">
+          <button type="button" class="pill-btn missal-lang-btn active" data-missal-lang="fr" aria-pressed="true">Français</button>
+          <button type="button" class="pill-btn missal-lang-btn" data-missal-lang="bi" aria-pressed="false">Bilingue</button>
+          <button type="button" class="pill-btn missal-lang-btn" data-missal-lang="la" aria-pressed="false">Latin</button>
+        </div>
+      </div>
+
+      <div id="missal-content" class="prayer-scroll-area missal-scroll-area"></div>
+    </section>
+
+    <!-- =========================================================
          MODALES & SHEETS STYLE iOS
          ========================================================= -->
     <div id="modal-backdrop" class="modal-backdrop hidden" aria-hidden="true"></div>
@@ -634,6 +690,13 @@
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
           </svg>
           <span>Nouvelle prière (note)</span>
+        </button>
+        <button id="act-classic-prayers" class="action-sheet-btn" type="button">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+          </svg>
+          <span>Bibliothèque de prières classiques</span>
         </button>
         <button id="act-new-pdf-prayer" class="action-sheet-btn" type="button">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -791,28 +854,10 @@
 
         <div id="novena-reminder-fields" class="reminder-fields-box">
           <div class="form-field">
-            <label class="field-label" for="novena-reminder-time">Heure du rappel</label>
+            <label class="field-label" for="novena-reminder-time">Heure du rappel quotidien</label>
             <input id="novena-reminder-time" type="time" value="08:00" class="ios-input">
           </div>
-
-          <div class="form-field">
-            <label class="field-label" for="novena-reminder-channel">Mode de notification</label>
-            <select id="novena-reminder-channel" class="ios-input">
-              <option value="iphone">Notification Push &amp; Calendrier (.ics)</option>
-              <option value="sms">SMS</option>
-              <option value="email">E-mail</option>
-            </select>
-          </div>
-
-          <div id="novena-phone-wrap" class="form-field hidden">
-            <label class="field-label" for="novena-reminder-phone">Numéro de téléphone (SMS)</label>
-            <input id="novena-reminder-phone" type="tel" class="ios-input" placeholder="+33 6 …">
-          </div>
-
-          <div id="novena-email-wrap" class="form-field hidden">
-            <label class="field-label" for="novena-reminder-email">Adresse e-mail</label>
-            <input id="novena-reminder-email" type="email" class="ios-input" placeholder="prenom@exemple.fr">
-          </div>
+          <p class="field-help">Rappel par notification Push (après installation) ou via le fichier Calendrier (.ics).</p>
         </div>
       </div>
     </div>
@@ -885,9 +930,9 @@
         </div>
 
         <div class="info-block">
-          <h3>Police des titres</h3>
+          <h3>Confidentialité &amp; Données</h3>
           <p class="field-help">
-            Ce site cherche d’abord <code>./fonts/ShelleyVolanteScript.ttf</code> (ou <code>.otf</code>). À défaut, la police calligraphique libre <strong>Great Vibes</strong> est utilisée localement.
+            Aucune publicité, aucun traceur et aucune revente de données. Vos prières, intentions et neuvaines restent strictement privées (sur votre appareil et, si vous créez un compte, dans votre espace isolé). Vous pouvez exporter une sauvegarde <code>.json</code> ou supprimer définitivement votre compte à tout moment dans <strong>Compte</strong>.
           </p>
         </div>
       </div>
@@ -998,6 +1043,12 @@
         </svg>
       </button>
     </nav>
+
+    <!-- Bandeau discret de mise à jour PWA -->
+    <div id="pwa-update-banner" class="pwa-update-banner hidden" role="status">
+      <span>Nouvelle version disponible</span>
+      <button id="btn-pwa-reload" class="pwa-update-btn" type="button">Actualiser</button>
+    </div>
 
     <!-- Pilule flottante du minuteur d’oraison en cours -->
     <button id="floating-timer-pill" class="floating-timer-pill hidden" type="button" aria-label="Ouvrir le minuteur d’oraison en cours"></button>

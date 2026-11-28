@@ -11,13 +11,17 @@ import {
   registerAccount,
   loginAccount,
   recoverAccount,
+  requestEmailResetCode,
+  confirmEmailResetCode,
   changePassword,
+  deleteAccount,
   listSessions,
   revokeSession,
   logoutAccount
 } from './auth.js';
 import { getApiBaseUrl, fetchServerConfig } from './config.js';
 import { getLocalStorageStats, getBackupWitness, requestPersistentStorage } from './db.js';
+import { uiConfirm } from './dialogs.js';
 import {
   isDriveSyncEnabled,
   isDriveConfigured,
@@ -27,6 +31,8 @@ import {
 } from './drive-sync.js';
 
 let activeMode = 'login'; // 'login' | 'register' | 'forgot'
+let forgotMethod = 'email'; // 'email' | 'key'
+let forgotEmailSentTo = '';
 let pendingRecoveryKey = '';
 let turnstileToken = '';
 let turnstileRequired = false;
@@ -229,16 +235,45 @@ async function renderGuestView(body) {
   }
 
   const card = el('div', 'info-block');
+  let emailResetReady = false;
   if (activeMode === 'forgot') {
+    const cfg = await fetchServerConfig();
+    emailResetReady = Boolean(cfg.emailResetAvailable);
+    if (!emailResetReady) forgotMethod = 'key';
+
     card.appendChild(el('h3', '', 'Mot de passe oublié'));
+    if (emailResetReady) {
+      const mTabs = el('div', 'segmented-control account-tabs-two');
+      [
+        { id: 'email', label: 'Par e-mail' },
+        { id: 'key', label: 'Par clé' }
+      ].forEach((opt) => {
+        const mb = el('button', `segment-btn${forgotMethod === opt.id ? ' active' : ''}`, opt.label);
+        mb.type = 'button';
+        mb.addEventListener('click', () => {
+          forgotMethod = opt.id;
+          forgotEmailSentTo = '';
+          renderAccountSheet();
+        });
+        mTabs.appendChild(mb);
+      });
+      card.appendChild(mTabs);
+    }
     card.appendChild(
       el(
         'p',
         'field-help',
-        'Saisissez votre adresse e-mail, la clé de récupération fournie lors de la création de votre compte, puis choisissez un nouveau mot de passe.'
+        forgotMethod === 'email' && emailResetReady
+          ? (forgotEmailSentTo
+              ? `Un code à 6 chiffres a été envoyé à ${forgotEmailSentTo} (valable 15 minutes).`
+              : 'Saisissez votre adresse e-mail pour recevoir un code de réinitialisation à 6 chiffres.')
+          : 'Saisissez votre adresse e-mail, la clé de récupération fournie lors de la création de votre compte, puis choisissez un nouveau mot de passe.'
       )
     );
   }
+
+  const isForgotEmailStep1 = activeMode === 'forgot' && emailResetReady && forgotMethod === 'email' && !forgotEmailSentTo;
+  const isForgotEmailStep2 = activeMode === 'forgot' && emailResetReady && forgotMethod === 'email' && Boolean(forgotEmailSentTo);
 
   const form = el('form', 'account-form');
   form.id = activeMode === 'forgot' ? 'account-form-recover' : `account-form-${activeMode}`;
@@ -258,11 +293,13 @@ async function renderGuestView(body) {
   emailInput.autocomplete = 'username';
   emailInput.inputMode = 'email';
   emailInput.placeholder = 'prenom@exemple.fr';
+  if (isForgotEmailStep2) emailInput.value = forgotEmailSentTo;
   emailField.append(emailLabel, emailInput);
   form.appendChild(emailField);
 
   let recoveryInput = null;
-  if (activeMode === 'forgot') {
+  let codeInput = null;
+  if (activeMode === 'forgot' && !isForgotEmailStep1 && !isForgotEmailStep2) {
     const recField = el('div', 'form-field');
     const recLabel = el('label', 'field-label', 'Clé de récupération');
     recLabel.htmlFor = 'acc-recovery-input';
@@ -274,30 +311,47 @@ async function renderGuestView(body) {
     recoveryInput.placeholder = 'XXXX-XXXX-XXXX-XXXX…';
     recField.append(recLabel, recoveryInput);
     form.appendChild(recField);
+  } else if (isForgotEmailStep2) {
+    const codeField = el('div', 'form-field');
+    const codeLabel = el('label', 'field-label', 'Code à 6 chiffres reçu par e-mail');
+    codeLabel.htmlFor = 'acc-code-input';
+    codeInput = el('input', 'ios-input account-mono-input');
+    codeInput.id = 'acc-code-input';
+    codeInput.type = 'text';
+    codeInput.inputMode = 'numeric';
+    codeInput.maxLength = 6;
+    codeInput.required = true;
+    codeInput.autocomplete = 'one-time-code';
+    codeInput.placeholder = '000000';
+    codeField.append(codeLabel, codeInput);
+    form.appendChild(codeField);
   }
 
-  const pwField = el('div', 'form-field');
-  const pwLabel = el(
-    'label',
-    'field-label',
-    activeMode === 'forgot' ? 'Nouveau mot de passe (10 caractères min.)' : 'Mot de passe'
-  );
-  pwLabel.htmlFor = 'acc-password-input';
-  const pwInput = el('input', 'ios-input');
-  pwInput.id = 'acc-password-input';
-  pwInput.name = 'password';
-  pwInput.type = 'password';
-  pwInput.required = true;
-  pwInput.minLength = activeMode === 'login' ? 1 : 10;
-  pwInput.autocomplete = activeMode === 'login' ? 'current-password' : 'new-password';
-  pwInput.placeholder = activeMode === 'login' ? 'Votre mot de passe' : 'Au moins 10 caractères';
-  pwField.append(pwLabel, pwInput);
-  if (activeMode !== 'login') {
-    pwField.appendChild(
-      el('p', 'field-help', 'Choisissez au moins 10 caractères. Votre appareil pourra enregistrer ce mot de passe automatiquement.')
+  let pwInput = null;
+  if (!isForgotEmailStep1) {
+    const pwField = el('div', 'form-field');
+    const pwLabel = el(
+      'label',
+      'field-label',
+      activeMode === 'forgot' ? 'Nouveau mot de passe (10 caractères min.)' : 'Mot de passe'
     );
+    pwLabel.htmlFor = 'acc-password-input';
+    pwInput = el('input', 'ios-input');
+    pwInput.id = 'acc-password-input';
+    pwInput.name = 'password';
+    pwInput.type = 'password';
+    pwInput.required = true;
+    pwInput.minLength = activeMode === 'login' ? 1 : 10;
+    pwInput.autocomplete = activeMode === 'login' ? 'current-password' : 'new-password';
+    pwInput.placeholder = activeMode === 'login' ? 'Votre mot de passe' : 'Au moins 10 caractères';
+    pwField.append(pwLabel, pwInput);
+    if (activeMode !== 'login') {
+      pwField.appendChild(
+        el('p', 'field-help', 'Choisissez au moins 10 caractères. Votre appareil pourra enregistrer ce mot de passe automatiquement.')
+      );
+    }
+    form.appendChild(pwField);
   }
-  form.appendChild(pwField);
 
   const tsSlot = el('div', 'turnstile-slot hidden');
   form.appendChild(tsSlot);
@@ -310,7 +364,9 @@ async function renderGuestView(body) {
       ? 'Se connecter'
       : activeMode === 'register'
         ? 'Créer mon compte gratuit'
-        : 'Réinitialiser mon mot de passe'
+        : isForgotEmailStep1
+          ? 'Envoyer le code par e-mail'
+          : 'Réinitialiser mon mot de passe'
   );
   submitBtn.id = 'btn-account-submit';
   submitBtn.type = 'submit';
@@ -323,6 +379,7 @@ async function renderGuestView(body) {
     forgotBtn.type = 'button';
     forgotBtn.addEventListener('click', () => {
       activeMode = 'forgot';
+      forgotEmailSentTo = '';
       renderAccountSheet();
     });
     form.appendChild(forgotBtn);
@@ -331,7 +388,7 @@ async function renderGuestView(body) {
       el(
         'p',
         'field-help',
-        'Clé de récupération perdue ? Votre carnet reste accessible localement sur cet appareil : exportez une sauvegarde (.json) depuis les informations puis importez-la dans un nouveau compte.'
+        'Votre carnet reste toujours accessible localement sur cet appareil : vous pouvez aussi exporter une sauvegarde (.json) depuis les informations.'
       )
     );
   }
@@ -355,7 +412,7 @@ async function renderGuestView(body) {
 
     submitBtn.disabled = true;
     const origText = submitBtn.textContent;
-    submitBtn.textContent = 'Connexion en cours…';
+    submitBtn.textContent = 'Traitement en cours…';
 
     try {
       if (activeMode === 'login') {
@@ -373,6 +430,24 @@ async function renderGuestView(body) {
         });
         pendingRecoveryKey = res.recoveryKey || '';
         hostCallbacks.showToast('Compte créé ✓ Notez votre clé de récupération !');
+      } else if (isForgotEmailStep1) {
+        const emailVal = emailInput.value.trim();
+        await requestEmailResetCode({ email: emailVal, turnstileToken });
+        forgotEmailSentTo = emailVal;
+        cleanupTurnstileWidget();
+        hostCallbacks.showToast('Code envoyé par e-mail (valable 15 min) ✓');
+        await renderAccountSheet();
+        return;
+      } else if (isForgotEmailStep2) {
+        const res = await confirmEmailResetCode({
+          email: emailInput.value.trim(),
+          code: codeInput.value.trim(),
+          newPassword: pwInput.value
+        });
+        pendingRecoveryKey = res.recoveryKey || '';
+        forgotEmailSentTo = '';
+        activeMode = 'login';
+        hostCallbacks.showToast('Mot de passe réinitialisé ✓');
       } else {
         const res = await recoverAccount({
           email: emailInput.value.trim(),
@@ -570,9 +645,13 @@ async function renderSignedInView(body, authState) {
   logoutBtn.id = 'btn-account-logout';
   logoutBtn.type = 'button';
   logoutBtn.addEventListener('click', async () => {
-    if (!confirm('Vous déconnecter de cet appareil ? Vos prières déjà enregistrées restent accessibles localement.')) {
-      return;
-    }
+    const ok = await uiConfirm({
+      title: 'Se déconnecter ?',
+      message: 'Vos prières déjà enregistrées restent accessibles localement sur cet appareil.',
+      confirmLabel: 'Déconnecter',
+      danger: true
+    });
+    if (!ok) return;
     pendingRecoveryKey = '';
     activeMode = 'login';
     await logoutAccount();
@@ -629,6 +708,57 @@ async function renderSignedInView(body, authState) {
   });
   pwDetails.appendChild(pwForm);
   body.appendChild(pwDetails);
+
+  // Droit à l'effacement (RGPD) : suppression définitive du compte et de toutes les données
+  const delDetails = el('details', 'account-advanced-details account-danger-details');
+  delDetails.appendChild(el('summary', 'account-advanced-summary account-danger-summary', 'Supprimer définitivement mon compte'));
+  const delForm = el('form', 'account-advanced-body');
+  delForm.appendChild(
+    el(
+      'p',
+      'field-help',
+      'Cette action efface définitivement votre compte, vos prières, vos neuvaines et vos intentions du serveur et de cet appareil. Pensez à exporter une sauvegarde (.json) avant si besoin.'
+    )
+  );
+  const delPw = el('input', 'ios-input');
+  delPw.id = 'acc-delete-password-input';
+  delPw.type = 'password';
+  delPw.required = true;
+  delPw.autocomplete = 'current-password';
+  delPw.placeholder = 'Confirmez votre mot de passe actuel';
+  const delSubmit = el('button', 'btn-danger-ios', 'Supprimer mon compte');
+  delSubmit.id = 'btn-account-delete-submit';
+  delSubmit.type = 'submit';
+  delForm.append(delPw, delSubmit);
+  delForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!navigator.onLine) {
+      hostCallbacks.showToast('Connexion Internet requise pour supprimer votre compte.');
+      return;
+    }
+    const confirmed = await uiConfirm({
+      title: 'Supprimer définitivement votre compte ?',
+      message: 'Toutes vos données synchronisées et locales seront effacées de façon irréversible.',
+      confirmLabel: 'Supprimer définitivement',
+      danger: true
+    });
+    if (!confirmed) return;
+    delSubmit.disabled = true;
+    try {
+      await deleteAccount({ password: delPw.value });
+      pendingRecoveryKey = '';
+      activeMode = 'login';
+      hostCallbacks.onStatusChange('local');
+      await hostCallbacks.onSynced({ force: true });
+      hostCallbacks.showToast('Compte et données supprimés ✓');
+      await renderAccountSheet();
+    } catch (err) {
+      hostCallbacks.showToast(err?.message || 'Suppression impossible.');
+      delSubmit.disabled = false;
+    }
+  });
+  delDetails.appendChild(delForm);
+  body.appendChild(delDetails);
 
   if (navigator.onLine) {
     try {

@@ -12,7 +12,10 @@ import {
   handleLogin,
   handleRefresh,
   handleRecover,
+  handleForgotEmail,
+  handleResetEmail,
   handleChangePassword,
+  handleDeleteAccount,
   handleListSessions,
   handleRevokeSession,
   handleLogout
@@ -47,18 +50,20 @@ export default {
     try {
       // Santé & configuration publique non sensible
       if (method === 'GET' && pathname === '/health') {
-        return jsonResponse({ ok: true, version: '8.0.0' }, 200, allowedOrigin);
+        return jsonResponse({ ok: true, version: '9.0.0' }, 200, allowedOrigin);
       }
 
       if (method === 'GET' && pathname === '/api/config') {
+        const provider = String(env.EMAIL_RELAY_PROVIDER || 'resend').trim().toLowerCase();
         return jsonResponse(
           {
             ok: true,
-            version: '8.0.0',
+            version: '9.0.0',
             maxUsers: Number(env.MAX_USERS) || 1000,
             maxTextBytes: Number(env.MAX_USER_TEXT_BYTES) || 2097152,
             vapidPublicKey: env.VAPID_PUBLIC_KEY || '',
-            turnstileSiteKey: env.TURNSTILE_SITE_KEY || ''
+            turnstileSiteKey: env.TURNSTILE_SITE_KEY || '',
+            emailResetAvailable: Boolean(env.EMAIL_RELAY_KEY && (provider === 'resend' || provider === 'brevo'))
           },
           200,
           allowedOrigin
@@ -77,6 +82,12 @@ export default {
       }
       if (method === 'POST' && pathname === '/api/auth/recover') {
         return await handleRecover(request, env, allowedOrigin);
+      }
+      if (method === 'POST' && pathname === '/api/auth/forgot-email') {
+        return await handleForgotEmail(request, env, allowedOrigin);
+      }
+      if (method === 'POST' && pathname === '/api/auth/reset-email') {
+        return await handleResetEmail(request, env, allowedOrigin);
       }
       if (method === 'POST' && pathname === '/api/auth/logout') {
         return await handleLogout(request, env, allowedOrigin);
@@ -103,6 +114,9 @@ export default {
       }
       if (method === 'POST' && pathname === '/api/auth/change-password') {
         return await handleChangePassword(request, env, allowedOrigin, auth);
+      }
+      if (method === 'DELETE' && pathname === '/api/auth/account') {
+        return await handleDeleteAccount(request, env, allowedOrigin, auth);
       }
       const sesMatch = pathname.match(/^\/api\/auth\/sessions\/([a-zA-Z0-9_-]{4,80})$/);
       if (method === 'DELETE' && sesMatch) {

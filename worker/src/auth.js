@@ -599,3 +599,237 @@ export async function handleLogout(request, env, origin) {
   }
   return jsonResponse({ ok: true }, 200, origin);
 }
+
+/**
+ * Droit à l'effacement (RGPD) : suppression définitive du compte et de toutes les données associées.
+ * Exige authentification + vérification du mot de passe actuel.
+ */
+export async function handleDeleteAccount(request, env, origin, auth) {
+  const body = await readJsonBounded(request, 4096);
+  const password = String(body.password || '');
+  if (!password) {
+    return jsonResponse({ error: 'Saisissez votre mot de passe actuel pour confirmer la suppression.' }, 400, origin);
+  }
+
+  const user = await env.DB
+    .prepare('SELECT id, password_hash, password_salt FROM users WHERE id = ?')
+    .bind(auth.userId)
+    .first();
+  if (!user) {
+    return jsonResponse({ error: 'Compte introuvable.' }, 404, origin);
+  }
+
+  const ok = await verifyPassword(password, user.password_salt, user.password_hash);
+  if (!ok) {
+    return jsonResponse({ error: 'Mot de passe incorrect.' }, 401, origin);
+  }
+
+  // Nettoyage explicite de toutes les tables liées (en plus des FK ON DELETE CASCADE)
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').bind(auth.userId),
+    env.DB.prepare('DELETE FROM prayers WHERE user_id = ?').bind(auth.userId),
+    env.DB.prepare('DELETE FROM novenas WHERE user_id = ?').bind(auth.userId),
+    env.DB.prepare('DELETE FROM intentions WHERE user_id = ?').bind(auth.userId),
+    env.DB.prepare('DELETE FROM rosary_state WHERE user_id = ?').bind(auth.userId),
+    env.DB.prepare('DELETE FROM settings WHERE user_id = ?').bind(auth.userId),
+    env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(auth.userId),
+    env.DB.prepare('UPDATE feedback_messages SET user_id = NULL WHERE user_id = ?').bind(auth.userId),
+    env.DB.prepare('DELETE FROM users WHERE id = ?').bind(auth.userId)
+  ]);
+
+  return jsonResponse({ ok: true }, 200, origin);
+}
+
+function generateSixDigitCode() {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return String(arr[0] % 1000000).padStart(6, '0');
+}
+
+async function sendResetEmailViaRelay(env, toEmail, code, fetchImpl = fetch) {
+  const relayKey = String(env.EMAIL_RELAY_KEY || '').trim();
+  const provider = String(env.EMAIL_RELAY_PROVIDER || 'resend').trim().toLowerCase();
+  if (!relayKey) return false;
+
+  const subject = 'Code de réinitialisation — Ma prière quotidienne';
+  const textBody = [
+    'Bonjour,',
+    '',
+    'Voici votre code temporaire pour réinitialiser le mot de passe de votre compte Ma prière quotidienne :',
+    '',
+    `    ${code}`,
+    '',
+    'Ce code est valable 15 minutes et ne peut être utilisé qu’une seule fois.',
+    'Si vous n’êtes pas à l’origine de cette demande, vous pouvez simplement ignorer cet e-mail.'
+  ].join('\n');
+
+  if (provider === 'resend') {
+    const resp = await fetchImpl('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${relayKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: env.EMAIL_FROM || 'Ma priere quotidienne <onboarding@resend.dev>',
+        to: [toEmail],
+        subject,
+        text: textBody
+      })
+    });
+    return resp.ok;
+  }
+
+  if (provider === 'brevo') {
+    const fromRaw = String(env.EMAIL_FROM || '').trim();
+    const match = fromRaw.match(/^(.*?)<([^>]+)>$/);
+    const senderEmail = (match ? match[2] : fromRaw || env.CONTACT_TARGET_EMAIL || '').trim();
+    const senderName = (match ? match[1] : 'Ma prière quotidienne').trim() || 'Ma prière quotidienne';
+    if (!senderEmail) return false;
+    const resp = await fetchImpl('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': relayKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email: toEmail }],
+        subject,
+        textContent: textBody
+      })
+    });
+    return resp.ok;
+  }
+
+  return false;
+}
+
+export async function handleForgotEmail(request, env, origin, fetchImpl = fetch) {
+  const ipHash = await hashClientIp(request, env);
+  const rl = await checkRateLimit(env.DB, `fge:${ipHash}`, 5, 3600);
+  if (!rl.allowed) {
+    return jsonResponse(
+      { error: 'Trop de demandes récentes. Merci de patienter une heure.' },
+      429,
+      origin,
+      { 'Retry-After': rl.retryAfterSec }
+    );
+  }
+
+  const body = await readJsonBounded(request, 8192);
+  const tsOk = await verifyTurnstile(body.turnstileToken, getClientIp(request), env, fetchImpl);
+  if (!tsOk) {
+    return jsonResponse({ error: 'Vérification anti-robot échouée.' }, 403, origin);
+  }
+
+  const email = normalizeEmail(body.email);
+  const genericOk = {
+    ok: true,
+    message: 'Si un compte correspond à cette adresse, un code à 6 chiffres vient d’être envoyé (valable 15 minutes).'
+  };
+  if (!email) {
+    return jsonResponse(genericOk, 200, origin);
+  }
+
+  const user = await env.DB
+    .prepare('SELECT id, email_normalized FROM users WHERE email_normalized = ?')
+    .bind(email)
+    .first();
+
+  if (!user) {
+    await dummyPasswordWork();
+    return jsonResponse(genericOk, 200, origin);
+  }
+
+  const code = generateSixDigitCode();
+  const codeHash = await sha256Hex(`${user.id}:${code}`);
+  const now = Date.now();
+  const expiresAt = now + 15 * 60 * 1000;
+
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM password_reset_codes WHERE user_id = ?').bind(user.id),
+    env.DB
+      .prepare('INSERT INTO password_reset_codes (id, user_id, code_hash, attempts, expires_at, created_at) VALUES (?, ?, ?, 0, ?, ?)')
+      .bind(makeId('rst'), user.id, codeHash, expiresAt, now)
+  ]);
+
+  await sendResetEmailViaRelay(env, user.email_normalized, code, fetchImpl).catch(() => false);
+  return jsonResponse(genericOk, 200, origin);
+}
+
+export async function handleResetEmail(request, env, origin) {
+  const ipHash = await hashClientIp(request, env);
+  const rl = await checkRateLimit(env.DB, `rse:${ipHash}`, 10, 3600);
+  if (!rl.allowed) {
+    return jsonResponse({ error: 'Trop de tentatives. Patientez avant de réessayer.' }, 429, origin);
+  }
+
+  const body = await readJsonBounded(request, 8192);
+  const email = normalizeEmail(body.email);
+  const code = String(body.code || '').replace(/\s+/g, '');
+  const newPassword = String(body.newPassword || '');
+  const deviceLabel = sanitizeString(body.deviceLabel || 'Appareil', 80);
+
+  if (!email || !/^\d{6}$/.test(code)) {
+    return jsonResponse({ error: 'Saisissez votre adresse e-mail et le code à 6 chiffres.' }, 400, origin);
+  }
+
+  const pwErr = validatePasswordStrength(newPassword, email);
+  if (pwErr) {
+    return jsonResponse({ error: pwErr }, 400, origin);
+  }
+
+  const user = await env.DB
+    .prepare('SELECT id, email_normalized, role FROM users WHERE email_normalized = ?')
+    .bind(email)
+    .first();
+
+  const now = Date.now();
+  const row = user
+    ? await env.DB
+        .prepare('SELECT id, code_hash, attempts, expires_at, used_at FROM password_reset_codes WHERE user_id = ? ORDER BY created_at DESC LIMIT 1')
+        .bind(user.id)
+        .first()
+    : null;
+
+  if (!user || !row || row.used_at || row.expires_at < now || row.attempts >= 5) {
+    await dummyPasswordWork();
+    return jsonResponse({ error: 'Code invalide ou expiré. Demandez un nouveau code.' }, 400, origin);
+  }
+
+  const expectedHash = await sha256Hex(`${user.id}:${code}`);
+  if (!timingSafeEqual(expectedHash, row.code_hash)) {
+    await env.DB.prepare('UPDATE password_reset_codes SET attempts = attempts + 1 WHERE id = ?').bind(row.id).run();
+    return jsonResponse({ error: 'Code incorrect.' }, 400, origin);
+  }
+
+  const { salt, hash } = await hashPassword(newPassword);
+  const nextRecoveryKey = generateRecoveryKey();
+  const nextRecoveryHash = await sha256Hex(normalizeRecoveryKey(nextRecoveryKey));
+
+  await env.DB.batch([
+    env.DB
+      .prepare('UPDATE password_reset_codes SET used_at = ? WHERE id = ?')
+      .bind(now, row.id),
+    env.DB
+      .prepare('UPDATE users SET password_hash = ?, password_salt = ?, recovery_key_hash = ?, failed_login_count = 0, locked_until = 0, updated_at = ? WHERE id = ?')
+      .bind(hash, salt, nextRecoveryHash, now, user.id),
+    env.DB
+      .prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL')
+      .bind(now, user.id)
+  ]);
+
+  const tokens = await createSessionPair(env.DB, env, user.id, deviceLabel);
+  return jsonResponse(
+    {
+      ok: true,
+      user: { id: user.id, email: user.email_normalized, role: user.role },
+      recoveryKey: nextRecoveryKey,
+      ...tokens
+    },
+    200,
+    origin
+  );
+}

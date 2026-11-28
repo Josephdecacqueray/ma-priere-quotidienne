@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ma-priere-v8-3';
+const CACHE_NAME = 'ma-priere-v9-0';
 
-// App Shell ultra-léger au démarrage (0 octet du corpus CEC/Thomas bloquant au boot)
+// App Shell ultra-léger au démarrage (0 octet du corpus CEC/Thomas/Missel bloquant au boot)
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const PRECACHE_URLS = [
   './js/config.js',
   './js/auth.js',
   './js/db.js',
+  './js/dialogs.js',
   './js/formatter.js',
   './js/ics.js',
   './js/liturgy.js',
@@ -21,9 +22,11 @@ const PRECACHE_URLS = [
   './js/drive-sync.js',
   './js/feedback.js',
   './js/la-priere.js',
+  './js/missal.js',
+  './js/classic-prayers.js',
   './js/tour.js',
   './js/timer.js',
-  './fonts/GreatVibes-Regular.ttf',
+  './fonts/GreatVibes-Regular.woff2',
   './icons/favicon-64.png',
   './icons/icon-180.png',
   './icons/icon-192.png',
@@ -114,8 +117,11 @@ async function precacheOfflineCorpus() {
     }
 
     const idx = await idxResp.clone().json();
+    const curYear = new Date().getFullYear();
+    const missalYearUrl = (curYear >= 2025 && curYear <= 2035) ? [`./data/missel-1962/cal/${curYear}.json`] : [];
     const allUrls = [
       ...OFFLINE_EXTRA_ASSETS,
+      ...missalYearUrl,
       ...(idx.texts || []).map((t) => `./data/la-priere/texts/${encodeURIComponent(t.id)}.json`)
     ];
 
@@ -155,7 +161,9 @@ async function precacheOfflineCorpus() {
 
 self.addEventListener('message', (event) => {
   const data = event.data || {};
-  if (data.type === 'PRECACHE_OFFLINE_CORPUS') {
+  if (data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  } else if (data.type === 'PRECACHE_OFFLINE_CORPUS') {
     event.waitUntil(precacheOfflineCorpus());
   } else if (data.type === 'GET_OFFLINE_CORPUS_STATUS') {
     event.waitUntil(

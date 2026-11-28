@@ -5,7 +5,7 @@
    - Aucune adresse e-mail personnelle, aucune clé privée ici
    ========================================================= */
 
-export const APP_VERSION = '8.2.0';
+export const APP_VERSION = '9.0.0';
 
 // URL publique du Cloudflare Worker (aucun secret)
 export const DEFAULT_API_BASE_URL = 'https://ma-priere-api.ma-priere-quotidienne.workers.dev';
@@ -109,7 +109,8 @@ export async function fetchServerConfig({ force = false } = {}) {
         maxUsers: Number(data.maxUsers) || 1000,
         maxTextBytes: Number(data.maxTextBytes) || 2097152,
         vapidPublicKey: String(data.vapidPublicKey || ''),
-        turnstileSiteKey: String(data.turnstileSiteKey || '')
+        turnstileSiteKey: String(data.turnstileSiteKey || ''),
+        emailResetAvailable: Boolean(data.emailResetAvailable)
       };
       return cachedServerConfig;
     })

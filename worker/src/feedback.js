@@ -80,6 +80,28 @@ export async function forwardFeedbackEmail(env, record, fetchImpl = fetch) {
       return { forwarded: resp.ok, status: resp.ok ? 'sent' : 'relay_error' };
     }
 
+    if (provider === 'brevo') {
+      const fromRaw = String(env.EMAIL_FROM || '').trim();
+      const match = fromRaw.match(/^(.*?)<([^>]+)>$/);
+      const senderEmail = (match ? match[2] : fromRaw || targetEmail).trim();
+      const senderName = (match ? match[1] : 'Ma prière quotidienne').trim() || 'Ma prière quotidienne';
+      const resp = await fetchImpl('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': relayKey,
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email: targetEmail }],
+          subject,
+          textContent: bodyText
+        })
+      });
+      return { forwarded: resp.ok, status: resp.ok ? 'sent' : 'relay_error' };
+    }
+
     if (provider === 'web3forms') {
       const resp = await fetchImpl('https://api.web3forms.com/submit', {
         method: 'POST',

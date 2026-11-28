@@ -77,6 +77,7 @@ export function getPrayerBinary(prayer) {
 }
 
 export async function getMeta(key) {
+  if (!key) return undefined;
   const row = await txPromise('meta', 'readonly', (s) => s.get(key));
   return row ? row.value : undefined;
 }
@@ -183,6 +184,7 @@ export async function getAllPrayers() {
 }
 
 export async function getPrayer(id) {
+  if (!id) return undefined;
   return txPromise('prayers', 'readonly', (s) => s.get(id));
 }
 
@@ -246,6 +248,7 @@ export async function getAllNovenas() {
 }
 
 export async function getNovena(id) {
+  if (!id) return undefined;
   return txPromise('novenas', 'readonly', (s) => s.get(id));
 }
 
@@ -266,6 +269,7 @@ export async function getAllIntentions() {
 }
 
 export async function getIntention(id) {
+  if (!id) return undefined;
   return txPromise('intentions', 'readonly', (s) => s.get(id));
 }
 
